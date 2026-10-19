@@ -1,3 +1,4 @@
+// src/app/katalog/page.tsx
 import React from 'react';
 import Link from 'next/link';
 import ProductCard from '@/components/ProductCard';
@@ -6,238 +7,214 @@ import { getAllProducts } from '@/lib/products';
 export const revalidate = 60;
 
 interface PageProps {
-  searchParams: Promise<{ search?: string; category?: string }>;
+  searchParams: Promise<{ search?: string; category?: string; page?: string }>;
 }
 
 export default async function KatalogPage({ searchParams }: PageProps) {
-  const { search, category } = await searchParams;
+  const { search, category, page } = await searchParams;
   const allProducts = await getAllProducts();
 
-  // Query search
+  // Query search & category
   const query = search?.toLowerCase().trim() || '';
-  const activeCategory = category?.toLowerCase().trim() || '';
+  const activeCategory = category?.toLowerCase().trim() || 'semua';
+  const currentPage = Number(page) || 1;
+  const itemsPerPage = 8; // 4 kolom ke samping, diatur per halaman
 
-  // Filter produk berdasarkan search + kategori
-  let products = allProducts;
+  // 1. Filter produk berdasarkan pencarian & kategori yang selaras
+  let filteredProducts = allProducts;
   if (query) {
-    products = products.filter(
+    filteredProducts = filteredProducts.filter(
       (p) =>
         p.name.toLowerCase().includes(query) ||
         (p.category && p.category.toLowerCase().includes(query)) ||
         (p.description && p.description.toLowerCase().includes(query))
     );
   }
-  if (activeCategory) {
-    products = products.filter(
-      (p) => p.category?.toLowerCase() === activeCategory
-    );
+  
+  if (activeCategory && activeCategory !== 'semua') {
+    filteredProducts = filteredProducts.filter((p) => {
+      const cat = p.category?.toLowerCase() || '';
+      if (activeCategory === 'keripik') return cat.includes('keripik') || cat.includes('kripik');
+      if (activeCategory === 'kue') return cat.includes('kue') || cat.includes('tradisional');
+      if (activeCategory === 'bagiak') return cat.includes('bagiak');
+      if (activeCategory === 'makanan') return cat.includes('makanan ringan');
+      if (activeCategory === 'kerupuk') return cat.includes('kerupuk') || cat.includes('krupuk');
+      if (activeCategory === 'kopi') return cat.includes('kopi') || cat.includes('minuman');
+      return cat.includes(activeCategory);
+    });
   }
 
-  // Daftar kategori untuk filter pill
+  // 2. Hitung Pagination
+  const totalProducts = filteredProducts.length;
+  const totalPages = Math.ceil(totalProducts / itemsPerPage) || 1;
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const paginatedProducts = filteredProducts.slice(startIndex, startIndex + itemsPerPage);
+
+  // Daftar kategori untuk sidebar dengan ID yang konsisten
   const categories = [
-    { id: 'semua', label: 'Semua Produk' },
-    { id: 'kripik', label: 'Keripik Khas' },
-    { id: 'kue', label: 'Kue Tradisional' },
-    { id: 'bagiak', label: 'Bagiak Banyuwangi' },
-    { id: 'ting-ting', label: 'Ting-Ting' },
-    { id: 'krupuk', label: 'Kerupuk & Olahan' },
-    { id: 'bolu', label: 'Bolu Khas' },
+    { id: 'semua', label: 'Semua Produk', count: allProducts.length },
+    { id: 'keripik', label: 'Keripik Khas', count: allProducts.filter(p => p.category?.toLowerCase().includes('keripik') || p.category?.toLowerCase().includes('kripik')).length },
+    { id: 'kue', label: 'Kue Tradisional', count: allProducts.filter(p => p.category?.toLowerCase().includes('kue') || p.category?.toLowerCase().includes('tradisional')).length },
+    { id: 'bagiak', label: 'Bagiak Banyuwangi', count: allProducts.filter(p => p.category?.toLowerCase().includes('bagiak')).length },
+    { id: 'makanan', label: 'Makanan Ringan', count: allProducts.filter(p => p.category?.toLowerCase().includes('makanan ringan')).length },
+    { id: 'kerupuk', label: 'Kerupuk & Olahan', count: allProducts.filter(p => p.category?.toLowerCase().includes('kerupuk') || p.category?.toLowerCase().includes('krupuk')).length },
+    { id: 'kopi', label: 'Kopi & Herbal', count: allProducts.filter(p => p.category?.toLowerCase().includes('kopi') || p.category?.toLowerCase().includes('minuman')).length },
   ];
 
   return (
-    <div className="relative min-h-screen text-gray-800 font-sans antialiased pb-20 bg-[#FAF6F0]">
+    <div className="min-h-screen bg-[#FDFBF7] text-[#2D241E] font-serif selection:bg-[#5c0f1c] selection:text-amber-100 antialiased pt-24 pb-24">
       
-      {/* ================= BACKGROUND TEKSTUR ================= */}
-      <div 
-        className="fixed inset-0 pointer-events-none z-0 bg-cover bg-center bg-no-repeat"
-        style={{
-          backgroundImage: `url('/background.jpeg')`,
-        }}
-      />
-      <div className="fixed inset-0 pointer-events-none z-0 bg-[#FAF6F0]/30 backdrop-blur-[0.5px]" />
+      {/* ================= UTAMA: SIDEBAR & GRID PRODUK ================= */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 pt-6">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+          
+          {/* ================= SIDEBAR KIRI ================= */}
+          <aside className="lg:col-span-1 space-y-6 animate-in fade-in slide-in-from-left duration-700">
+            
+            {/* Kotak Pencarian di Sidebar */}
+            <div className="bg-[#FAF7F0] p-5 rounded-2xl border border-amber-900/10 shadow-sm font-sans space-y-3 transition-all duration-300 hover:shadow-md">
+              <h3 className="font-serif font-bold text-sm text-[#3b0912] uppercase tracking-wider">
+                Cari Produk
+              </h3>
+              <form action="/katalog" method="GET" className="relative">
+                <input
+                  type="text"
+                  name="search"
+                  defaultValue={search || ''}
+                  placeholder="Ketik nama camilan..."
+                  className="w-full bg-white text-gray-900 text-xs placeholder:text-gray-400 pl-3 pr-9 py-2.5 rounded-xl border border-amber-900/20 focus:outline-none focus:ring-2 focus:ring-[#5c0f1c] transition-all"
+                />
+                <button type="submit" className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-[#5c0f1c] transition-colors">
+                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                </button>
+              </form>
+            </div>
 
-      <div className="relative z-10">
-        
-        {/* ================= 1. HEADER JUDUL ================= */}
-        <section className="pt-24 sm:pt-28 pb-6 sm:pb-8 border-b border-[#EBE3D5]/80 bg-[#FAF6F0]/60">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12">
-            <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
-              <div className="space-y-2">
-                <span className="inline-flex items-center gap-2 bg-[#5c0f1c]/10 text-[#5c0f1c] text-[11px] font-extrabold px-3.5 py-1 rounded-full tracking-wider uppercase">
-                  <span className="w-2 h-2 rounded-full bg-[#5c0f1c]" />
-                  Oleh-Oleh Resmi Banyuwangi
-                </span>
-                <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black text-gray-900 tracking-tight leading-tight">
-                  Katalog <span className="text-[#5c0f1c]">Surya Snack</span>
-                </h1>
-                <p className="text-gray-600 text-xs sm:text-sm max-w-xl leading-relaxed">
-                  Jelajahi kelezatan camilan gurih, renyah, dan jajanan tradisional khas Banyuwangi berkualitas premium yang dibuat fresh setiap hari.
+            {/* Daftar Kategori Sidebar */}
+            <div className="bg-[#FAF7F0] p-5 rounded-2xl border border-amber-900/10 shadow-sm font-sans space-y-3 transition-all duration-300 hover:shadow-md">
+              <h3 className="font-serif font-bold text-sm text-[#3b0912] uppercase tracking-wider border-b border-amber-900/10 pb-2">
+                Kategori Pilihan
+              </h3>
+              <ul className="space-y-1.5 text-xs">
+                {categories.map((cat) => {
+                  const isCatActive = activeCategory === cat.id;
+                  return (
+                    <li key={cat.id}>
+                      <Link
+                        href={`/katalog?category=${cat.id}${search ? `&search=${search}` : ''}`}
+                        className={`flex items-center justify-between px-3.5 py-2.5 rounded-xl transition-all duration-300 transform hover:translate-x-1 ${
+                          isCatActive
+                            ? 'bg-[#3b0912] text-amber-200 font-bold shadow-md scale-[1.02]'
+                            : 'text-gray-700 hover:bg-amber-100/60 hover:text-[#3b0912]'
+                        }`}
+                      >
+                        <span>{cat.label}</span>
+                        <span className={`text-[10px] px-2 py-0.5 rounded-full transition-colors ${isCatActive ? 'bg-amber-400/20 text-amber-300' : 'bg-gray-200 text-gray-600'}`}>
+                          {cat.count}
+                        </span>
+                      </Link>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+
+          </aside>
+
+          {/* ================= KONTEN KANAN (GRID & PAGINATION) ================= */}
+          <div className="lg:col-span-3 space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
+            
+            {/* Info Filter Aktif */}
+            {(query || (activeCategory && activeCategory !== 'semua')) && (
+              <div className="flex items-center justify-between bg-[#FAF7F0] p-4 rounded-2xl border border-amber-900/10 font-sans text-xs sm:text-sm shadow-sm transition-all">
+                <p className="text-gray-600">
+                  Menampilkan hasil untuk{' '}
+                  {query && <span className="font-bold text-[#3b0912]">&ldquo;{search}&rdquo;</span>}
+                  {activeCategory && activeCategory !== 'semua' && (
+                    <span> kategori <span className="font-bold text-[#3b0912]">{categories.find((c) => c.id === activeCategory)?.label || activeCategory}</span></span>
+                  )}
+                  {' '}(<span className="font-bold text-[#3b0912]">{totalProducts} produk</span>)
                 </p>
-              </div>
-
-              {/* Total Produk Ringkasan */}
-              <div className="shrink-0 bg-white/90 border border-[#EBE3D5] rounded-2xl px-4 py-2.5 shadow-xs flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-amber-400/20 text-[#5c0f1c] flex items-center justify-center font-black text-lg">
-                  {products.length}
-                </div>
-                <div className="flex flex-col leading-none">
-                  <span className="text-xs font-bold text-gray-900">Varian Camilan</span>
-                  <span className="text-[10px] text-gray-500 mt-0.5">Tersedia Siap Kirim</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* ================= 2. BAR FILTER & PENCARIAN (NORMAL SCROLL / TIDAK MELAYANG) ================= */}
-        <div className="w-full bg-[#FAF6F0]/90 border-b border-[#EBE3D5] shadow-xs">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 py-3 sm:py-4 flex flex-col md:flex-row md:items-center md:justify-between gap-3 sm:gap-4">
-
-            {/* Filter Kategori Pills */}
-            <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-1 -mx-1 px-1">
-              {categories.map((cat) => {
-                const isActive =
-                  (cat.id === 'semua' && !activeCategory && !query) ||
-                  cat.id === activeCategory;
-                return (
-                  <Link
-                    key={cat.id}
-                    href={cat.id === 'semua' ? '/katalog' : `/katalog?category=${cat.id}`}
-                    className={`shrink-0 px-4 py-2 rounded-xl text-xs font-bold transition-all duration-200 ${
-                      isActive
-                        ? 'bg-[#5c0f1c] text-white shadow-md shadow-[#5c0f1c]/20'
-                        : 'bg-white/90 hover:bg-amber-100/80 text-gray-700 hover:text-[#5c0f1c] border border-[#EBE3D5]'
-                    }`}
-                  >
-                    {cat.label}
-                  </Link>
-                );
-              })}
-            </div>
-
-            {/* Search Box */}
-            <form
-              action="/katalog"
-              method="GET"
-              className="relative w-full md:w-72 shrink-0"
-            >
-              <input
-                type="text"
-                name="search"
-                defaultValue={search || ''}
-                placeholder="Cari camilan favoritmu..."
-                className="w-full bg-white/90 border border-[#EBE3D5] text-gray-800 text-xs placeholder:text-gray-400 pl-4 pr-10 py-2.5 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#5c0f1c]/30 focus:border-[#5c0f1c] focus:bg-white transition shadow-inner"
-              />
-              <button
-                type="submit"
-                aria-label="Cari Produk"
-                className="absolute right-1.5 top-1/2 -translate-y-1/2 w-8 h-8 rounded-lg bg-[#5c0f1c] text-white hover:bg-[#7a1425] active:scale-95 flex items-center justify-center transition shadow-xs"
-              >
-                <svg
-                  className="w-4 h-4"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2.5}
-                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                  />
-                </svg>
-              </button>
-            </form>
-
-          </div>
-        </div>
-
-        {/* ================= 3. GRID PRODUK ================= */}
-        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 pt-6 sm:pt-8">
-
-          {/* Info Pencarian & Action Reset */}
-          {(query || activeCategory) && (
-            <div className="mb-6 bg-white/90 p-4 rounded-2xl border border-[#EBE3D5] shadow-xs flex items-center justify-between flex-wrap gap-3">
-              <p className="text-xs sm:text-sm text-gray-600">
-                Menampilkan <span className="font-extrabold text-[#5c0f1c]">{products.length} produk</span>
-                {query && (
-                  <>
-                    {' '}untuk pencarian <span className="font-extrabold text-[#5c0f1c]">&ldquo;{search}&rdquo;</span>
-                  </>
-                )}
-                {activeCategory && (
-                  <>
-                    {' '}dalam kategori <span className="font-extrabold text-[#5c0f1c]">{categories.find((c) => c.id === activeCategory)?.label || activeCategory}</span>
-                  </>
-                )}
-              </p>
-              <Link
-                href="/katalog"
-                className="text-xs font-bold text-[#5c0f1c] bg-amber-50 hover:bg-amber-100 px-3 py-1.5 rounded-lg transition inline-flex items-center gap-1.5"
-              >
-                <svg
-                  className="w-3.5 h-3.5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2.5}
-                    d="M6 18L18 6M6 6l12 12"
-                  />
-                </svg>
-                Reset Filter
-              </Link>
-            </div>
-          )}
-
-          {/* Grid Produk atau Empty State */}
-          {products.length === 0 ? (
-            <div className="bg-white/90 rounded-3xl p-8 sm:p-16 text-center border border-[#EBE3D5] shadow-sm space-y-4 my-8">
-              <div className="w-16 h-16 sm:w-20 sm:h-20 mx-auto bg-amber-50 text-[#5c0f1c] rounded-2xl flex items-center justify-center shadow-xs">
-                <svg
-                  className="w-8 h-8 sm:w-10 sm:h-10"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                  />
-                </svg>
-              </div>
-              <div className="space-y-1">
-                <h3 className="text-base sm:text-lg font-bold text-gray-900">Produk Tidak Ditemukan</h3>
-                <p className="text-xs sm:text-sm text-gray-500 max-w-md mx-auto leading-relaxed">
-                  {query
-                    ? `Tidak ada jajanan yang cocok dengan kata kunci "${search}". Coba gunakan kata kunci lainnya.`
-                    : 'Belum ada produk yang tersedia untuk kategori ini.'}
-                </p>
-              </div>
-              <div className="pt-2">
-                <Link
-                  href="/katalog"
-                  className="inline-flex items-center gap-2 bg-[#5c0f1c] hover:bg-[#7a1425] text-white font-extrabold text-xs px-5 py-3 rounded-xl transition shadow-md active:scale-95"
-                >
-                  ← Tampilkan Semua Produk
+                <Link href="/katalog" className="text-xs font-bold text-[#5c0f1c] hover:underline uppercase tracking-wider transition-opacity hover:opacity-75">
+                  Reset Filter ✕
                 </Link>
               </div>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
-              {products.map((product) => (
-                <ProductCard key={product.id} product={product} />
-              ))}
-            </div>
-          )}
+            )}
 
-        </section>
-      </div>
+            {/* Grid Produk (4 kolom ke samping) */}
+            {paginatedProducts.length === 0 ? (
+              <div className="bg-[#FAF7F0] rounded-3xl p-12 text-center border-2 border-dashed border-amber-900/25 space-y-4 font-sans shadow-sm">
+                <h3 className="text-lg font-serif font-bold text-[#3b0912]">Produk Tidak Ditemukan</h3>
+                <p className="text-xs text-gray-600 max-w-md mx-auto">
+                  Maaf, tidak ada produk yang cocok dengan kriteria pencarian atau kategori yang Anda pilih.
+                </p>
+                <div>
+                  <Link href="/katalog" className="bg-[#3b0912] hover:bg-[#5c0f1c] text-amber-200 font-bold px-6 py-3 rounded-xl text-xs uppercase tracking-widest transition-all duration-300 inline-block shadow-md hover:scale-105 active:scale-95">
+                    Tampilkan Semua Produk
+                  </Link>
+                </div>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
+                {paginatedProducts.map((product, index) => (
+                  <div 
+                    key={product.id} 
+                    className="transition-all duration-500 hover:-translate-y-1.5"
+                    style={{ animation: `fadeInUp 0.6s ease-out ${index * 0.08}s both` }}
+                  >
+                    <ProductCard product={product} />
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* ================= PAGINATION (1, 2, 3, 4, dst.) ================= */}
+            {totalPages > 1 && (
+              <div className="flex items-center justify-center gap-2 pt-10 font-sans">
+                {currentPage > 1 && (
+                  <Link
+                    href={`/katalog?category=${activeCategory}${search ? `&search=${search}` : ''}&page=${currentPage - 1}`}
+                    className="px-4 py-2.5 rounded-xl bg-[#FAF7F0] border border-amber-900/20 text-xs font-bold text-gray-700 hover:bg-[#3b0912] hover:text-white transition-all duration-300 shadow-sm hover:scale-105"
+                  >
+                    ← Prev
+                  </Link>
+                )}
+
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNum) => {
+                  const isPageActive = pageNum === currentPage;
+                  return (
+                    <Link
+                      key={pageNum}
+                      href={`/katalog?category=${activeCategory}${search ? `&search=${search}` : ''}&page=${pageNum}`}
+                      className={`w-10 h-10 flex items-center justify-center rounded-xl text-xs font-bold transition-all duration-300 shadow-sm ${
+                        isPageActive
+                          ? 'bg-[#3b0912] text-amber-300 border border-[#3b0912] scale-105 shadow-md'
+                          : 'bg-[#FAF7F0] text-gray-700 border border-amber-900/20 hover:bg-amber-100/80 hover:scale-105'
+                      }`}
+                    >
+                      {pageNum}
+                    </Link>
+                  );
+                })}
+
+                {currentPage < totalPages && (
+                  <Link
+                    href={`/katalog?category=${activeCategory}${search ? `&search=${search}` : ''}&page=${currentPage + 1}`}
+                    className="px-4 py-2.5 rounded-xl bg-[#FAF7F0] border border-amber-900/20 text-xs font-bold text-gray-700 hover:bg-[#3b0912] hover:text-white transition-all duration-300 shadow-sm hover:scale-105"
+                  >
+                    Next →
+                  </Link>
+                )}
+              </div>
+            )}
+
+          </div>
+
+        </div>
+      </section>
+
     </div>
   );
 }

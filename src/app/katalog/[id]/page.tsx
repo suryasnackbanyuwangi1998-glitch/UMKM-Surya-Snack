@@ -1,7 +1,10 @@
+// src/app/katalog/[id]/page.tsx
 import React from 'react';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faArrowRight } from '@fortawesome/free-solid-svg-icons';
 import ProductDetailClient from '@/components/ProductDetailClient';
 import ProductCard from '@/components/ProductCard';
 import { getAllProducts, getProductBySlug } from '@/lib/products';
@@ -20,7 +23,7 @@ const formatIDR = (value: number | null | undefined): string => {
     currency: 'IDR',
     maximumFractionDigits: 0,
   }).format(value);
-}
+};
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { id } = await params;
@@ -60,7 +63,6 @@ export default async function DetailProdukPage({ params }: PageProps) {
   const allProducts = await getAllProducts();
   const activeCategory = product.category?.trim();
 
-  // Rekomendasi: 优先 kategori sama, lalu produk lain (maks 4)
   const relatedProducts: Product[] = [];
   const addedIds = new Set<Product['id']>([product.id]);
 
@@ -82,59 +84,53 @@ export default async function DetailProdukPage({ params }: PageProps) {
   }
 
   return (
-    <main className="relative min-h-screen overflow-hidden bg-[#FAF8F5] text-neutral-800 antialiased selection:bg-[#5c0f1c] selection:text-white">
+    <main className="min-h-screen bg-[#FDFBF7] text-[#2D241E] font-serif selection:bg-[#5c0f1c] selection:text-amber-100 antialiased overflow-x-hidden pt-28 pb-16">
       
-      {/* ===== BACKGROUND PREMIUM ===== */}
-      <div className="absolute inset-0 -z-30 bg-[#FAF8F5]" />
-      <div
-        className="pointer-events-none absolute inset-0 -z-20 opacity-[0.03]"
-        style={{
-          backgroundImage:
-            'linear-gradient(to right, #5c0f1c 1px, transparent 1px), linear-gradient(to bottom, #5c0f1c 1px, transparent 1px)',
-          backgroundSize: '44px 44px',
-          maskImage: 'radial-gradient(ellipse at center, transparent 8%, black 72%)',
-          WebkitMaskImage: 'radial-gradient(ellipse at center, transparent 8%, black 72%)',
-        }}
-      />
-      <div className="pointer-events-none absolute -top-48 -left-24 -z-10 h-[680px] w-[680px] rounded-full bg-gradient-to-br from-amber-200/50 via-orange-100/25 to-transparent blur-[140px]" />
-      <div className="pointer-events-none absolute top-1/3 -right-32 -z-10 h-[620px] w-[620px] rounded-full bg-gradient-to-bl from-rose-200/40 via-amber-100/20 to-transparent blur-[130px]" />
-      <div className="pointer-events-none absolute -bottom-40 left-1/4 -z-10 h-[650px] w-[650px] rounded-full bg-gradient-to-tr from-[rgba(92,15,28,0.08)] via-amber-100/25 to-transparent blur-[150px]" />
-
-      {/* ===== KONTEN ===== */}
-      <div className="relative z-10">
+      {/* ===== KONTEN UTAMA DENGAN ANIMASI FADE-IN ELEGAN ===== */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 space-y-16 animate-in fade-in slide-in-from-bottom-6 duration-700">
         
-        {/* Detail produk (layout ala referensi) */}
-        <ProductDetailClient product={product} />
+        {/* Detail Produk Client Component dengan Sentuhan Bingkai Mewah */}
+        <div className="bg-[#FAF7F0] rounded-3xl border border-amber-900/15 p-6 sm:p-10 shadow-md transition-all duration-300 hover:shadow-lg">
+          <ProductDetailClient product={product} />
+        </div>
 
-        {/* Rekomendasi produk lainnya */}
+        {/* Rekomendasi Produk Lainnya */}
         {relatedProducts.length > 0 && (
-          <section className="mx-auto max-w-7xl px-4 pb-16 sm:px-6 sm:pb-20 lg:px-12">
-            <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-              <div className="space-y-1">
-                <h2 className="text-2xl font-black tracking-tight text-gray-900 sm:text-3xl">
+          <section className="space-y-8 pt-8 border-t border-amber-900/15 font-sans animate-in fade-in duration-1000">
+            
+            <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
+              <div>
+                <span className="text-[#5c0f1c] text-xs font-bold tracking-[0.25em] uppercase">
+                  ✦ Pilihan Lainnya ✦
+                </span>
+                <h2 className="text-2xl sm:text-3xl font-serif font-bold text-[#3b0912] mt-1">
                   Rekomendasi Lainnya
                 </h2>
-                <p className="text-sm text-gray-500">
-                  Camilan khas lain yang cocok jadi pelengkap pesananmu.
-                </p>
               </div>
               <Link
                 href="/katalog"
-                className="hidden shrink-0 items-center gap-2 rounded-xl border border-[#EBE3D5] bg-white/80 px-4 py-2.5 text-xs font-bold text-gray-700 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-[#5c0f1c]/25 hover:bg-white hover:text-[#5c0f1c] hover:shadow-md sm:inline-flex sm:text-sm"
+                className="inline-flex items-center gap-2 text-xs font-bold text-[#5c0f1c] hover:text-[#3b0912] transition-colors duration-200 group"
               >
-                Lihat Semua Produk
+                <span>Lihat Semua Katalog</span>
+                <FontAwesomeIcon icon={faArrowRight} className="w-3 h-3 transition-transform group-hover:translate-x-1" />
               </Link>
             </div>
 
-            <div className="grid grid-cols-2 gap-4 sm:gap-6 lg:grid-cols-4">
-              {relatedProducts.map((item) => (
-                <div key={item.id} className="h-full">
+            <div className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+              {relatedProducts.map((item, index) => (
+                <div 
+                  key={item.id} 
+                  className="h-full transition-all duration-500 hover:-translate-y-1.5"
+                  style={{ animation: `fadeInUp 0.6s ease-out ${index * 0.1}s both` }}
+                >
                   <ProductCard product={item} />
                 </div>
               ))}
             </div>
+
           </section>
         )}
+
       </div>
     </main>
   );

@@ -1,3 +1,4 @@
+// src/components/ProductDetailClient.tsx
 'use client';
 
 import React, { useEffect, useState } from 'react';
@@ -9,16 +10,14 @@ import {
   faArrowLeft,
   faLocationDot,
   faWeightHanging,
-  faStar,
   faBoxOpen,
-  faRoute,
   faCircleCheck,
   faFire,
-  faTag,
   faMagnifyingGlassPlus,
   faXmark,
+  faShieldHeart,
+  faTruck,
 } from '@fortawesome/free-solid-svg-icons';
-import type { IconDefinition } from '@fortawesome/fontawesome-svg-core';
 import type { Product } from '@/types';
 
 interface ProductDetailClientProps {
@@ -28,17 +27,15 @@ interface ProductDetailClientProps {
 export default function ProductDetailClient({ product }: ProductDetailClientProps) {
   const [selectedImage, setSelectedImage] = useState(0);
   const [zoomOpen, setZoomOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState<'deskripsi' | 'komposisi' | 'pemesanan'>('deskripsi');
 
   const waNumber = '6289509604700';
   const instagramUrl = 'https://www.instagram.com/suryasnack.banyuwangi';
 
   const images: string[] = [
-    product.image_url ||
-      'https://images.unsplash.com/photo-1599490659213-e2b9527bd087?q=80&w=800',
+    product.image_url || 'https://images.unsplash.com/photo-1599490659213-e2b9527bd087?q=80&w=800',
     ...(product.images || []),
-  ]
-    .filter(Boolean)
-    .slice(0, 4);
+  ].filter(Boolean).slice(0, 4);
 
   const formatRupiah = (price: number | null): string =>
     price === null || price === undefined
@@ -66,280 +63,268 @@ export default function ProductDetailClient({ product }: ProductDetailClientProp
     };
   }, [zoomOpen]);
 
-  // ===== Keunggulan produk =====
   const highlights = [
-    'Dibuat fresh setiap hari dengan resep khas turun-temurun',
-    'Bahan baku pilihan dari petani dan pengrajin lokal Banyuwangi',
-    'Kemasan rapat & food grade, aman untuk pengiriman jarak jauh',
-    'Higienis, halal, dan tanpa pengawet berbahaya',
-    product.sales > 0
-      ? `Sudah dipercaya ${product.sales}+ pelanggan di berbagai kota`
-      : null,
-    product.badge ? `Termasuk produk unggulan: ${product.badge}` : null,
-  ]
-    .filter(Boolean)
-    .slice(0, 6) as string[];
-
-  // ===== Spesifikasi =====
-  const specs = [
-    product.category ? `Kategori: ${product.category}` : null,
-    product.weight ? `Berat per kemasan: ${product.weight}` : null,
-    product.stock > 0
-      ? `Stok tersedia: ${product.stock} pcs siap kirim`
-      : 'Stok sedang habis — bisa pre-order via WhatsApp',
-    product.sales > 0 ? `Total terjual: ${product.sales} pcs` : null,
-    product.ingredients ? `Komposisi: ${product.ingredients}` : null,
+    'Dibuat fresh setiap hari dengan resep khas turun-temurun sejak 1998',
+    'Bahan baku pilihan dari hasil bumi petani lokal Banyuwangi',
+    'Kemasan rapat food-grade yang menjaga kerenyahan tahan lama',
+    'Higienis, halal, dan tanpa pengawet buatan',
+    product.sales > 0 ? `Telah terjual lebih dari ${product.sales} pcs ke berbagai kota` : null,
   ].filter(Boolean) as string[];
 
-  // ===== Alur pemesanan =====
   const orderSteps: [string, string][] = [
-    ['Klik Pesan', 'Tombol WhatsApp terbuka dengan format pesanan otomatis berisi nama produk.'],
-    ['Konfirmasi', 'Admin membalas ketersediaan stok, total harga, dan pilihan ekspedisi.'],
-    ['Pembayaran', 'Transfer bank, e-wallet, atau COD untuk area Banyuwangi.'],
-    ['Pengemasan', 'Produk dikemas fresh dan rapat pada hari yang sama.'],
-    ['Pengiriman', 'Paket dikirim via ekspedisi pilihan, lengkap dengan nomor resi.'],
+    ['1. Klik Pesan WhatsApp', 'Tombol pesanan akan otomatis membawa Anda ke chat WhatsApp resmi admin kami.'],
+    ['2. Konfirmasi Detail', 'Admin akan memeriksa ketersediaan stok terbaru dan total biaya pesanan Anda.'],
+    ['3. Pembayaran Aman', 'Pilih metode pembayaran via transfer bank, e-wallet, atau COD (khusus area Banyuwangi).'],
+    ['4. Pengemasan & Pengiriman', 'Pesanan Anda dikemas dengan aman dan dikirimkan pada hari yang sama.'],
   ];
 
   return (
-    <div className="relative mx-auto w-full max-w-5xl px-4 pb-28 pt-24 sm:px-6 sm:pt-28 lg:pb-12">
+    <div className="relative mx-auto w-full max-w-6xl px-4 pb-28 pt-20 sm:px-6 lg:pb-16 font-sans">
       
-      {/* ===== TOMBOL KEMBALI ===== */}
-      <Link
-        href="/katalog"
-        className="inline-flex items-center gap-2 rounded-full border border-[#EBE3D5] bg-white/90 px-4 py-2 text-xs font-bold text-gray-600 shadow-sm backdrop-blur-sm transition-all duration-200 hover:-translate-x-0.5 hover:border-[#5c0f1c]/30 hover:text-[#5c0f1c] hover:shadow-md sm:text-sm"
-      >
-        <FontAwesomeIcon icon={faArrowLeft} className="h-3.5 w-3.5" />
-        Kembali ke Katalog
-      </Link>
-
-      {/* ===== META ROW ===== */}
-      <div className="mt-6 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-gray-600">
-        <span className="rounded-full bg-[#5c0f1c] px-3.5 py-1 text-xs font-bold text-white shadow-sm">
-          {product.badge || 'Best Seller'}
+      {/* ===== TOMBOL KEMBALI & BREADCRUMB ===== */}
+      <div className="flex items-center justify-between mb-8">
+        <Link
+          href="/katalog"
+          className="inline-flex items-center gap-2 rounded-xl border border-amber-900/15 bg-white px-4 py-2.5 text-xs font-bold text-gray-700 shadow-xs transition hover:border-[#5c0f1c]/40 hover:text-[#5c0f1c]"
+        >
+          <FontAwesomeIcon icon={faArrowLeft} className="h-3.5 w-3.5" />
+          <span>Kembali ke Katalog</span>
+        </Link>
+        <span className="text-xs uppercase tracking-widest text-gray-400 font-bold hidden sm:block">
+          ✦ Surya Snack Artisan Catalog ✦
         </span>
-
-        <span className="inline-flex items-center gap-1.5">
-          <FontAwesomeIcon icon={faLocationDot} className="h-3.5 w-3.5 text-[#5c0f1c]" />
-          Banyuwangi
-        </span>
-
-        {product.weight && (
-          <span className="inline-flex items-center gap-1.5">
-            <FontAwesomeIcon icon={faWeightHanging} className="h-3.5 w-3.5 text-[#5c0f1c]" />
-            {product.weight}
-          </span>
-        )}
-
-        {product.category && (
-          <span className="inline-flex items-center gap-1.5 text-gray-500">
-            <FontAwesomeIcon icon={faTag} className="h-3 w-3 text-[#5c0f1c]/60" />
-            {product.category}
-          </span>
-        )}
       </div>
 
-      {/* ===== JUDUL PRODUK ===== */}
-      <h1 className="mt-3 text-3xl font-extrabold tracking-tight text-gray-900 sm:text-4xl lg:text-[2.75rem] lg:leading-[1.15]">
-        {product.name}
-      </h1>
-
-      {/* ===== HERO IMAGE (UTUH + BISA DI-ZOOM) ===== */}
-      <button
-        type="button"
-        onClick={() => setZoomOpen(true)}
-        aria-label="Perbesar gambar produk"
-        className="group relative mt-6 block aspect-square w-full cursor-zoom-in overflow-hidden rounded-2xl border border-[#EBE3D5] bg-[#FAF6F0] shadow-sm sm:mt-8 sm:aspect-[4/3]"
-      >
-        <Image
-          src={images[selectedImage]}
-          alt={product.name}
-          fill
-          priority
-          quality={90}
-          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 90vw, 64rem"
-          className="object-contain p-3 transition-transform duration-700 group-hover:scale-[1.03] sm:p-6"
-        />
-
-        {/* Petunjuk zoom */}
-        <span className="absolute bottom-3 right-3 flex items-center gap-1.5 rounded-full bg-black/45 px-3 py-1.5 text-[11px] font-bold text-white backdrop-blur-md transition group-hover:bg-black/60">
-          <FontAwesomeIcon icon={faMagnifyingGlassPlus} className="h-3 w-3" />
-          Klik untuk memperbesar
-        </span>
-      </button>
-
-      {/* Thumbnail galeri (lebih besar agar jelas) */}
-      {images.length > 1 && (
-        <div className="mt-4 flex gap-3 overflow-x-auto pb-1">
-          {images.map((img, idx) => (
-            <button
-              key={idx}
-              type="button"
-              onClick={() => setSelectedImage(idx)}
-              aria-label={`Lihat gambar ${idx + 1}`}
-              className={`relative h-20 w-20 shrink-0 overflow-hidden rounded-xl border-2 transition-all sm:h-24 sm:w-24 ${
-                selectedImage === idx
-                  ? 'border-[#5c0f1c] ring-2 ring-amber-400/40'
-                  : 'border-transparent opacity-70 hover:opacity-100'
-              }`}
-            >
-              <Image
-                src={img}
-                alt={`Thumbnail ${idx + 1}`}
-                fill
-                sizes="96px"
-                className="object-cover"
-              />
-            </button>
-          ))}
-        </div>
-      )}
-
-      {/* ===== GRID 2 KOLOM ===== */}
-      <div className="mt-10 grid gap-10 lg:grid-cols-[minmax(0,1fr)_320px] lg:gap-12">
+      {/* ===== KONTEN UTAMA: SPLIT SCREEN (GALERI & INFO UTAMA) ===== */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-start bg-white rounded-3xl border border-amber-900/10 p-6 sm:p-10 shadow-sm">
         
-        {/* ---------- KOLOM KIRI ---------- */}
-        <div className="min-w-0 space-y-12">
-          
-          <section>
-            <h2 className="text-xl font-extrabold text-gray-900 sm:text-2xl">
-              Ringkasan Produk
-            </h2>
-            <p className="mt-1 text-xs font-semibold uppercase tracking-wider text-gray-400">
-              {product.category ? `Kategori ${product.category}` : 'Oleh-oleh khas Banyuwangi'}
-            </p>
-            <div className="mt-4 space-y-4 text-[15px] leading-relaxed text-gray-600 sm:text-base">
-              {(product.long_description ?? product.description ?? '')
-                .split('\n\n')
-                .filter((par) => par.trim())
-                .map((par, i) => (
-                  <p key={i}>{par}</p>
-                ))}
-            </div>
-          </section>
+        {/* KOLOM KIRI: FOTO & GALERI */}
+        <div className="lg:col-span-6 space-y-4">
+          <button
+            type="button"
+            onClick={() => setZoomOpen(true)}
+            aria-label="Perbesar gambar produk"
+            className="group relative block aspect-square w-full cursor-zoom-in overflow-hidden rounded-2xl border border-amber-900/10 bg-[#FAF7F0] shadow-inner"
+          >
+            <Image
+              src={images[selectedImage]}
+              alt={product.name}
+              fill
+              priority
+              quality={90}
+              className="object-contain p-4 transition-transform duration-500 group-hover:scale-105"
+            />
+            <span className="absolute bottom-3 right-3 flex items-center gap-1.5 rounded-full bg-black/50 px-3 py-1.5 text-[11px] font-bold text-white backdrop-blur-md transition group-hover:bg-black/70">
+              <FontAwesomeIcon icon={faMagnifyingGlassPlus} className="h-3 w-3" />
+              Perbesar Gambar
+            </span>
+          </button>
 
-          <section>
-            <SectionHeading icon={faStar} title="Keunggulan Produk" />
-            <ul className="mt-5 space-y-3.5">
-              {highlights.map((item) => (
-                <li
-                  key={item}
-                  className="flex items-start gap-3 text-sm leading-relaxed text-gray-600 sm:text-[15px]"
+          {/* Thumbnail galeri */}
+          {images.length > 1 && (
+            <div className="flex gap-3 overflow-x-auto pb-1">
+              {images.map((img, idx) => (
+                <button
+                  key={idx}
+                  type="button"
+                  onClick={() => setSelectedImage(idx)}
+                  className={`relative h-20 w-20 shrink-0 overflow-hidden rounded-xl border-2 transition ${
+                    selectedImage === idx
+                      ? 'border-[#5c0f1c] ring-2 ring-amber-400/40'
+                      : 'border-gray-200 opacity-60 hover:opacity-100'
+                  }`}
                 >
-                  <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-[#5c0f1c]/25 bg-white text-[#5c0f1c]">
-                    <FontAwesomeIcon icon={faCircleCheck} className="h-3 w-3" />
-                  </span>
-                  {item}
-                </li>
-              ))}
-            </ul>
-          </section>
-
-          <section>
-            <SectionHeading icon={faBoxOpen} title="Spesifikasi & Kemasan" />
-            <ul className="mt-5 space-y-2.5">
-              {specs.map((item) => (
-                <li
-                  key={item}
-                  className="flex items-start gap-2.5 text-sm text-gray-600 sm:text-[15px]"
-                >
-                  <span className="mt-[7px] h-1.5 w-1.5 shrink-0 rounded-full bg-[#5c0f1c]/60" />
-                  {item}
-                </li>
-              ))}
-            </ul>
-          </section>
-
-          <section>
-            <SectionHeading icon={faRoute} title="Alur Pemesanan" />
-            <div className="mt-5 space-y-3 rounded-2xl border border-[#EBE3D5] bg-[#FAF6F0]/80 p-5 sm:p-6">
-              {orderSteps.map(([label, text], i) => (
-                <p key={label} className="text-sm leading-relaxed text-gray-600">
-                  <span className="font-bold text-[#5c0f1c]">
-                    {i + 1}. {label}
-                  </span>
-                  {' — '}
-                  {text}
-                </p>
+                  <Image src={img} alt="" fill className="object-cover" />
+                </button>
               ))}
             </div>
-          </section>
+          )}
         </div>
 
-        {/* ---------- KOLOM KANAN: SIDEBAR STICKY (DESKTOP) ---------- */}
-        <aside className="h-fit space-y-4 lg:sticky lg:top-24">
-          <div className="space-y-4 rounded-2xl border border-[#EBE3D5] bg-white p-5 shadow-sm">
-            
-            <div>
-              <span className="text-[11px] font-bold uppercase tracking-widest text-gray-400">
-                Harga
+        {/* KOLOM KANAN: INFORMASI & AKSI UTAMA */}
+        <div className="lg:col-span-6 space-y-6">
+          
+          <div className="space-y-2">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="bg-[#5c0f1c] text-amber-200 text-xs font-bold uppercase tracking-widest px-3.5 py-1 rounded-full font-serif shadow-xs">
+                {product.badge || 'Khas Banyuwangi'}
               </span>
-              <div className="mt-1 text-2xl font-extrabold tracking-tight text-[#5c0f1c] sm:text-3xl">
-                {formatRupiah(product.price)}
-              </div>
-            </div>
-
-            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 border-y border-gray-100 py-3 text-xs font-semibold text-gray-600">
-              <span className="inline-flex items-center gap-1.5">
-                <FontAwesomeIcon icon={faBoxOpen} className="h-3.5 w-3.5 text-[#5c0f1c]" />
-                {product.stock > 0 ? `${product.stock} pcs siap kirim` : 'Stok habis'}
-              </span>
-              {product.sales > 0 && (
-                <span className="inline-flex items-center gap-1.5">
-                  <FontAwesomeIcon icon={faFire} className="h-3.5 w-3.5 text-[#5c0f1c]" />
-                  {product.sales} terjual
+              {product.category && (
+                <span className="bg-amber-100/70 text-[#3b0912] text-xs font-bold px-3 py-1 rounded-full">
+                  {product.category}
                 </span>
               )}
             </div>
 
+            <h1 className="text-3xl sm:text-4xl font-serif font-bold text-[#3b0912] leading-tight">
+              {product.name}
+            </h1>
+
+            <div className="text-3xl font-black text-[#5c0f1c] pt-2">
+              {formatRupiah(product.price)}
+            </div>
+          </div>
+
+          {/* Spesifikasi Ringkas */}
+          <div className="grid grid-cols-2 gap-3 py-3 border-y border-amber-900/10 text-xs font-semibold text-gray-700">
+            {product.weight && (
+              <div className="flex items-center gap-2">
+                <FontAwesomeIcon icon={faWeightHanging} className="text-[#5c0f1c]" />
+                <span>Berat: {product.weight}</span>
+              </div>
+            )}
+            <div className="flex items-center gap-2">
+              <FontAwesomeIcon icon={faBoxOpen} className="text-[#5c0f1c]" />
+              <span>{product.stock > 0 ? `Stok: ${product.stock} Tersedia` : 'Stok Pre-Order'}</span>
+            </div>
+            {product.sales > 0 && (
+              <div className="flex items-center gap-2">
+                <FontAwesomeIcon icon={faFire} className="text-[#5c0f1c]" />
+                <span>Terjual: {product.sales}+ pcs</span>
+              </div>
+            )}
+            <div className="flex items-center gap-2">
+              <FontAwesomeIcon icon={faLocationDot} className="text-[#5c0f1c]" />
+              <span>Asal: Banyuwangi</span>
+            </div>
+          </div>
+
+          {/* Tombol Aksi WhatsApp & Instagram */}
+          <div className="space-y-3 pt-2">
             <a
               href={waHref}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 py-3.5 text-sm font-bold text-white shadow-md shadow-emerald-500/20 transition-all duration-300 hover:-translate-y-0.5 hover:from-emerald-400 hover:to-emerald-500 hover:shadow-lg"
+              className="flex w-full items-center justify-center gap-3 rounded-xl bg-[#25D366] hover:bg-[#20bd5a] py-4 text-sm font-bold text-white shadow-md transition-all active:scale-95 uppercase tracking-wider"
             >
-              <FontAwesomeIcon icon={faWhatsapp} className="h-4 w-4" />
-              Pesan via WhatsApp
+              <FontAwesomeIcon icon={faWhatsapp} className="h-5 w-5" />
+              <span>Pesan Cepat via WhatsApp</span>
             </a>
 
             <a
               href={instagramUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex w-full items-center justify-center gap-2 rounded-xl border-2 border-[#5c0f1c]/20 py-3 text-sm font-bold text-[#5c0f1c] transition-all duration-300 hover:border-[#5c0f1c] hover:bg-[#5c0f1c] hover:text-white"
+              className="flex w-full items-center justify-center gap-2 rounded-xl border-2 border-[#5c0f1c]/20 hover:border-[#5c0f1c] hover:bg-[#5c0f1c] hover:text-white py-3 text-xs font-bold text-[#5c0f1c] transition-all uppercase tracking-widest"
             >
               <FontAwesomeIcon icon={faInstagram} className="h-4 w-4" />
-              Kunjungi Instagram
+              <span>Lihat Testimoni di Instagram</span>
             </a>
-
-            <p className="text-center text-[11px] leading-relaxed text-gray-400">
-              Respon cepat pada jam operasional 08.00–20.00 WIB.
-            </p>
           </div>
-        </aside>
+
+          {/* Jaminan Layanan */}
+          <div className="grid grid-cols-2 gap-3 pt-2 text-[11px] text-gray-500">
+            <div className="flex items-center gap-2 bg-[#FAF7F0] p-3 rounded-xl border border-amber-900/5">
+              <FontAwesomeIcon icon={faShieldHeart} className="text-[#5c0f1c] text-base" />
+              <span>100% Halal & Tanpa Pengawet</span>
+            </div>
+            <div className="flex items-center gap-2 bg-[#FAF7F0] p-3 rounded-xl border border-amber-900/5">
+              <FontAwesomeIcon icon={faTruck} className="text-[#5c0f1c] text-base" />
+              <span>Pengiriman Seluruh Nusantara</span>
+            </div>
+          </div>
+
+        </div>
       </div>
 
-      {/* ===== STICKY BOTTOM BAR (MOBILE & TABLET) ===== */}
-      <div className="fixed inset-x-0 bottom-0 z-40 border-t border-[#EBE3D5] bg-white/95 shadow-[0_-10px_30px_-15px_rgba(92,15,28,0.35)] backdrop-blur-md lg:hidden">
-        <div className="mx-auto flex max-w-5xl items-center justify-between gap-3 px-4 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] sm:px-6">
-          <div className="min-w-0">
-            <span className="block text-[10px] font-bold uppercase tracking-widest text-gray-400">
-              Harga
-            </span>
-            <span className="block truncate text-base font-extrabold text-[#5c0f1c] sm:text-lg">
-              {formatRupiah(product.price)}
-            </span>
-          </div>
-
-          <a
-            href={waHref}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex shrink-0 items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 px-5 py-3 text-sm font-bold text-white shadow-md shadow-emerald-500/20 transition-all duration-200 active:scale-95"
+      {/* ===== SECTION TAB INFORMASI RINCI ===== */}
+      <div className="mt-12 bg-white rounded-3xl border border-amber-900/10 p-6 sm:p-10 shadow-sm space-y-8">
+        
+        {/* Tombol Tab Navigasi */}
+        <div className="flex flex-wrap gap-2 border-b border-amber-900/10 pb-4">
+          <button
+            onClick={() => setActiveTab('deskripsi')}
+            className={`px-6 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition ${
+              activeTab === 'deskripsi'
+                ? 'bg-[#3b0912] text-amber-200 shadow-sm'
+                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+            }`}
           >
-            <FontAwesomeIcon icon={faWhatsapp} className="h-4 w-4" />
-            Pesan Sekarang
-          </a>
+            Deskripsi & Keunggulan
+          </button>
+          <button
+            onClick={() => setActiveTab('komposisi')}
+            className={`px-6 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition ${
+              activeTab === 'komposisi'
+                ? 'bg-[#3b0912] text-amber-200 shadow-sm'
+                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+            }`}
+          >
+            Komposisi & Spesifikasi
+          </button>
+          <button
+            onClick={() => setActiveTab('pemesanan')}
+            className={`px-6 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition ${
+              activeTab === 'pemesanan'
+                ? 'bg-[#3b0912] text-amber-200 shadow-sm'
+                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+            }`}
+          >
+            Alur Pemesanan
+          </button>
         </div>
+
+        {/* Isi Konten Tab dengan whitespace-pre-line */}
+        <div className="min-h-[180px]">
+          {activeTab === 'deskripsi' && (
+            <div className="space-y-6">
+              <div>
+                <h3 className="text-xl font-serif font-bold text-[#3b0912] mb-3">Tentang Produk Ini</h3>
+                {/* Deskripsi lengkap dengan dukungan format baris baru & emoji */}
+                <div className="text-gray-600 text-sm sm:text-base leading-relaxed whitespace-pre-line">
+                  {product.long_description || product.description || 'Belum ada deskripsi lengkap.'}
+                </div>
+              </div>
+
+              <div className="pt-4 border-t border-amber-900/10">
+                <h4 className="font-serif font-bold text-base text-[#3b0912] mb-3">Keunggulan Utama:</h4>
+                <ul className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {highlights.map((item, idx) => (
+                    <li key={idx} className="flex items-start gap-2.5 text-xs sm:text-sm text-gray-700">
+                      <FontAwesomeIcon icon={faCircleCheck} className="text-emerald-600 mt-0.5 shrink-0" />
+                      <span>{item}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'komposisi' && (
+            <div className="space-y-6">
+              <h3 className="text-xl font-serif font-bold text-[#3b0912]">Detail Komposisi & Kemasan</h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="bg-[#FAF7F0] p-4 rounded-2xl border border-amber-900/10 space-y-2">
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-[#5c0f1c]">Bahan Pilihan</span>
+                  <p className="text-sm text-gray-700 font-medium whitespace-pre-line">
+                    {product.ingredients || 'Menggunakan bahan-bahan alami pilihan berkualitas tinggi tanpa pengawet buatan.'}
+                  </p>
+                </div>
+                <div className="bg-[#FAF7F0] p-4 rounded-2xl border border-amber-900/10 space-y-2">
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-[#5c0f1c]">Standar Kemasan</span>
+                  <p className="text-sm text-gray-700 font-medium">
+                    Dikemas menggunakan plastik kedap udara (food grade) tebal untuk menjamin kerenyahan dan aroma khas tetap terjaga.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'pemesanan' && (
+            <div className="space-y-6">
+              <h3 className="text-xl font-serif font-bold text-[#3b0912]">Alur Pemesanan Cepat & Transparan</h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {orderSteps.map(([title, desc], idx) => (
+                  <div key={idx} className="bg-[#FAF7F0] p-4 rounded-2xl border border-amber-900/10 space-y-1.5">
+                    <h4 className="font-bold text-sm text-[#3b0912]">{title}</h4>
+                    <p className="text-xs text-gray-600 leading-relaxed">{desc}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+
       </div>
 
       {/* ===== LIGHTBOX ZOOM (FULLSCREEN) ===== */}
@@ -347,11 +332,9 @@ export default function ProductDetailClient({ product }: ProductDetailClientProp
         <div
           role="dialog"
           aria-modal="true"
-          aria-label={`Gambar ${product.name}`}
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 p-4 backdrop-blur-sm sm:p-8"
           onClick={() => setZoomOpen(false)}
         >
-          {/* Tombol close */}
           <button
             type="button"
             aria-label="Tutup gambar"
@@ -360,56 +343,18 @@ export default function ProductDetailClient({ product }: ProductDetailClientProp
             <FontAwesomeIcon icon={faXmark} className="h-4 w-4" />
           </button>
 
-          {/* Gambar fullscreen (utuh, object-contain) */}
-          <div
-            className="relative h-[70vh] w-full max-w-4xl sm:h-[80vh]"
-            onClick={(e) => e.stopPropagation()}
-          >
+          <div className="relative h-[75vh] w-full max-w-4xl" onClick={(e) => e.stopPropagation()}>
             <Image
               src={images[selectedImage]}
               alt={product.name}
               fill
               quality={90}
-              sizes="100vw"
               className="object-contain"
             />
           </div>
-
-          {/* Navigasi antar gambar di dalam lightbox */}
-          {images.length > 1 && (
-            <div
-              className="absolute bottom-5 left-1/2 flex -translate-x-1/2 gap-2"
-              onClick={(e) => e.stopPropagation()}
-            >
-              {images.map((img, idx) => (
-                <button
-                  key={idx}
-                  type="button"
-                  onClick={() => setSelectedImage(idx)}
-                  aria-label={`Gambar ${idx + 1}`}
-                  className={`relative h-14 w-14 overflow-hidden rounded-lg border-2 transition ${
-                    selectedImage === idx
-                      ? 'border-white'
-                      : 'border-transparent opacity-60 hover:opacity-100'
-                  }`}
-                >
-                  <Image src={img} alt="" fill sizes="56px" className="object-cover" />
-                </button>
-              ))}
-            </div>
-          )}
         </div>
       )}
-    </div>
-  );
-}
 
-/* ============ SUB-COMPONENT: JUDUL SECTION ============ */
-function SectionHeading({ icon, title }: { icon: IconDefinition; title: string }) {
-  return (
-    <div className="flex items-center gap-2.5">
-      <FontAwesomeIcon icon={icon} className="h-4 w-4 text-[#5c0f1c]" />
-      <h2 className="text-xl font-extrabold text-gray-900 sm:text-2xl">{title}</h2>
     </div>
   );
 }

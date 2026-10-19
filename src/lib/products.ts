@@ -1,73 +1,62 @@
-import { supabase } from './supabase';
-import type { Product } from '@/types';
+// src/lib/products.ts
+import { supabase } from "@/lib/supabase";
+import type { Product } from "@/types";
 
-export async function getFeaturedProducts(limit = 4): Promise<Product[]> {
+// Helper untuk format mata uang Rupiah
+export function formatRupiah(price: number | null | undefined): string {
+  if (price === null || price === undefined) return "Rp 0";
+  return new Intl.NumberFormat("id-ID", {
+    style: "currency",
+    currency: "IDR",
+    maximumFractionDigits: 0,
+  }).format(price);
+}
+
+// Ambil semua produk aktif
+export async function getAllProducts(): Promise<Product[]> {
   const { data, error } = await supabase
-    .from('products')
-    .select('*')
-    .eq('is_active', true)
-    .order('sales', { ascending: false })
+    .from("products")
+    .select("*")
+    .eq("is_active", true)
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    console.error("Gagal mengambil data produk:", error.message);
+    return [];
+  }
+
+  return data || [];
+}
+
+// Ambil produk unggulan untuk halaman utama (featured products)
+export async function getFeaturedProducts(limit: number = 4): Promise<Product[]> {
+  const { data, error } = await supabase
+    .from("products")
+    .select("*")
+    .eq("is_active", true)
+    .eq("is_popular", true) // Memfilter produk yang dicentang sebagai unggulan di admin
     .limit(limit);
 
   if (error) {
-    console.error('Error fetching featured products:', error.message);
+    console.error("Gagal mengambil produk unggulan:", error.message);
     return [];
   }
-  return (data ?? []) as Product[];
+
+  return data || [];
 }
 
-export async function getAllProducts(): Promise<Product[]> {
-  const { data, error } = await supabase
-    .from('products')
-    .select('*')
-    .eq('is_active', true)
-    .order('created_at', { ascending: false });
-
-  if (error) {
-    console.error('Error fetching products:', error.message);
-    return [];
-  }
-  return (data ?? []) as Product[];
-}
-
+// Ambil detail produk berdasarkan slug
 export async function getProductBySlug(slug: string): Promise<Product | null> {
   const { data, error } = await supabase
-    .from('products')
-    .select('*')
-    .eq('slug', slug)
-    .eq('is_active', true)
-    .maybeSingle();
+    .from("products")
+    .select("*")
+    .eq("slug", slug)
+    .single();
 
   if (error) {
-    console.error('Error fetching product:', error.message);
+    console.error("Gagal mengambil detail produk:", error.message);
     return null;
   }
-  return (data as Product) ?? null;
-}
 
-export async function getCategories(): Promise<string[]> {
-  const { data, error } = await supabase
-    .from('products')
-    .select('category')
-    .eq('is_active', true);
-
-  if (error) return [];
-
-  const categories = [
-    ...new Set(
-      (data as { category: string | null }[])
-        ?.map((p) => p.category)
-        .filter((c): c is string => Boolean(c)) ?? []
-    ),
-  ];
-
-  return categories;
-}
-
-// ✅ FUNGSI YANG DIPERBAIKI
-export function formatRupiah(price: number | null): string {
-  if (price === null || price === undefined) {
-    return 'Hubungi untuk harga';
-  }
-  return `Rp ${price.toLocaleString('id-ID')}`;
+  return data;
 }

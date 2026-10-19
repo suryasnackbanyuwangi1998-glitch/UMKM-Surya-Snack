@@ -1,254 +1,253 @@
+// src/app/page.tsx
 import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { motion } from 'framer-motion'; // Catatan: Untuk framer-motion di Server Component, pastikan aman atau gunakan wrapper client jika diperlukan
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faWhatsapp } from '@fortawesome/free-brands-svg-icons';
 import {
-  faSmile,
-  faUtensils,
-  faStore,
-  faHeadset,
+  faAward,
+  faSeedling,
+  faFireFlameCurved,
+  faPhoneVolume,
   faArrowRight,
+  faQuoteLeft,
 } from '@fortawesome/free-solid-svg-icons';
 import ProductCard from '@/components/ProductCard';
-import { getFeaturedProducts } from '@/lib/products';
+import { getFeaturedProducts } from '@/lib/products'; // <-- Import fungsi getFeaturedProducts
 
-export const revalidate = 60;
+// Memastikan data selalu diperbarui (tidak menggunakan cache lama)
+export const revalidate = 0;
 
 export default async function HomePage() {
+  // Mengambil data produk unggulan langsung dari database Supabase
   const products = await getFeaturedProducts(4);
 
-  const features = [
-    { icon: faSmile, title: 'Rasa Yang Autentik', desc: 'Resep asli khas daerah yang selalu diminati banyak orang.' },
-    { icon: faUtensils, title: 'Bahan Pilihan', desc: 'Menggunakan bahan baku segar dan diproses secara higienis.' },
-    { icon: faStore, title: 'Dibuat Fresh Setiap Hari', desc: 'Produksi rutin sehingga barang selalu baru dan tetap renyah.' },
-    { icon: faHeadset, title: 'Pelayanan Ramah', desc: 'Layanan pemesanan mudah dan respon cepat via Whatsapp.' },
+  const heritageFeatures = [
+    {
+      icon: faAward,
+      title: 'Resep Warisan Autentik',
+      desc: 'Diwariskan dari generasi ke generasi sejak tahun 1998, menjaga keaslian rasa tradisional Banyuwangi.',
+    },
+    {
+      icon: faSeedling,
+      title: 'Bahan Pilihan Premium',
+      desc: 'Hanya menggunakan hasil bumi pilihan tanpa pengawet buatan, diolah secara higienis setiap hari.',
+    },
+    {
+      icon: faFireFlameCurved,
+      title: 'Dipanggang & Digoreng Sempurna',
+      desc: 'Tekstur renyah di luar, empuk dan gurih di dalam dengan standar kualitas artisan.',
+    },
+    {
+      icon: faPhoneVolume,
+      title: 'Layanan Pelanggan Personal',
+      desc: 'Pemesanan transparan dan konfirmasi langsung dengan respon hangat melalui WhatsApp.',
+    },
   ];
 
   return (
-    <div className="min-h-screen bg-white text-gray-800 font-sans antialiased overflow-x-hidden">
+    <div className="min-h-screen bg-[#FDFBF7] text-[#2D241E] font-serif selection:bg-[#5c0f1c] selection:text-amber-100 antialiased overflow-x-hidden">
       
-      {/* ================= 1. HERO SECTION (FULL SCREEN MENTOK KE ATAS) ================= */}
-      <section className="relative w-full h-screen min-h-[650px] flex items-center justify-start overflow-hidden pt-20 sm:pt-24">
-        {/* Background Image - Mentok Penuh 1 Layar */}
-        <Image
-          src="/hero-background.jpg"
-          alt="Surya Snack Hero Background"
-          fill
-          priority
-          className="object-cover object-center scale-105"
-        />
-        
-        {/* Overlay Gradients */}
-        <div className="absolute inset-0 bg-gradient-to-r from-black/90 via-black/65 to-black/30" />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
+      {/* ================= 1. HERO SECTION ================= */}
+      <section className="relative w-full h-screen min-h-[700px] flex items-center justify-center text-center overflow-hidden border-b-4 border-[#5c0f1c] bg-[#1a120e]">
+        <div className="absolute inset-0">
+          <Image
+            src="/hero-background.jpg"
+            alt="Surya Snack Heritage"
+            fill
+            priority
+            className="object-cover object-center filter brightness-[0.55] contrast-110"
+          />
+        </div>
+        <div className="absolute inset-0 bg-gradient-to-t from-[#1a120e]/80 via-black/30 to-black/50" />
 
-        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 w-full pt-12 sm:pt-8">
-          <div className="max-w-2xl space-y-4 sm:space-y-6 text-white">
-            
-            {/* Badge */}
-            <span className="inline-flex items-center gap-2 bg-[#5c0f1c]/90 backdrop-blur-md text-amber-300 text-[11px] sm:text-xs font-bold px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-full tracking-wide border border-amber-400/30 shadow-lg">
-              <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
-              Khas Dari Banyuwangi, Jawa Timur
+        <div className="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 space-y-6 pt-16">
+          <div className="inline-flex items-center gap-3 px-5 py-2 rounded-full border border-amber-400/40 bg-[#3b0912]/80 backdrop-blur-md shadow-xl mx-auto">
+            <span className="text-amber-400 text-xs tracking-widest">★ EST. 1998 ★</span>
+            <span className="w-1 h-1 rounded-full bg-amber-400"></span>
+            <span className="text-amber-200 text-xs uppercase tracking-wider font-sans font-semibold">
+              Oleh-Oleh Khas Banyuwangi
             </span>
-
-            {/* Title */}
-            <h1 className="text-3xl xs:text-4xl sm:text-5xl lg:text-6xl font-black leading-[1.15] sm:leading-[1.1] tracking-tight drop-shadow-md">
-              Nikmati Cita Rasa <span className="text-amber-400">Khas</span> Berbagai Olahan Makanan
-            </h1>
-
-            {/* Description */}
-            <p className="text-gray-200 text-xs sm:text-base leading-relaxed max-w-xl font-normal">
-              Nikmati cita rasa khas gurih & renyah dari Surya Snack yang diolah dengan resep tradisional dan bahan alami berkualitas.
-            </p>
-
-            {/* CTA Buttons */}
-            <div className="flex flex-wrap gap-4 pt-2">
-              <Link 
-                href="/katalog" 
-                className="group bg-amber-400 hover:bg-amber-300 text-[#5c0f1c] font-bold px-7 py-3.5 rounded-lg shadow-xl transition-all text-sm inline-flex items-center gap-2 hover:-translate-y-0.5 active:scale-95"
-              >
-                Lihat Produk
-                <FontAwesomeIcon icon={faArrowRight} className="w-3.5 h-3.5 transition-transform group-hover:translate-x-1" />
-              </Link>
-              <a 
-                href="https://wa.me/6289509604700" 
-                target="_blank" 
-                rel="noopener noreferrer" 
-                className="bg-white/5 backdrop-blur-sm hover:bg-white/15 text-white border border-white/70 hover:border-white font-semibold px-7 py-3.5 rounded-lg transition-all text-sm hover:-translate-y-0.5 active:scale-95"
-              >
-                Pelajari Selengkapnya
-              </a>
-            </div>
-
-          </div>
-        </div>
-      </section>
-
-      {/* ================= 2. PRODUK UNGGULAN ================= */}
-      <section className="relative py-12 sm:py-20 overflow-hidden bg-white">
-        <div
-          className="absolute inset-0 pointer-events-none opacity-40"
-          style={{
-            backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='48'%3E%3Cpath d='M 48 0 L 0 0 0 48' fill='none' stroke='%23d1d5db' stroke-width='1'/%3E%3C/svg%3E")`,
-            backgroundRepeat: 'repeat',
-          }}
-        />
-        <div className="absolute top-0 left-0 right-0 h-16 sm:h-24 bg-gradient-to-b from-white to-transparent pointer-events-none" />
-        <div className="absolute bottom-0 left-0 right-0 h-16 sm:h-24 bg-gradient-to-t from-white to-transparent pointer-events-none" />
-
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 space-y-8 sm:space-y-10">
-          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 border-b border-gray-200/80 pb-4 sm:pb-6">
-            <div>
-              <span className="inline-block text-[#5c0f1c] text-xs font-bold tracking-[0.2em] uppercase mb-1 sm:mb-2">
-                Katalog Kami
-              </span>
-              <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-gray-900 tracking-tight">
-                Produk <span className="text-[#5c0f1c]">Unggulan</span> Kami
-              </h2>
-              <p className="text-gray-500 text-xs sm:text-sm mt-1 sm:mt-2">
-                Pilihan camilan terbaik favorit pelanggan kami.
-              </p>
-            </div>
-            <Link
-              href="/katalog"
-              className="group text-[#5c0f1c] hover:text-[#7a1425] font-bold text-xs sm:text-sm inline-flex items-center gap-2 transition shrink-0 self-start sm:self-auto"
-            >
-              Lihat Semua Produk
-              <FontAwesomeIcon icon={faArrowRight} className="w-3 h-3 transition-transform group-hover:translate-x-1" />
-            </Link>
           </div>
 
-          {products.length === 0 ? (
-            <div className="text-center py-12 text-gray-500 text-xs sm:text-sm bg-gray-50 rounded-2xl border border-dashed border-gray-300">
-              Belum ada produk. Silakan tambahkan di Supabase.
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
-              {products.map((product) => (
-                <ProductCard key={product.id} product={product} />
-              ))}
-            </div>
-          )}
-        </div>
-      </section>
+          <h1 className="text-4xl sm:text-6xl lg:text-7xl font-bold tracking-tight text-white leading-[1.1] font-serif drop-shadow-lg">
+            Kelezatan Tradisional <br />
+            <span className="italic font-normal text-amber-300">Kelas Artisan</span>
+          </h1>
 
-      {/* ================= 3. TENTANG KAMI ================= */}
-      <section className="relative bg-gradient-to-b from-amber-50/80 to-amber-50/30 py-12 sm:py-20 border-y border-amber-100/60 overflow-hidden">
-        <div className="absolute -top-20 -right-20 w-48 sm:w-64 h-48 sm:h-64 bg-amber-200/30 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute -bottom-20 -left-20 w-48 sm:w-64 h-48 sm:h-64 bg-rose-200/20 rounded-full blur-3xl pointer-events-none" />
-
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 grid md:grid-cols-2 gap-8 sm:gap-12 items-center">
-          <div className="space-y-4 sm:space-y-5 order-2 md:order-1">
-            <div className="w-12 sm:w-14 h-1 bg-[#5c0f1c] rounded-full" />
-            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-gray-900 leading-tight tracking-tight">
-              Menerima Pesanan, <span className="text-[#5c0f1c]">Menjaga Kualitas</span>
-            </h2>
-            <p className="text-gray-600 text-xs sm:text-base leading-relaxed">
-              Surya Snack didirikan dengan komitmen untuk menyajikan makanan olahan khas lokal yang berkualitas tinggi, dibuat dari bahan-bahan pilihan tanpa pengawet buatan sehingga aman dikonsumsi seluruh keluarga.
-            </p>
-            <p className="text-gray-600 text-xs sm:text-base leading-relaxed">
-              Setiap varian makanan dari Surya Snack diproduksi dengan higienis dan standar kualitas tinggi untuk mempertahankan cita rasa asli khas Banyuwangi yang renyah dan gurih alami.
-            </p>
-            <div className="pt-2">
-              <Link
-                href="/tentang"
-                className="group inline-flex items-center gap-2 text-[#5c0f1c] font-bold text-xs sm:text-sm hover:text-[#7a1425] transition"
-              >
-                Pelajari Lebih Lanjut
-                <FontAwesomeIcon icon={faArrowRight} className="w-3 h-3 transition-transform group-hover:translate-x-1" />
-              </Link>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-3 sm:gap-4 order-1 md:order-2">
-            <div className="relative h-56 sm:h-72 rounded-2xl overflow-hidden shadow-md group border border-amber-100">
-              <Image
-                src="https://images.unsplash.com/photo-1556910103-1c02745aae4d?q=80&w=500"
-                alt="Proses Pembuatan"
-                fill
-                sizes="(max-width: 768px) 50vw, 25vw"
-                className="object-cover group-hover:scale-105 transition-transform duration-500"
-              />
-            </div>
-            <div className="space-y-3 sm:space-y-4 flex flex-col justify-between">
-              <div className="relative h-28 sm:h-36 rounded-2xl overflow-hidden shadow-md group border border-amber-100">
-                <Image
-                  src="https://images.unsplash.com/photo-1599490659213-e2b9527bd087?q=80&w=400"
-                  alt="Produk Surya Snack"
-                  fill
-                  sizes="(max-width: 768px) 50vw, 25vw"
-                  className="object-cover group-hover:scale-105 transition-transform duration-500"
-                />
-              </div>
-              <div className="bg-gradient-to-br from-[#5c0f1c] to-[#7a1425] text-white p-4 sm:p-5 rounded-2xl flex flex-col items-center justify-center text-center space-y-1 h-24 sm:h-32 shadow-md">
-                <span className="text-2xl sm:text-3xl font-black text-amber-300">100%</span>
-                <span className="text-[9px] sm:text-[10px] tracking-widest uppercase font-bold text-white/90">
-                  Produk Lokal
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ================= 4. KENAPA MEMILIH ================= */}
-      <section className="py-12 sm:py-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 text-center space-y-8 sm:space-y-14">
-        <div className="max-w-2xl mx-auto space-y-2">
-          <h2 className="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight">
-            Kenapa Memilih Surya Snack?
-          </h2>
-          <p className="text-gray-500 text-xs sm:text-base">
-            Kami berkomitmen memberikan kualitas terbaik untuk pelanggan.
+          <p className="max-w-2xl mx-auto text-gray-200 text-sm sm:text-lg font-sans font-light leading-relaxed">
+            Menghadirkan camilan dan jajanan khas berkualitas tinggi dengan resep pusaka leluhur, diolah penuh dedikasi untuk Anda.
           </p>
-        </div>
 
-        <div className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6 lg:gap-8">
-          {features.map((feature, idx) => (
-            <div
-              key={idx}
-              className="group space-y-3 sm:space-y-4 flex flex-col items-center p-5 sm:p-6 rounded-2xl bg-gray-50/60 hover:bg-amber-50/60 border border-gray-100 hover:border-amber-200/60 transition-all duration-300"
-            >
-              <div className="w-12 sm:w-16 h-12 sm:h-16 bg-gradient-to-br from-rose-100 to-amber-100 text-[#5c0f1c] rounded-2xl flex items-center justify-center text-xl sm:text-2xl shadow-xs group-hover:shadow-md group-hover:scale-110 transition-all duration-300">
-                <FontAwesomeIcon icon={feature.icon} />
-              </div>
-              <h3 className="font-extrabold text-gray-900 text-sm sm:text-base">{feature.title}</h3>
-              <p className="text-gray-500 text-xs leading-relaxed max-w-xs">{feature.desc}</p>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* ================= 5. CTA WHATSAPP ================= */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 pb-16 sm:pb-20">
-        <div className="relative bg-gradient-to-br from-[#420913] via-[#5c0f1c] to-[#7a1425] rounded-2xl sm:rounded-3xl p-6 sm:p-10 md:p-12 text-white flex flex-col md:flex-row items-center justify-between gap-6 sm:gap-8 shadow-2xl overflow-hidden">
-          <div className="absolute -top-16 -right-16 w-40 sm:w-48 h-40 sm:h-48 bg-amber-400/10 rounded-full blur-2xl pointer-events-none" />
-          <div className="absolute -bottom-16 -left-16 w-40 sm:w-48 h-40 sm:h-48 bg-amber-400/10 rounded-full blur-2xl pointer-events-none" />
-
-          <div className="relative space-y-2 sm:space-y-3 text-center md:text-left max-w-xl">
-            <h2 className="text-xl sm:text-2xl md:text-3xl font-black leading-tight">
-              Tertarik Untuk Memesan Produk Surya Snack?
-            </h2>
-            <p className="text-gray-200 text-xs sm:text-sm md:text-base leading-relaxed">
-              Pesan sekarang melalui katalog atau langsung hubungi kami via WhatsApp.
-            </p>
-          </div>
-
-          <div className="relative flex flex-col xs:flex-row gap-3 w-full md:w-auto justify-center">
+          <div className="flex flex-wrap items-center justify-center gap-4 pt-4 font-sans">
             <Link
               href="/katalog"
-              className="bg-amber-400 hover:bg-amber-300 text-[#5c0f1c] font-extrabold px-5 sm:px-6 py-3 rounded-xl text-xs sm:text-sm text-center transition-all hover:-translate-y-0.5 active:scale-95 shadow-md"
+              className="group bg-amber-400 hover:bg-amber-300 text-[#3b0912] font-bold px-8 py-4 rounded-md shadow-2xl transition-all text-sm uppercase tracking-wider inline-flex items-center gap-2 border border-amber-300 hover:scale-105 active:scale-95"
             >
-              Lihat Semua Produk
+              Jelajahi Katalog
+              <FontAwesomeIcon icon={faArrowRight} className="w-3.5 h-3.5 transition-transform group-hover:translate-x-1" />
             </Link>
             <a
               href="https://wa.me/6289509604700"
               target="_blank"
               rel="noopener noreferrer"
-              className="bg-[#25D366] hover:bg-[#20bd5a] text-white font-extrabold px-5 sm:px-6 py-3 rounded-xl text-xs sm:text-sm flex items-center justify-center space-x-2 transition-all hover:-translate-y-0.5 active:scale-95 shadow-md"
+              className="bg-transparent hover:bg-white/10 text-white border-2 border-white/80 font-bold px-8 py-4 rounded-md transition-all text-sm uppercase tracking-wider hover:scale-105 active:scale-95"
+            >
+              Hubungi Toko
+            </a>
+          </div>
+        </div>
+        <div className="absolute bottom-0 left-0 right-0 h-3 bg-gradient-to-r from-amber-600 via-amber-400 to-amber-600 z-20" />
+      </section>
+
+      {/* ================= 2. QUOTE STATEMENT SECTION ================= */}
+      <section className="py-16 sm:py-24 bg-[#FAF7F0] border-b border-amber-900/10 text-center px-4 overflow-hidden">
+        <div className="max-w-3xl mx-auto space-y-6">
+          <FontAwesomeIcon icon={faQuoteLeft} className="text-4xl text-[#5c0f1c]/40" />
+          <h2 className="text-2xl sm:text-4xl font-serif font-bold text-[#3b0912] leading-snug">
+            “Kualitas sejati tidak pernah berkompromi pada rasa. Setiap gigitan adalah cerita tentang tradisi dan ketulusan.”
+          </h2>
+          <div className="w-16 h-0.5 bg-amber-600 mx-auto" />
+          <p className="text-xs uppercase tracking-[0.25em] text-gray-600 font-sans font-bold">
+            — Surya Snack Artisan Kitchen
+          </p>
+        </div>
+      </section>
+
+      {/* ================= 3. PRODUK UNGGULAN (FEATURED PRODUCTS) ================= */}
+      <section className="py-20 sm:py-28 max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 space-y-12">
+        <div className="text-center max-w-2xl mx-auto space-y-3">
+          <span className="text-[#5c0f1c] text-xs font-bold tracking-[0.3em] uppercase font-sans">
+            ✦ Koleksi Pilihan ✦
+          </span>
+          <h2 className="text-3xl sm:text-5xl font-serif font-bold text-[#3b0912] tracking-tight">
+            Produk Unggulan Kami
+          </h2>
+          <p className="text-gray-600 font-sans text-sm">
+            Camilan terlaris yang selalu dirindukan para penikmat kuliner tradisional.
+          </p>
+          <div className="w-24 h-px bg-amber-500/50 mx-auto pt-2" />
+        </div>
+
+        {products.length === 0 ? (
+          <div className="text-center py-16 text-gray-500 font-sans text-sm bg-white rounded-xl border border-amber-900/10 shadow-xs">
+            Belum ada produk unggulan di database. Silakan centang "Jadikan Produk Unggulan" melalui panel admin.
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            {products.map((product) => (
+              <ProductCard key={product.id} product={product} />
+            ))}
+          </div>
+        )}
+
+        <div className="text-center pt-6 font-sans">
+          <Link
+            href="/katalog"
+            className="inline-flex items-center gap-2 bg-[#3b0912] hover:bg-[#5c0f1c] text-amber-200 font-bold px-8 py-3.5 rounded-md transition text-xs uppercase tracking-widest shadow-md hover:scale-105"
+          >
+            Lihat Seluruh Katalog Produk →
+          </Link>
+        </div>
+      </section>
+
+      {/* ================= 4. HERITAGE STORY SECTION ================= */}
+      <section className="bg-[#3b0912] text-amber-100 py-20 sm:py-28 relative overflow-hidden">
+        <div
+          className="absolute inset-0 opacity-5 pointer-events-none"
+          style={{
+            backgroundImage: 'radial-gradient(#f59e0b 1px, transparent 1px)',
+            backgroundSize: '24px 24px',
+          }}
+        />
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 grid md:grid-cols-2 gap-12 items-center">
+          <div className="space-y-6">
+            <span className="text-amber-400 text-xs font-sans font-bold uppercase tracking-[0.25em]">
+              ✦ Sejarah & Dedikasi ✦
+            </span>
+            <h2 className="text-3xl sm:text-5xl font-serif font-bold text-white leading-tight">
+              Menjaga Tradisi, <br />
+              <span className="text-amber-300 italic font-normal">Memahat Cita Rasa</span>
+            </h2>
+            <p className="text-gray-300 font-sans text-sm sm:text-base leading-relaxed font-light">
+              Berawal dari dapur rumahan di Banyuwangi, Surya Snack tumbuh dengan memegang teguh prinsip keaslian resep leluhur. Kami percaya bahwa makanan terbaik dibuat bukan dari mesin, melainkan dari ketelitian dan bahan-bahan pilihan berkualitas tinggi.
+            </p>
+            <div className="grid grid-cols-2 gap-6 pt-4 border-t border-white/10 font-sans">
+              <div>
+                <h4 className="text-3xl font-serif font-bold text-amber-400">25+</h4>
+                <p className="text-xs text-gray-300 uppercase tracking-wider mt-1">Tahun Pengalaman</p>
+              </div>
+              <div>
+                <h4 className="text-3xl font-serif font-bold text-amber-400">100%</h4>
+                <p className="text-xs text-gray-300 uppercase tracking-wider mt-1">Bahan Alami Lokal</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="relative h-80 sm:h-[420px] rounded-lg overflow-hidden border-4 border-amber-400/30 shadow-2xl">
+            <Image
+              src="https://images.unsplash.com/photo-1556910103-1c02745aae4d?q=80&w=600"
+              alt="Proses Pembuatan Tradisional"
+              fill
+              className="object-cover filter sepia-[0.2]"
+            />
+          </div>
+        </div>
+      </section>
+
+      {/* ================= 5. KENAPA MEMILIH KAMI ================= */}
+      <section className="py-20 sm:py-28 max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 space-y-16">
+        <div className="text-center max-w-2xl mx-auto space-y-3">
+          <span className="text-[#5c0f1c] text-xs font-bold tracking-[0.3em] uppercase font-sans">
+            ✦ Standar Artisan ✦
+          </span>
+          <h2 className="text-3xl sm:text-4xl font-serif font-bold text-[#3b0912]">
+            Komitmen Kualitas Kami
+          </h2>
+          <div className="w-16 h-px bg-amber-600 mx-auto" />
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 font-sans">
+          {heritageFeatures.map((item, idx) => (
+            <div
+              key={idx}
+              className="bg-white p-8 rounded-lg border border-amber-900/10 shadow-sm hover:shadow-xl transition-all text-center space-y-4 group cursor-pointer"
+            >
+              <div className="w-14 h-14 mx-auto rounded-full bg-[#3b0912] text-amber-300 flex items-center justify-center text-xl shadow-md group-hover:scale-110 transition-transform">
+                <FontAwesomeIcon icon={item.icon} />
+              </div>
+              <h3 className="font-serif font-bold text-lg text-[#3b0912]">{item.title}</h3>
+              <p className="text-gray-600 text-xs leading-relaxed">{item.desc}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* ================= 6. CLASSIC BANNER CTA ================= */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 pb-20 font-sans">
+        <div className="bg-[#FAF7F0] border-2 border-dashed border-amber-900/30 rounded-2xl p-8 sm:p-14 text-center space-y-6 shadow-inner">
+          <h2 className="text-2xl sm:text-4xl font-serif font-bold text-[#3b0912]">
+            Siap Menikmati Kelezatan Khas Banyuwangi?
+          </h2>
+          <p className="text-gray-600 text-sm max-w-xl mx-auto">
+            Pesan langsung melalui katalog digital kami atau hubungi admin via WhatsApp untuk pemesanan khusus dan pengiriman ke seluruh wilayah.
+          </p>
+          <div className="flex flex-wrap items-center justify-center gap-4 pt-2">
+            <Link
+              href="/katalog"
+              className="bg-[#3b0912] hover:bg-[#5c0f1c] text-amber-200 font-bold px-8 py-3.5 rounded-md text-xs uppercase tracking-widest transition shadow-md hover:scale-105"
+            >
+              Lihat Katalog Produk
+            </Link>
+            <a
+              href="https://wa.me/6289509604700"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="bg-[#25D366] hover:bg-[#20bd5a] text-white font-bold px-8 py-3.5 rounded-md text-xs uppercase tracking-widest transition shadow-md inline-flex items-center gap-2 hover:scale-105"
             >
               <FontAwesomeIcon icon={faWhatsapp} className="w-4 h-4" />
-              <span>Pesan via WhatsApp</span>
+              <span>WhatsApp Admin</span>
             </a>
           </div>
         </div>

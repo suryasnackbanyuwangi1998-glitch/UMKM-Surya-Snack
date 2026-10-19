@@ -1,8 +1,8 @@
+// src/app/layout.tsx
 import React from 'react';
 import type { Metadata } from 'next';
 import './globals.css';
-import Navbar from '@/components/Navbar';
-import Footer from '@/components/Footer';
+import MainLayout from '@/components/MainLayout';
 
 export const metadata: Metadata = {
   title: 'Surya Snack - Camilan Khas UMKM',
@@ -16,13 +16,8 @@ export default function RootLayout({
 }): React.ReactElement {
   return (
     <html lang="id" suppressHydrationWarning>
-      <body
-        className="bg-gray-50 min-h-screen flex flex-col justify-between font-sans"
-        suppressHydrationWarning
-      >
-        <Navbar />
-        <main className="flex-grow">{children}</main>
-        <Footer />
+      <body className="bg-[#FDFBF7] min-h-screen font-sans antialiased" suppressHydrationWarning>
+        <MainLayout>{children}</MainLayout>
       </body>
     </html>
   );
