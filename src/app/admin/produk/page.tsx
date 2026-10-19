@@ -1,4 +1,3 @@
-// src/app/admin/produk/page.tsx
 "use client";
 
 import React, { useState, useEffect } from "react";
@@ -16,6 +15,8 @@ import {
   faArrowLeft,
   faEdit,
   faSearch,
+  faChevronLeft,
+  faChevronRight,
 } from "@fortawesome/free-solid-svg-icons";
 import type { Product } from "@/types";
 
@@ -36,7 +37,11 @@ export default function AdminProdukPage() {
   // State untuk Search Bar
   const [searchQuery, setSearchQuery] = useState("");
 
-  // Form State sesuai dengan interface Product
+  // State untuk Paginasi
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
+
+  // Form State
   const [name, setName] = useState("");
   const [price, setPrice] = useState("");
   const [category, setCategory] = useState("Makanan Ringan");
@@ -72,6 +77,11 @@ export default function AdminProdukPage() {
     fetchProducts();
   }, []);
 
+  // Reset ke halaman 1 saat pencarian berubah
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery]);
+
   // Handle Pilih File Gambar & Preview
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -81,7 +91,7 @@ export default function AdminProdukPage() {
     }
   };
 
-  // Helper untuk membuat slug otomatis dari nama produk
+  // Helper Slug
   const generateSlug = (text: string) => {
     return text
       .toLowerCase()
@@ -89,7 +99,7 @@ export default function AdminProdukPage() {
       .replace(/(^-|-$)+/g, "");
   };
 
-  // Buka Modal Tambah Produk Baru
+  // Buka Modal Tambah
   const handleOpenAddModal = () => {
     setIsEditMode(false);
     setCurrentId(null);
@@ -109,7 +119,7 @@ export default function AdminProdukPage() {
     setIsModalOpen(true);
   };
 
-  // Buka Modal Edit Produk
+  // Buka Modal Edit
   const handleOpenEditModal = (item: Product & { images?: string[] | string | null; is_popular?: boolean }) => {
     setIsEditMode(true);
     setCurrentId(item.id);
@@ -137,7 +147,7 @@ export default function AdminProdukPage() {
     setIsModalOpen(true);
   };
 
-  // Handle Simpan (Tambah atau Update Produk ke Supabase)
+  // Simpan Produk
   const handleSaveProduct = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitting(true);
@@ -218,7 +228,7 @@ export default function AdminProdukPage() {
     }
   };
 
-  // Handle Hapus Produk
+  // Hapus Produk
   const handleDelete = async (id: string) => {
     if (!confirm("Apakah Anda yakin ingin menghapus produk ini?")) return;
 
@@ -230,17 +240,22 @@ export default function AdminProdukPage() {
     }
   };
 
-  // Filter produk berdasarkan kata kunci pencarian (Nama atau Kategori)
+  // Filter produk berdasarkan pencarian
   const filteredProducts = products.filter((item: any) =>
     item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     (item.category && item.category.toLowerCase().includes(searchQuery.toLowerCase()))
   );
 
+  // Paginasi
+  const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const currentProducts = filteredProducts.slice(startIndex, startIndex + itemsPerPage);
+
   return (
-    <div className="p-6 md:p-10 space-y-8 bg-[#FDFBF7] min-h-full text-[#2D241E] font-serif selection:bg-[#5c0f1c] selection:text-amber-100">
+    <div className="p-6 md:p-10 space-y-8 bg-white min-h-screen text-[#2D241E] font-sans">
       
       {/* Top Header Card */}
-      <div className="bg-white border border-amber-900/15 p-6 md:p-8 rounded-3xl shadow-sm flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div className="bg-white border border-gray-200 p-6 md:p-8 rounded-3xl shadow-xs flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div className="space-y-1.5 font-sans">
           <Link
             href="/admin/dashboard"
@@ -258,7 +273,7 @@ export default function AdminProdukPage() {
         </div>
         <button
           onClick={handleOpenAddModal}
-          className="bg-[#3b0912] hover:bg-[#5c0f1c] text-amber-200 text-xs font-bold px-5 py-3.5 rounded-xl transition shadow-md flex items-center gap-2 w-fit cursor-pointer font-sans uppercase tracking-widest"
+          className="bg-[#3b0912] hover:bg-[#5c0f1c] text-amber-200 text-xs font-bold px-5 py-3.5 rounded-xl transition shadow-md flex items-center gap-2 w-fit cursor-pointer uppercase tracking-widest"
         >
           <FontAwesomeIcon icon={faPlus} className="w-3.5 h-3.5 text-amber-400" />
           <span>Tambah Produk Baru</span>
@@ -267,14 +282,14 @@ export default function AdminProdukPage() {
 
       {/* Notifikasi Sukses */}
       {successMsg && (
-        <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-2xl text-xs text-emerald-800 flex items-center gap-2 font-sans shadow-xs">
+        <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-2xl text-xs text-emerald-800 flex items-center gap-2 shadow-xs">
           <FontAwesomeIcon icon={faCheckCircle} className="text-emerald-600 text-base" />
           <span className="font-bold">{successMsg}</span>
         </div>
       )}
 
-      {/* Tabel Daftar Produk dengan Search Bar */}
-      <div className="bg-white border border-amber-900/15 rounded-3xl shadow-sm overflow-hidden font-sans">
+      {/* Tabel Daftar Produk */}
+      <div className="bg-white border border-gray-200 rounded-3xl shadow-xs overflow-hidden">
         <div className="p-6 border-b border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-4">
           <h2 className="text-sm font-bold text-[#3b0912] flex items-center gap-2 font-serif">
             <FontAwesomeIcon icon={faBoxOpen} className="text-amber-600" />
@@ -307,83 +322,126 @@ export default function AdminProdukPage() {
             <p className="text-xs">Coba gunakan kata kunci nama atau kategori yang lain.</p>
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="border-b border-gray-100 text-[10px] font-extrabold uppercase tracking-widest text-gray-400 bg-gray-50/50">
-                  <th className="p-4">Nama Produk</th>
-                  <th className="p-4">Kategori</th>
-                  <th className="p-4">Harga (Rp)</th>
-                  <th className="p-4">Stok</th>
-                  <th className="p-4 text-center">Unggulan</th>
-                  <th className="p-4 text-center">Aksi</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100 text-xs">
-                {filteredProducts.map((item: any) => {
-                  const displayImg = item.image_url || (Array.isArray(item.images) ? item.images[0] : null) || "https://images.unsplash.com/photo-1599490659213-e2b9527bd087?q=80&w=200";
-                  return (
-                    <tr key={item.id} className="hover:bg-amber-50/20 transition">
-                      <td className="p-4 flex items-center gap-3">
-                        <div className="relative w-12 h-12 rounded-xl overflow-hidden bg-gray-100 shrink-0 border border-gray-200">
-                          <img
-                            src={displayImg}
-                            alt={item.name}
-                            className="w-full h-full object-cover"
-                          />
-                        </div>
-                        <div>
-                          <div className="font-bold text-[#3b0912] text-sm">{item.name}</div>
-                          <div className="text-[11px] text-gray-400 line-clamp-1">{item.weight || "-"}</div>
-                        </div>
-                      </td>
-                      <td className="p-4">
-                        <span className="bg-amber-100/70 text-[#3b0912] px-2.5 py-1 rounded-md text-[11px] font-bold">
-                          {item.category || "Umum"}
-                        </span>
-                      </td>
-                      <td className="p-4 font-black text-[#5c0f1c]">
-                        {item.price ? `Rp ${item.price.toLocaleString("id-ID")}` : "Hubungi CS"}
-                      </td>
-                      <td className="p-4 font-bold text-gray-700">
-                        {item.stock} pcs
-                      </td>
-                      <td className="p-4 text-center">
-                        {item.is_popular ? (
-                          <span className="inline-block px-2.5 py-1 bg-emerald-100 text-emerald-800 rounded-full font-bold text-[10px]">
-                            Ya ✦
+          <>
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="border-b border-gray-100 text-[10px] font-extrabold uppercase tracking-widest text-gray-400 bg-gray-50">
+                    <th className="p-4">Nama Produk</th>
+                    <th className="p-4">Kategori</th>
+                    <th className="p-4">Harga (Rp)</th>
+                    <th className="p-4">Stok</th>
+                    <th className="p-4 text-center">Unggulan</th>
+                    <th className="p-4 text-center">Aksi</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100 text-xs">
+                  {currentProducts.map((item: any) => {
+                    const displayImg = item.image_url || (Array.isArray(item.images) ? item.images[0] : null) || "https://images.unsplash.com/photo-1599490659213-e2b9527bd087?q=80&w=200";
+                    return (
+                      <tr key={item.id} className="hover:bg-gray-50 transition">
+                        <td className="p-4 flex items-center gap-3">
+                          <div className="relative w-12 h-12 rounded-xl overflow-hidden bg-gray-100 shrink-0 border border-gray-200">
+                            <img
+                              src={displayImg}
+                              alt={item.name}
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
+                          <div>
+                            <div className="font-bold text-[#3b0912] text-sm">{item.name}</div>
+                            <div className="text-[11px] text-gray-400 line-clamp-1">{item.weight || "-"}</div>
+                          </div>
+                        </td>
+                        <td className="p-4">
+                          <span className="bg-amber-100/70 text-[#3b0912] px-2.5 py-1 rounded-md text-[11px] font-bold">
+                            {item.category || "Umum"}
                           </span>
-                        ) : (
-                          <span className="text-gray-300">-</span>
-                        )}
-                      </td>
-                      <td className="p-4 text-center space-x-2">
-                        <button
-                          onClick={() => handleOpenEditModal(item)}
-                          className="px-3 py-1.5 bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 rounded-xl transition text-xs font-bold cursor-pointer inline-flex items-center gap-1"
-                        >
-                          <FontAwesomeIcon icon={faEdit} /> Edit
-                        </button>
-                        <button
-                          onClick={() => handleDelete(item.id)}
-                          className="px-3 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-xl transition text-xs font-bold cursor-pointer inline-flex items-center gap-1"
-                        >
-                          <FontAwesomeIcon icon={faTrash} /> Hapus
-                        </button>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+                        </td>
+                        <td className="p-4 font-black text-[#5c0f1c]">
+                          {item.price ? `Rp ${item.price.toLocaleString("id-ID")}` : "Hubungi CS"}
+                        </td>
+                        <td className="p-4 font-bold text-gray-700">
+                          {item.stock} pcs
+                        </td>
+                        <td className="p-4 text-center">
+                          {item.is_popular ? (
+                            <span className="inline-block px-2.5 py-1 bg-emerald-100 text-emerald-800 rounded-full font-bold text-[10px]">
+                              Ya ✦
+                            </span>
+                          ) : (
+                            <span className="text-gray-300">-</span>
+                          )}
+                        </td>
+                        <td className="p-4 text-center space-x-2">
+                          <button
+                            onClick={() => handleOpenEditModal(item)}
+                            className="px-3 py-1.5 bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 rounded-xl transition text-xs font-bold cursor-pointer inline-flex items-center gap-1"
+                          >
+                            <FontAwesomeIcon icon={faEdit} /> Edit
+                          </button>
+                          <button
+                            onClick={() => handleDelete(item.id)}
+                            className="px-3 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-xl transition text-xs font-bold cursor-pointer inline-flex items-center gap-1"
+                          >
+                            <FontAwesomeIcon icon={faTrash} /> Hapus
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Paginasi */}
+            {totalPages > 1 && (
+              <div className="p-4 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs bg-gray-50">
+                <span className="text-gray-500">
+                  Menampilkan <strong className="text-[#3b0912]">{startIndex + 1}</strong> - <strong className="text-[#3b0912]">{Math.min(startIndex + itemsPerPage, filteredProducts.length)}</strong> dari <strong className="text-[#3b0912]">{filteredProducts.length}</strong> produk
+                </span>
+
+                <div className="flex items-center gap-1">
+                  <button
+                    onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                    disabled={currentPage === 1}
+                    className="p-2 w-8 h-8 rounded-lg border border-gray-200 flex items-center justify-center text-gray-600 hover:bg-gray-100 disabled:opacity-40 disabled:hover:bg-transparent transition cursor-pointer"
+                  >
+                    <FontAwesomeIcon icon={faChevronLeft} className="w-3 h-3" />
+                  </button>
+
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                    <button
+                      key={page}
+                      onClick={() => setCurrentPage(page)}
+                      className={`w-8 h-8 rounded-lg font-bold border transition cursor-pointer ${
+                        currentPage === page
+                          ? "bg-[#3b0912] text-amber-200 border-[#3b0912]"
+                          : "bg-white text-gray-700 border-gray-200 hover:bg-gray-100"
+                      }`}
+                    >
+                      {page}
+                    </button>
+                  ))}
+
+                  <button
+                    onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+                    disabled={currentPage === totalPages}
+                    className="p-2 w-8 h-8 rounded-lg border border-gray-200 flex items-center justify-center text-gray-600 hover:bg-gray-100 disabled:opacity-40 disabled:hover:bg-transparent transition cursor-pointer"
+                  >
+                    <FontAwesomeIcon icon={faChevronRight} className="w-3 h-3" />
+                  </button>
+                </div>
+              </div>
+            )}
+          </>
         )}
       </div>
 
-      {/* ===== MODAL TAMBAH / EDIT PRODUK ===== */}
+      {/* Modal Tambah / Edit */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-xs font-sans">
-          <div className="bg-white border border-amber-900/20 rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl relative space-y-6 max-h-[90vh] overflow-y-auto">
+          <div className="bg-white border border-gray-200 rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl relative space-y-6 max-h-[90vh] overflow-y-auto">
             
             <div className="flex items-center justify-between border-b border-gray-100 pb-4">
               <h3 className="text-lg font-serif font-bold text-[#3b0912] flex items-center gap-2">
@@ -494,7 +552,7 @@ export default function AdminProdukPage() {
                 </label>
               </div>
 
-              {/* Upload / Ganti Gambar */}
+              {/* Upload Gambar */}
               <div>
                 <label className="block text-[11px] font-bold uppercase tracking-widest text-gray-500 mb-1.5">
                   {isEditMode ? "Ganti Gambar Produk (Opsional)" : "Unggah Gambar Produk"}

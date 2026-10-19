@@ -1,4 +1,3 @@
-// src/app/admin/layout.tsx
 "use client";
 
 import React, { useState } from "react";
@@ -38,9 +37,9 @@ export default function AdminLayout({
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex font-sans">
       
-      {/* ===== SIDEBAR KIRI (Tema Merah Marun Surya Snack) ===== */}
+      {/* ===== SIDEBAR KIRI (Dibuat Sticky di Layar Dekstop) ===== */}
       <aside
-        className={`fixed inset-y-0 left-0 z-50 w-64 bg-gradient-to-b from-[#3b0912] via-[#5c0f1c] to-[#26050b] border-r border-[#7a1425]/40 flex flex-col transition-transform duration-300 md:static md:translate-x-0 shadow-2xl ${
+        className={`fixed inset-y-0 left-0 z-50 w-64 bg-gradient-to-b from-[#3b0912] via-[#5c0f1c] to-[#26050b] border-r border-[#7a1425]/40 flex flex-col transition-transform duration-300 md:sticky md:top-0 md:h-screen md:translate-x-0 shrink-0 shadow-2xl ${
           isSidebarOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
@@ -71,7 +70,7 @@ export default function AdminLayout({
         </div>
 
         {/* Menu Navigasi dengan FontAwesome Icons */}
-        <nav className="flex-1 p-4 space-y-2">
+        <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
           <p className="px-3 text-[10px] font-extrabold uppercase tracking-widest text-amber-300/70 mb-2">
             Menu Utama
           </p>
@@ -139,7 +138,7 @@ export default function AdminLayout({
         </header>
 
         {/* Area isi halaman */}
-        <main className="flex-1 bg-slate-950 overflow-y-auto">
+        <main className="flex-1 bg-slate-950">
           {children}
         </main>
       </div>

@@ -1,0 +1,58 @@
+UMKM-Surya-Snack
+├── public
+│   ├── background-login.jpg
+│   ├── background.jpeg
+│   ├── file.svg
+│   ├── foto-depan.jpeg
+│   ├── globe.svg
+│   ├── hero-background.jpg
+│   ├── logo.jpeg
+│   ├── logoSS.png
+│   ├── next.svg
+│   ├── vercel.svg
+│   └── window.svg
+├── src
+│   ├── app
+│   │   ├── admin
+│   │   │   ├── dashboard
+│   │   │   │   └── page.tsx
+│   │   │   ├── login
+│   │   │   │   └── page.tsx
+│   │   │   ├── produk
+│   │   │   │   └── page.tsx
+│   │   │   ├── layout.tsx
+│   │   │   └── page.tsx
+│   │   ├── katalog
+│   │   │   ├── [id]
+│   │   │   │   └── page.tsx
+│   │   │   └── page.tsx
+│   │   ├── kontak
+│   │   │   └── page.tsx
+│   │   ├── tentang
+│   │   │   └── page.tsx
+│   │   ├── favicon.ico
+│   │   ├── globals.css
+│   │   ├── layout.tsx
+│   │   └── page.tsx
+│   ├── components
+│   │   ├── Footer.tsx
+│   │   ├── MainLayout.tsx
+│   │   ├── Navbar.tsx
+│   │   ├── ProductCard.tsx
+│   │   └── ProductDetailClient.tsx
+│   ├── lib
+│   │   ├── products.ts
+│   │   └── supabase.ts
+│   └── types
+│       └── index.ts
+├── .env.local
+├── .gitignore
+├── eslint.config.mjs
+├── next-env.d.ts
+├── next.config.ts
+├── package-lock.json
+├── package.json
+├── postcss.config.mjs
+├── README.md
+├── tree.txt
+└── tsconfig.json
