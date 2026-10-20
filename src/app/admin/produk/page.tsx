@@ -17,6 +17,8 @@ import {
   faSearch,
   faChevronLeft,
   faChevronRight,
+  faBoxArchive,
+  faStar,
 } from "@fortawesome/free-solid-svg-icons";
 import type { Product } from "@/types";
 
@@ -51,6 +53,8 @@ export default function AdminProdukPage() {
   const [description, setDescription] = useState("");
   const [longDescription, setLongDescription] = useState("");
   const [ingredients, setIngredients] = useState("");
+  const [packagingStandard, setPackagingStandard] = useState("Plastik Standing Pouch Foil Kedap Udara");
+  const [keyFeatures, setKeyFeatures] = useState("Tanpa Bahan Pengawet, Resep Warisan Leluhur, Gurih & Renyah");
   const [isPopular, setIsPopular] = useState(false);
   
   const [imageFile, setImageFile] = useState<File | null>(null);
@@ -112,6 +116,8 @@ export default function AdminProdukPage() {
     setDescription("");
     setLongDescription("");
     setIngredients("");
+    setPackagingStandard("Plastik Standing Pouch Foil Kedap Udara");
+    setKeyFeatures("Tanpa Pengawet, Resep Asli Banyuwangi, Renyah & Gurih");
     setIsPopular(false);
     setImageFile(null);
     setImagePreview(null);
@@ -120,7 +126,7 @@ export default function AdminProdukPage() {
   };
 
   // Buka Modal Edit
-  const handleOpenEditModal = (item: Product & { images?: string[] | string | null; is_popular?: boolean }) => {
+  const handleOpenEditModal = (item: any) => {
     setIsEditMode(true);
     setCurrentId(item.id);
     setName(item.name || "");
@@ -132,13 +138,19 @@ export default function AdminProdukPage() {
     setDescription(item.description || "");
     setLongDescription(item.long_description || "");
     setIngredients(item.ingredients || "");
+    setPackagingStandard(item.packaging_standard || "Plastik Standing Pouch Foil Kedap Udara");
+    setKeyFeatures(
+      Array.isArray(item.key_features)
+        ? item.key_features.join(", ")
+        : item.key_features || ""
+    );
     setIsPopular(item.is_popular || false);
     setImageFile(null);
 
     let activeImg = item.image_url;
     if (!activeImg && Array.isArray(item.images) && item.images.length > 0) {
       activeImg = item.images[0];
-    } else if (!activeImg && typeof item.images === 'string') {
+    } else if (!activeImg && typeof item.images === "string") {
       activeImg = item.images;
     }
 
@@ -177,6 +189,12 @@ export default function AdminProdukPage() {
         }
       }
 
+      // Format Keunggulan Utama (Pisahkan koma menjadi array string)
+      const formattedKeyFeatures = keyFeatures
+        .split(",")
+        .map((item) => item.trim())
+        .filter((item) => item.length > 0);
+
       const productPayload = {
         name,
         slug: generateSlug(name),
@@ -188,6 +206,8 @@ export default function AdminProdukPage() {
         description,
         long_description: longDescription,
         ingredients,
+        packaging_standard: packagingStandard,
+        key_features: formattedKeyFeatures,
         image_url: finalImageUrl,
         images: finalImageUrl ? [finalImageUrl] : [],
         is_active: true,
@@ -268,7 +288,7 @@ export default function AdminProdukPage() {
             Manajemen Produk
           </h1>
           <p className="text-xs text-gray-500">
-            Kelola daftar produk, harga, dan ketersediaan stok Surya Snack secara real-time.
+            Kelola daftar produk, standar kemasan, keunggulan utama, dan ketersediaan stok Surya Snack.
           </p>
         </div>
         <button
@@ -467,7 +487,7 @@ export default function AdminProdukPage() {
                   required
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  placeholder="Contoh: Corndog Mozzarella Krispi"
+                  placeholder="Contoh: Bagiak Susu Super Banyuwangi"
                   className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-800 focus:outline-none focus:border-[#5c0f1c] transition"
                 />
               </div>
@@ -481,7 +501,7 @@ export default function AdminProdukPage() {
                     type="number"
                     value={price}
                     onChange={(e) => setPrice(e.target.value)}
-                    placeholder="Contoh: 15000"
+                    placeholder="Contoh: 25000"
                     className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-800 focus:outline-none focus:border-[#5c0f1c] transition"
                   />
                 </div>
@@ -493,7 +513,7 @@ export default function AdminProdukPage() {
                     type="text"
                     value={category}
                     onChange={(e) => setCategory(e.target.value)}
-                    placeholder="Contoh: Kue Kering"
+                    placeholder="Contoh: Bagiak Banyuwangi"
                     className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-800 focus:outline-none focus:border-[#5c0f1c] transition"
                   />
                 </div>
@@ -536,6 +556,42 @@ export default function AdminProdukPage() {
                     className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-3 text-sm text-gray-800 focus:outline-none focus:border-[#5c0f1c] transition"
                   />
                 </div>
+              </div>
+
+              {/* FITUR BARU: STANDAR KEMASAN */}
+              <div>
+                <label className="block text-[11px] font-bold uppercase tracking-widest text-gray-500 mb-1.5 flex items-center gap-1.5">
+                  <FontAwesomeIcon icon={faBoxArchive} className="text-amber-600" />
+                  <span>Standar Kemasan</span>
+                </label>
+                <input
+                  type="text"
+                  value={packagingStandard}
+                  onChange={(e) => setPackagingStandard(e.target.value)}
+                  placeholder="Contoh: Standing Pouch Ziplock + Sealed Aluminium Foil"
+                  className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-800 focus:outline-none focus:border-[#5c0f1c] transition"
+                />
+                <p className="text-[10px] text-gray-400 mt-1">
+                  Info jenis kemasan produk agar menarik minat pembeli (contoh: Pouch Foil Kedap Udara).
+                </p>
+              </div>
+
+              {/* FITUR BARU: KEUNGGULAN UTAMA */}
+              <div>
+                <label className="block text-[11px] font-bold uppercase tracking-widest text-gray-500 mb-1.5 flex items-center gap-1.5">
+                  <FontAwesomeIcon icon={faStar} className="text-amber-600" />
+                  <span>Keunggulan Utama (Pisahkan dengan koma)</span>
+                </label>
+                <input
+                  type="text"
+                  value={keyFeatures}
+                  onChange={(e) => setKeyFeatures(e.target.value)}
+                  placeholder="Contoh: Tanpa Pengawet, 100% Bahan Alami, Resep Leluhur"
+                  className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-800 focus:outline-none focus:border-[#5c0f1c] transition"
+                />
+                <p className="text-[10px] text-gray-400 mt-1">
+                  Gunakan tanda koma (`,`) untuk memisahkan setiap poin keunggulan utama produk.
+                </p>
               </div>
 
               {/* Checkbox Produk Unggulan */}
@@ -592,7 +648,7 @@ export default function AdminProdukPage() {
                   type="text"
                   value={ingredients}
                   onChange={(e) => setIngredients(e.target.value)}
-                  placeholder="Contoh: Tepung, Gula, Garam, Rempah pilihan"
+                  placeholder="Contoh: Tepung tapioka, Susu murni, Gula, Margarin"
                   className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-800 focus:outline-none focus:border-[#5c0f1c] transition"
                 />
               </div>

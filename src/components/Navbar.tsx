@@ -1,4 +1,3 @@
-// src/components/Navbar.tsx
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -6,7 +5,12 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faBars, faXmark, faChevronRight, faStore } from '@fortawesome/free-solid-svg-icons';
+import {
+  faBars,
+  faXmark,
+  faChevronRight,
+  faStore,
+} from '@fortawesome/free-solid-svg-icons';
 import { faWhatsapp, faInstagram } from '@fortawesome/free-brands-svg-icons';
 
 export default function Navbar(): React.ReactElement {
@@ -14,10 +18,8 @@ export default function Navbar(): React.ReactElement {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const pathname = usePathname();
 
-  // Cek apakah sedang di halaman beranda
   const isHomePage = pathname === '/';
 
-  // Perbaikan fungsi isActive agar lebih presisi
   const isActive = (path: string) => {
     if (path === '/') {
       return pathname === '/';
@@ -33,7 +35,6 @@ export default function Navbar(): React.ReactElement {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Tutup menu otomatis saat berpindah halaman
   useEffect(() => {
     setIsMobileMenuOpen(false);
   }, [pathname]);
@@ -56,7 +57,7 @@ export default function Navbar(): React.ReactElement {
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 flex items-center justify-between">
           
-          {/* ===== KIRI: Brand Logo ===== */}
+          {/* Logo Brand */}
           <Link href="/" className="group flex items-center gap-3 hover:opacity-95 transition">
             <div className="relative shrink-0">
               <Image
@@ -90,7 +91,7 @@ export default function Navbar(): React.ReactElement {
             </div>
           </Link>
 
-          {/* ===== KANAN (DESKTOP): Navigasi Menu ===== */}
+          {/* Navigasi Desktop */}
           <nav className="hidden md:flex items-center gap-6 font-sans">
             {menuItems.map((item) => {
               const active = isActive(item.href);
@@ -117,12 +118,12 @@ export default function Navbar(): React.ReactElement {
             })}
           </nav>
 
-          {/* ===== KANAN (MOBILE): Tombol Hamburger Menu ===== */}
-          <div className="md:hidden flex items-center">
+          {/* Header Mobile Button */}
+          <div className="md:hidden flex items-center gap-2">
             <button
               onClick={() => setIsMobileMenuOpen(true)}
               aria-label="Buka Menu"
-              className={`w-10 h-10 rounded-xl backdrop-blur-sm border flex items-center justify-center shadow-xs active:scale-95 transition ${
+              className={`w-10 h-10 rounded-xl backdrop-blur-sm border flex items-center justify-center shadow-xs active:scale-95 transition cursor-pointer ${
                 isScrolled || !isHomePage
                   ? 'bg-white/90 border-gray-200 text-gray-900'
                   : 'bg-black/30 border-white/30 text-white'
@@ -135,7 +136,7 @@ export default function Navbar(): React.ReactElement {
         </div>
       </header>
 
-      {/* ==================== MOBILE DRAWER OVERLAY ==================== */}
+      {/* Mobile Drawer Overlay */}
       {isMobileMenuOpen && (
         <div
           onClick={() => setIsMobileMenuOpen(false)}
@@ -143,13 +144,12 @@ export default function Navbar(): React.ReactElement {
         />
       )}
 
-      {/* ==================== MOBILE DRAWER MENU ==================== */}
+      {/* Mobile Drawer Menu */}
       <aside
         className={`fixed top-0 right-0 bottom-0 w-[85%] max-w-xs z-50 transform transition-transform duration-300 ease-out md:hidden flex flex-col bg-[#FDFBF7] shadow-2xl ${
           isMobileMenuOpen ? 'translate-x-0' : 'translate-x-full'
         }`}
       >
-        {/* Header Drawer */}
         <div className="relative bg-[#3b0912] p-6 text-white shrink-0 overflow-hidden shadow-md flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Image
@@ -172,13 +172,12 @@ export default function Navbar(): React.ReactElement {
           <button
             onClick={() => setIsMobileMenuOpen(false)}
             aria-label="Tutup Menu"
-            className="w-9 h-9 rounded-xl bg-white/15 text-gray-200 hover:text-white flex items-center justify-center transition active:scale-95"
+            className="w-9 h-9 rounded-xl bg-white/15 text-gray-200 hover:text-white flex items-center justify-center transition active:scale-95 cursor-pointer"
           >
             <FontAwesomeIcon icon={faXmark} className="w-4 h-4" />
           </button>
         </div>
 
-        {/* List Menu Navigasi Mobile */}
         <div className="flex-grow overflow-y-auto p-5 space-y-6 font-sans">
           <div>
             <p className="px-3 pb-2 text-[10px] font-extrabold uppercase tracking-widest text-gray-400">
@@ -198,14 +197,16 @@ export default function Navbar(): React.ReactElement {
                     }`}
                   >
                     <span className="text-sm font-extrabold">{item.label}</span>
-                    <FontAwesomeIcon icon={faChevronRight} className={`w-3 h-3 ${active ? 'text-amber-300' : 'text-gray-400'}`} />
+                    <FontAwesomeIcon
+                      icon={faChevronRight}
+                      className={`w-3 h-3 ${active ? 'text-amber-300' : 'text-gray-400'}`}
+                    />
                   </Link>
                 );
               })}
             </nav>
           </div>
 
-          {/* Banner Kontak Cepat di Drawer */}
           <div className="bg-amber-50 border border-amber-200/80 rounded-2xl p-4 space-y-3 shadow-xs">
             <div className="flex items-center gap-2 text-[#5c0f1c] font-bold text-xs">
               <FontAwesomeIcon icon={faStore} className="w-3.5 h-3.5 text-amber-600" />
@@ -237,7 +238,6 @@ export default function Navbar(): React.ReactElement {
           </div>
         </div>
 
-        {/* Footer Drawer */}
         <div className="bg-gray-100 border-t border-gray-200 px-5 py-3.5 text-center font-sans">
           <p className="text-[10px] font-bold text-gray-500">
             © 2026 Surya Snack Banyuwangi

@@ -26,6 +26,8 @@ UMKM-Surya-Snack
 │   │   │   ├── [id]
 │   │   │   │   └── page.tsx
 │   │   │   └── page.tsx
+│   │   ├── keranjang
+│   │   │   └── page.tsx
 │   │   ├── kontak
 │   │   │   └── page.tsx
 │   │   ├── tentang
@@ -40,6 +42,8 @@ UMKM-Surya-Snack
 │   │   ├── Navbar.tsx
 │   │   ├── ProductCard.tsx
 │   │   └── ProductDetailClient.tsx
+│   ├── context
+│   │   └── CartContext.tsx
 │   ├── lib
 │   │   ├── products.ts
 │   │   └── supabase.ts
