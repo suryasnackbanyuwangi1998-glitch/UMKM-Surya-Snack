@@ -100,8 +100,18 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
 export function useCart() {
   const context = useContext(CartContext);
+  // PERBAIKAN: Jika context belum ada (belum terbungkus provider di rute tertentu), 
+  // kembalikan nilai default aman agar aplikasi tidak crash / error.
   if (!context) {
-    throw new Error('useCart harus digunakan di dalam CartProvider');
+    return {
+      cart: [],
+      addToCart: () => {},
+      removeFromCart: () => {},
+      updateQuantity: () => {},
+      clearCart: () => {},
+      totalItems: 0,
+      totalPrice: 0,
+    };
   }
   return context;
 }

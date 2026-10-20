@@ -23,6 +23,7 @@ import {
   faCartPlus,
   faArrowRight,
 } from '@fortawesome/free-solid-svg-icons';
+import { useCart } from '@/context/CartProvider';
 import type { Product } from '@/types';
 
 interface ProductDetailClientProps {
@@ -31,13 +32,16 @@ interface ProductDetailClientProps {
 
 export default function ProductDetailClient({ product }: ProductDetailClientProps) {
   const router = useRouter();
+  const { addToCart, totalItems } = useCart();
+
   const [selectedImage, setSelectedImage] = useState(0);
   const [zoomOpen, setZoomOpen] = useState(false);
-  const [showModal, setShowModal] = useState(false);
   const [activeTab, setActiveTab] = useState<'deskripsi' | 'komposisi' | 'pemesanan'>('deskripsi');
   
-  // Kuantitas awal dimulai dari 0
-  const [quantity, setQuantity] = useState(0);
+  // Kuantitas awal dimulai dari 1
+  const [quantity, setQuantity] = useState(1);
+  // State untuk menampilkan bar bawah setelah produk ditambahkan
+  const [showBottomBar, setShowBottomBar] = useState(false);
 
   const images: string[] = [
     product.image_url || 'https://images.unsplash.com/photo-1599490659213-e2b9527bd087?q=80&w=800',
@@ -50,10 +54,8 @@ export default function ProductDetailClient({ product }: ProductDetailClientProp
       : `Rp ${price.toLocaleString('id-ID')}`;
 
   const handleDecrement = () => {
-    if (quantity > 0) {
-      const newQty = quantity - 1;
-      setQuantity(newQty);
-      if (newQty === 0) setShowModal(false);
+    if (quantity > 1) {
+      setQuantity((prev) => prev - 1);
     }
   };
 
@@ -63,17 +65,12 @@ export default function ProductDetailClient({ product }: ProductDetailClientProp
 
   const totalPrice = (product.price || 0) * quantity;
 
-  // Klik "Tambah Pesanan" memicu Pop-up Modal
-  const handleOpenModal = () => {
+  // Klik tombol Tambah Pesanan / Keranjang
+  const handleAddToCart = () => {
     if (quantity > 0) {
-      setShowModal(true);
+      addToCart(product, quantity);
+      setShowBottomBar(true); // Munculkan floating bottom bar di bawah
     }
-  };
-
-  // Klik "Pesan Sekarang" di dalam Pop-up mengarahkan ke Halaman Konfirmasi Checkout
-  const handleGoToCheckout = () => {
-    if (quantity <= 0) return;
-    router.push(`/checkout?product_id=${product.id}&qty=${quantity}`);
   };
 
   useEffect(() => {
@@ -107,14 +104,14 @@ export default function ProductDetailClient({ product }: ProductDetailClientProp
   const highlights = dynamicKeyFeatures.length > 0 ? dynamicKeyFeatures : defaultHighlights;
 
   const orderSteps: [string, string][] = [
-    ['1. Tentukan Kuantitas', 'Pilih jumlah pesanan dimulai dari angka yang Anda butuhkan lalu klik Tambah Pesanan.'],
-    ['2. Konfirmasi di Pop-up', 'Periksa ringkasan singkat item lalu klik Pesan Sekarang untuk masuk ke halaman detail transaksi.'],
-    ['3. Lengkapi Pengiriman', 'Isi lokasi pengiriman dan catatan opsional pada halaman konfirmasi pesanan.'],
-    ['4. Kirim via WhatsApp', 'Sistem akan merapikan format pesan belanja Anda langsung ke WhatsApp resmi admin.'],
+    ['1. Tentukan Kuantitas', 'Pilih jumlah pesanan sesuai kebutuhan lalu klik Tambahkan ke Keranjang.'],
+    ['2. Floating Bar Bawah', 'Bilah informasi akan muncul di bawah layar menampilkan total item dan harga.'],
+    ['3. Tambah Produk Lain', 'Anda bisa kembali ke katalog untuk memilih camilan lezat lainnya.'],
+    ['4. Kirim ke WhatsApp', 'Buka halaman keranjang untuk melihat rincian nota dan kirim pesanan ke WhatsApp admin.'],
   ];
 
   return (
-    <div className="relative mx-auto w-full max-w-6xl px-4 pb-28 pt-20 sm:px-6 lg:pb-16 font-sans">
+    <div className="relative mx-auto w-full max-w-6xl px-4 pb-36 pt-20 sm:px-6 lg:pb-24 font-sans">
       
       {/* ===== TOMBOL KEMBALI & BREADCRUMB ===== */}
       <div className="flex items-center justify-between mb-8">
@@ -221,7 +218,7 @@ export default function ProductDetailClient({ product }: ProductDetailClientProp
             </div>
           </div>
 
-          {/* AKSI: - + KUANTITAS DARI 0 & TOMBOL TAMBAH PESANAN */}
+          {/* AKSI: KUANTITAS & TOMBOL TAMBAH KE KERANJANG */}
           <div className="space-y-4 pt-2">
             
             <div className="flex items-center justify-between bg-amber-50/60 p-3.5 rounded-2xl border border-amber-200/70">
@@ -231,7 +228,7 @@ export default function ProductDetailClient({ product }: ProductDetailClientProp
                 <button
                   type="button"
                   onClick={handleDecrement}
-                  disabled={quantity <= 0}
+                  disabled={quantity <= 1}
                   className="w-7 h-7 rounded-lg bg-gray-100 hover:bg-amber-100 text-gray-800 flex items-center justify-center font-bold disabled:opacity-40 disabled:cursor-not-allowed transition cursor-pointer"
                   title="Kurangi Kuantitas"
                 >
@@ -261,19 +258,14 @@ export default function ProductDetailClient({ product }: ProductDetailClientProp
                 </span>
               </div>
 
-              {/* Tombol TAMBAH PESANAN */}
+              {/* Tombol TAMBAHKAN KE KERANJANG */}
               <button
                 type="button"
-                onClick={handleOpenModal}
-                disabled={quantity <= 0}
-                className={`flex w-full items-center justify-center gap-2.5 rounded-2xl py-4 text-xs font-extrabold text-white shadow-md transition-all uppercase tracking-wider ${
-                  quantity > 0
-                    ? 'bg-[#5c0f1c] hover:bg-[#3b0912] cursor-pointer active:scale-95'
-                    : 'bg-gray-300 cursor-not-allowed'
-                }`}
+                onClick={handleAddToCart}
+                className="flex w-full items-center justify-center gap-2.5 rounded-2xl py-4 text-xs font-extrabold text-white bg-[#5c0f1c] hover:bg-[#3b0912] shadow-md transition-all uppercase tracking-wider cursor-pointer active:scale-95"
               >
                 <FontAwesomeIcon icon={faCartPlus} className="h-4 w-4 text-amber-300" />
-                <span>TAMBAH PESANAN</span>
+                <span>TAMBAHKAN KE KERANJANG</span>
               </button>
             </div>
 
@@ -293,66 +285,31 @@ export default function ProductDetailClient({ product }: ProductDetailClientProp
         </div>
       </div>
 
-      {/* ===== POP-UP MODAL KONFIRMASI ITEM ===== */}
-      {showModal && quantity > 0 && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl border border-amber-100 relative animate-in fade-in zoom-in-95 duration-200 font-sans space-y-5">
+      {/* ===== FLOATING BOTTOM BAR (WARNA TEMA SURYA SNACK: MARUN GELAP & EMAS) ===== */}
+      {showBottomBar && (
+        <div className="fixed bottom-6 left-0 right-0 z-50 px-4 flex justify-center animate-in slide-in-from-bottom duration-300">
+          <div className="bg-[#3b0912] text-amber-100 rounded-full p-2.5 sm:px-6 sm:py-3.5 shadow-2xl flex items-center justify-between gap-4 max-w-lg w-full border border-amber-900/30">
             
-            <button
-              onClick={() => setShowModal(false)}
-              className="absolute top-4 right-4 w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-600 flex items-center justify-center transition cursor-pointer"
-            >
-              <FontAwesomeIcon icon={faXmark} className="w-4 h-4" />
-            </button>
-
-            <div>
-              <span className="text-[10px] font-bold uppercase tracking-wider text-amber-800 bg-amber-100 px-2.5 py-1 rounded-md">
-                Rincian Pesanan
+            {/* Info Item & Total Harga di Sebelah Kiri */}
+            <div className="pl-3">
+              <span className="text-[10px] font-bold uppercase tracking-widest text-amber-300/80 block font-sans">
+                {totalItems} ITEM DI KERANJANG
               </span>
-              <h3 className="font-serif font-bold text-lg text-[#3b0912] mt-2">
-                Item Ditambahkan
-              </h3>
-            </div>
-
-            <div className="flex items-center gap-3.5 bg-gray-50 p-3.5 rounded-2xl border border-gray-100">
-              <div className="relative w-16 h-16 rounded-xl overflow-hidden bg-white border border-gray-200 shrink-0">
-                <Image
-                  src={images[0]}
-                  alt={product.name}
-                  fill
-                  unoptimized
-                  className="object-cover"
-                />
-              </div>
-              <div className="flex-1 min-w-0">
-                <h4 className="font-bold text-gray-900 text-sm truncate">
-                  {product.name}
-                </h4>
-                <p className="text-xs text-[#5c0f1c] font-bold mt-0.5">
-                  {formatRupiah(product.price)} / pcs
-                </p>
-                <p className="text-xs font-extrabold text-gray-700 mt-1">
-                  Kuantitas: <span className="text-[#5c0f1c]">{quantity} pcs</span>
-                </p>
-              </div>
-            </div>
-
-            <div className="flex justify-between items-center pt-2 border-t border-gray-100">
-              <span className="text-xs font-bold text-gray-500">Total Estimasi</span>
-              <span className="font-serif font-black text-base text-[#5c0f1c]">
+              <span className="font-serif font-black text-base sm:text-lg text-amber-200">
                 {formatRupiah(totalPrice)}
               </span>
             </div>
 
-            {/* Tombol PESAN SEKARANG mengarahkan ke /checkout */}
+            {/* Tombol Aksi "ORDER SEKARANG" di Sebelah Kanan (Warna Emas/Amber Khas Surya Snack) */}
             <button
               type="button"
-              onClick={handleGoToCheckout}
-              className="w-full bg-[#25D366] hover:bg-[#20bd5a] text-white font-extrabold py-3.5 px-4 rounded-2xl shadow-md transition-all flex items-center justify-center gap-2 text-xs uppercase tracking-wider cursor-pointer active:scale-95"
+              onClick={() => router.push('/keranjang')}
+              className="bg-amber-400 hover:bg-amber-300 text-[#3b0912] font-extrabold text-xs sm:text-sm px-6 py-3 rounded-full uppercase tracking-wider shadow-md transition-all flex items-center gap-2 cursor-pointer active:scale-95 shrink-0 font-sans"
             >
-              <span>PESAN SEKARANG</span>
-              <FontAwesomeIcon icon={faArrowRight} className="text-sm" />
+              <span>ORDER SEKARANG</span>
+              <FontAwesomeIcon icon={faArrowRight} />
             </button>
+
           </div>
         </div>
       )}
