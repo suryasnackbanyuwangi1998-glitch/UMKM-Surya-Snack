@@ -54,7 +54,12 @@ export default function AdminProdukPage() {
   const [longDescription, setLongDescription] = useState("");
   const [ingredients, setIngredients] = useState("");
   const [packagingStandard, setPackagingStandard] = useState("Plastik Standing Pouch Foil Kedap Udara");
-  const [keyFeatures, setKeyFeatures] = useState("Tanpa Bahan Pengawet, Resep Warisan Leluhur, Gurih & Renyah");
+  
+  // Diubah menjadi teks panjang ke bawah (menggunakan baris baru / newline)
+  const [keyFeatures, setKeyFeatures] = useState(
+    "Tanpa Bahan Pengawet.\nResep Warisan Leluhur.\nGurih & Renyah."
+  );
+  
   const [isPopular, setIsPopular] = useState(false);
   
   const [imageFile, setImageFile] = useState<File | null>(null);
@@ -117,7 +122,7 @@ export default function AdminProdukPage() {
     setLongDescription("");
     setIngredients("");
     setPackagingStandard("Plastik Standing Pouch Foil Kedap Udara");
-    setKeyFeatures("Tanpa Pengawet, Resep Asli Banyuwangi, Renyah & Gurih");
+    setKeyFeatures("Tanpa Pengawet.\nResep Asli Banyuwangi.\nRenyah & Gurih.");
     setIsPopular(false);
     setImageFile(null);
     setImagePreview(null);
@@ -139,11 +144,16 @@ export default function AdminProdukPage() {
     setLongDescription(item.long_description || "");
     setIngredients(item.ingredients || "");
     setPackagingStandard(item.packaging_standard || "Plastik Standing Pouch Foil Kedap Udara");
-    setKeyFeatures(
-      Array.isArray(item.key_features)
-        ? item.key_features.join(", ")
-        : item.key_features || ""
-    );
+    
+    // Jika di database berupa array, gabungkan dengan baris baru (\n) agar tampil rapi ke bawah
+    let formattedFeatures = item.key_features;
+    if (Array.isArray(formattedFeatures)) {
+      formattedFeatures = formattedFeatures.join("\n");
+    } else if (!formattedFeatures) {
+      formattedFeatures = "";
+    }
+    setKeyFeatures(formattedFeatures);
+
     setIsPopular(item.is_popular || false);
     setImageFile(null);
 
@@ -189,11 +199,13 @@ export default function AdminProdukPage() {
         }
       }
 
-      // Format Keunggulan Utama (Pisahkan koma menjadi array string)
+      // Format Keunggulan Utama (Memisahkan berdasarkan Baris Baru \n atau Tanda Titik .)
       const formattedKeyFeatures = keyFeatures
-        .split(",")
+        .split(/\r?\n/) // Pisahkan berdasarkan enter/baris baru
+        .flatMap((line) => line.split(".")) // Opsional: dukung juga pemisahan titik jika ada
         .map((item) => item.trim())
-        .filter((item) => item.length > 0);
+        .filter((item) => item.length > 0)
+        .map((item) => (item.endsWith(".") ? item : item + ".")); // Pastikan diakhiri titik
 
       const productPayload = {
         name,
@@ -576,21 +588,24 @@ export default function AdminProdukPage() {
                 </p>
               </div>
 
-              {/* FITUR BARU: KEUNGGULAN UTAMA */}
+              {/* PERUBAHAN: KEUNGGULAN UTAMA MENGGUNAKAN TEXTAREA (BISA KETIK KE BAWAH) */}
               <div>
                 <label className="block text-[11px] font-bold uppercase tracking-widest text-gray-500 mb-1.5 flex items-center gap-1.5">
                   <FontAwesomeIcon icon={faStar} className="text-amber-600" />
-                  <span>Keunggulan Utama (Pisahkan dengan koma)</span>
+                  <span>Keunggulan Utama (Tekan Enter untuk baris baru ke bawah)</span>
                 </label>
-                <input
-                  type="text"
+                <textarea
+                  rows={4}
                   value={keyFeatures}
                   onChange={(e) => setKeyFeatures(e.target.value)}
-                  placeholder="Contoh: Tanpa Pengawet, 100% Bahan Alami, Resep Leluhur"
-                  className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-800 focus:outline-none focus:border-[#5c0f1c] transition"
+                  placeholder="Contoh:
+Tanpa Bahan Pengawet.
+Resep Warisan Leluhur.
+Gurih & Renyah."
+                  className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-800 focus:outline-none focus:border-[#5c0f1c] transition resize-y font-sans"
                 />
                 <p className="text-[10px] text-gray-400 mt-1">
-                  Gunakan tanda koma (`,`) untuk memisahkan setiap poin keunggulan utama produk.
+                  Setiap baris baru (tekan <strong>Enter</strong>) akan otomatis menjadi satu poin keunggulan tersendiri secara rapi ke bawah.
                 </p>
               </div>
 

@@ -160,7 +160,7 @@ export default function KeranjangPage() {
                         </p>
                       </div>
 
-                      {/* Tombol Kuantitas (- / +) Murni Hanya Mengubah Jumlah */}
+                      {/* Tombol Kuantitas (- / +) */}
                       <div className="flex items-center gap-2 bg-gray-50 p-1.5 rounded-xl border border-gray-200">
                         <button
                           type="button"
@@ -242,17 +242,15 @@ export default function KeranjangPage() {
                   </div>
                 </div>
 
-                {/* Tombol Utama Memicu Pop-up Nota Rincian Pesanan */}
                 <button
                   type="button"
                   onClick={() => setIsModalOpen(true)}
-                  className="w-full bg-[#3b0912] hover:bg-[#5c0f1c] text-amber-200 font-bold py-4 rounded-2xl shadow-lg transition-all duration-300 flex items-center justify-center gap-2.5 text-xs uppercase tracking-widest cursor-pointer hover:scale-[1.01] active:scale-[0.99]"
+                  className="w-full bg-[#3b0912] hover:bg-[#5c0f1c] text-amber-200 font-bold py-4 rounded-2xl shadow-lg transition-all duration-300 flex items-center justify-center gap-2.5 text-xs uppercase tracking-widest cursor-pointer"
                 >
                   <FontAwesomeIcon icon={faFileInvoice} className="text-lg" />
                   <span>Lihat Rincian & Kirim Pesanan</span>
                 </button>
 
-                {/* Tombol Tambah Produk Lain dari Katalog */}
                 <Link
                   href="/katalog"
                   className="w-full bg-amber-50 hover:bg-amber-100 text-[#5c0f1c] border border-amber-900/10 font-bold py-3 rounded-xl transition-all flex items-center justify-center gap-2 text-xs uppercase tracking-wider block text-center"
@@ -260,22 +258,17 @@ export default function KeranjangPage() {
                   <FontAwesomeIcon icon={faCartPlus} />
                   <span>+ Tambah Produk Lain dari Katalog</span>
                 </Link>
-
-                <p className="text-[10px] text-center text-gray-400 leading-relaxed">
-                  Pesanan akan diverifikasi rinciannya melalui pop-up sebelum dikirim otomatis ke WhatsApp resmi Surya Snack Banyuwangi.
-                </p>
               </div>
             </div>
 
           </div>
         )}
 
-        {/* MODAL / POP-UP RINCIAN PESANAN (Hanya muncul jika setIsModalOpen(true) dipanggil) */}
+        {/* MODAL / POP-UP RINCIAN PESANAN */}
         {isModalOpen && (
-          <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 font-sans animate-fade-in">
+          <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 font-sans">
             <div className="bg-white w-full max-w-lg rounded-3xl shadow-2xl border border-amber-900/10 overflow-hidden flex flex-col max-h-[90vh]">
               
-              {/* Header Modal */}
               <div className="bg-[#3b0912] text-amber-100 p-5 flex items-center justify-between">
                 <div className="flex items-center gap-2.5">
                   <FontAwesomeIcon icon={faFileInvoice} className="text-amber-400 text-lg" />
@@ -290,7 +283,6 @@ export default function KeranjangPage() {
                 </button>
               </div>
 
-              {/* Konten Rincian */}
               <div className="p-6 overflow-y-auto space-y-4 text-xs text-gray-700">
                 <div className="bg-amber-50/60 p-3.5 rounded-2xl border border-amber-900/10 space-y-1">
                   <p><strong className="text-gray-900">Nama Pemesan:</strong> {customerName || '(Tidak diisi)'}</p>
@@ -318,13 +310,8 @@ export default function KeranjangPage() {
                   <span>Total Estimasi Harga:</span>
                   <span className="text-[#5c0f1c] text-base font-black">{formatRupiah(totalPrice)}</span>
                 </div>
-
-                <div className="bg-blue-50 text-blue-800 p-3 rounded-xl text-[11px] leading-relaxed">
-                  💡 Dengan menekan tombol konfirmasi di bawah, rincian ini akan otomatis terkirim ke WhatsApp Admin Surya Snack untuk pengecekan stok & ongkir.
-                </div>
               </div>
 
-              {/* Footer Modal & Tombol Aksi */}
               <div className="p-5 bg-gray-50 border-t border-gray-100 flex gap-3">
                 <button
                   type="button"

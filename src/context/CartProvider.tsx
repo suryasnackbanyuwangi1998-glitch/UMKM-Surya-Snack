@@ -11,8 +11,8 @@ export interface CartItem {
 interface CartContextType {
   cart: CartItem[];
   addToCart: (product: Product, quantity?: number) => void;
-  removeFromCart: (productId: string) => void;
-  updateQuantity: (productId: string, quantity: number) => void;
+  removeFromCart: (productId: string | number) => void;
+  updateQuantity: (productId: string | number, quantity: number) => void;
   clearCart: () => void;
   totalItems: number;
   totalPrice: number;
@@ -44,7 +44,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
   const addToCart = (product: Product, quantity: number = 1) => {
     setCart((prevCart) => {
-      const existingIndex = prevCart.findIndex((item) => item.product.id === product.id);
+      const existingIndex = prevCart.findIndex((item) => String(item.product.id) === String(product.id));
       if (existingIndex > -1) {
         const updatedCart = [...prevCart];
         updatedCart[existingIndex].quantity += quantity;
@@ -54,18 +54,18 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     });
   };
 
-  const removeFromCart = (productId: string) => {
-    setCart((prevCart) => prevCart.filter((item) => item.product.id !== productId));
+  const removeFromCart = (productId: string | number) => {
+    setCart((prevCart) => prevCart.filter((item) => String(item.product.id) !== String(productId)));
   };
 
-  const updateQuantity = (productId: string, quantity: number) => {
+  const updateQuantity = (productId: string | number, quantity: number) => {
     if (quantity <= 0) {
       removeFromCart(productId);
       return;
     }
     setCart((prevCart) =>
       prevCart.map((item) =>
-        item.product.id === productId ? { ...item, quantity } : item
+        String(item.product.id) === String(productId) ? { ...item, quantity } : item
       )
     );
   };
@@ -100,8 +100,6 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
 export function useCart() {
   const context = useContext(CartContext);
-  // PERBAIKAN: Jika context belum ada (belum terbungkus provider di rute tertentu), 
-  // kembalikan nilai default aman agar aplikasi tidak crash / error.
   if (!context) {
     return {
       cart: [],
