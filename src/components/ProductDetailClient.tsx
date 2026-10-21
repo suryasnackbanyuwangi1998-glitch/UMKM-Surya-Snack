@@ -23,7 +23,7 @@ import {
   faBagShopping,
   faStore,
   faHeart,
-  faSeedling, // Icon baru untuk Komposisi
+  faSeedling, 
 } from '@fortawesome/free-solid-svg-icons';
 import { faWhatsapp } from '@fortawesome/free-brands-svg-icons';
 import { useCart } from '@/context/CartProvider';
