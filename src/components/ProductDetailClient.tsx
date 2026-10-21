@@ -22,8 +22,10 @@ import {
   faCartPlus,
   faBagShopping,
   faStore,
-  faHeart, // Gunakan ikon hati
+  faHeart,
+  faSeedling, // Icon baru untuk Komposisi
 } from '@fortawesome/free-solid-svg-icons';
+import { faWhatsapp } from '@fortawesome/free-brands-svg-icons';
 import { useCart } from '@/context/CartProvider';
 import type { Product } from '@/types';
 
@@ -73,6 +75,15 @@ export default function ProductDetailClient({ product }: ProductDetailClientProp
     }
   };
 
+  // Fungsi untuk langsung bertanya via WhatsApp tanpa keranjang
+  const handleAskWhatsApp = () => {
+    const phoneNumber = '6289509604700'; // Nomor WhatsApp Admin Surya Snack
+    const text = encodeURIComponent(
+      `Halo Kak Admin Surya Snack 👋, saya ingin bertanya-tanya mengenai produk *${product.name}* (${formatRupiah(product.price)}). Mohon informasinya ya, terima kasih!`
+    );
+    window.open(`https://wa.me/${phoneNumber}?text=${text}`, '_blank');
+  };
+
   useEffect(() => {
     if (!zoomOpen) return;
     const onKey = (e: KeyboardEvent) => {
@@ -88,8 +99,7 @@ export default function ProductDetailClient({ product }: ProductDetailClientProp
   }, [zoomOpen]);
 
   // =========================================================================
-  // LOGIKA PEMISAHAN KEUNGGULAN UTAMA (Mendukung Input Admin yang Smart)
-  // Tetap dipertahankan dari Solusi 2 sebelumnya
+  // LOGIKA PEMISAHAN KEUNGGULAN UTAMA
   // =========================================================================
   const rawKeyFeatures = product.key_features;
   let highlights: string[] = [];
@@ -101,12 +111,11 @@ export default function ProductDetailClient({ product }: ProductDetailClientProp
       .filter((item) => item.length > 0);
   } else if (typeof rawKeyFeatures === 'string' && rawKeyFeatures.trim() !== '') {
     highlights = rawKeyFeatures
-      .split(/[\r\n*]+/) // REGEX: Potong di Enter, newline, atau Bintang
-      .flatMap((line) => line.split(',')) // Dan potong juga di Koma
-      .map((item) => item.trim()) // Bersihkan spasi
-      .filter((item) => item.length > 0); // Buang jika ada potongan kosong
+      .split(/[\r\n*]+/)
+      .flatMap((line) => line.split(','))
+      .map((item) => item.trim())
+      .filter((item) => item.length > 0);
   } else {
-    // Fallback jika data kosong
     highlights = [
       'Perpaduan kulit bakpia yang lembut berlapis dengan isian padat legit yang lumer di mulut!',
       'Camilan manis istimewa favorit keluarga yang pas dinikmati dalam berbagai suasana',
@@ -230,7 +239,7 @@ export default function ProductDetailClient({ product }: ProductDetailClientProp
             </div>
           </div>
 
-          {/* AKSI: KUANTITAS & TOMBOL TAMBAH KE KERANJANG */}
+          {/* AKSI: KUANTITAS & TOMBOL AKSI */}
           <div className="space-y-4 pt-2">
             
             <div className="flex items-center justify-between bg-amber-50/60 p-3.5 rounded-2xl border border-amber-200/70">
@@ -274,10 +283,20 @@ export default function ProductDetailClient({ product }: ProductDetailClientProp
               <button
                 type="button"
                 onClick={handleAddToCartAndOpenModal}
-                className="flex w-full items-center justify-center gap-2.5 rounded-2xl py-4 text-xs font-extrabold text-white bg-[#5c0f1c] hover:bg-[#3b0912] shadow-md transition-all uppercase tracking-wider cursor-pointer active:scale-95"
+                className="flex w-full items-center justify-center gap-2.5 rounded-2xl py-3.5 text-xs font-extrabold text-white bg-[#5c0f1c] hover:bg-[#3b0912] shadow-md transition-all uppercase tracking-wider cursor-pointer active:scale-95"
               >
                 <FontAwesomeIcon icon={faCartPlus} className="h-4 w-4 text-amber-300" />
                 <span>TAMBAHKAN KE KERANJANG</span>
+              </button>
+
+              {/* Tombol TANYA-TANYA VIA WHATSAPP */}
+              <button
+                type="button"
+                onClick={handleAskWhatsApp}
+                className="flex w-full items-center justify-center gap-2.5 rounded-2xl py-3.5 text-xs font-extrabold text-emerald-900 bg-emerald-100 hover:bg-emerald-200 border border-emerald-300 shadow-xs transition-all uppercase tracking-wider cursor-pointer active:scale-95"
+              >
+                <FontAwesomeIcon icon={faWhatsapp} className="h-4 w-4 text-emerald-700 text-base" />
+                <span>Tanya-Tanya Produk via WhatsApp</span>
               </button>
             </div>
 
@@ -400,44 +419,40 @@ export default function ProductDetailClient({ product }: ProductDetailClientProp
           </button>
         </div>
 
-        <div className="min-h-[180px]">
+        <div className="min-h-45">
           {activeTab === 'deskripsi' && (
             <div className="space-y-6">
               <div>
                 <h3 className="text-xl font-serif font-bold text-[#3b0912] mb-3">Tentang Produk Ini</h3>
-                <div className="text-gray-600 text-sm sm:text-base leading-relaxed whitespace-pre-line leading-relaxed">
+                <div className="text-gray-600 text-sm sm:text-base leading-relaxed whitespace-pre-line">
                   {product.long_description || product.description || 'Belum ada deskripsi lengkap.'}
                 </div>
               </div>
 
               <div className="pt-4 border-t border-amber-900/10 space-y-4">
+                {/* ICON FONT AWESOME PADA JUDUL KEUNGGULAN UTAMA */}
                 <h4 className="font-serif font-bold text-base text-[#3b0912] flex items-center gap-2">
                   <FontAwesomeIcon icon={faStar} className="text-amber-500" />
                   <span>Keunggulan Utama:</span>
                 </h4>
                 
-                {/* ========================================================================= */}
-                {/* TAMPILAN BARU KEUNGGULAN UTAMA: TERSUSUN KE BAWAH DENGAN IKON HATI */}
-                {/* ========================================================================= */}
+                {/* KEUNGGULAN UTAMA DENGAN IKON HATI */}
                 <div className="space-y-3 font-serif">
                   {highlights.map((item, idx) => (
                     <div 
                       key={idx} 
                       className="flex items-start gap-3 text-sm sm:text-base text-gray-700"
                     >
-                      {/* Ikon Hati Kuning/Oranye khas Surya Snack */}
                       <FontAwesomeIcon 
                         icon={faHeart} 
                         className="text-amber-500 mt-1 shrink-0 text-sm" 
                       />
-                      {/* Deskripsi Keunggulan */}
                       <p className="leading-relaxed flex-1">
                         {item}
                       </p>
                     </div>
                   ))}
                 </div>
-                {/* ========================================================================= */}
 
               </div>
             </div>
@@ -447,12 +462,19 @@ export default function ProductDetailClient({ product }: ProductDetailClientProp
             <div className="space-y-6">
               <h3 className="text-xl font-serif font-bold text-[#3b0912]">Detail Komposisi & Standar Kemasan</h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                
+                {/* ICON FONT AWESOME PADA KOMPOSISI / BAHAN UTAMA */}
                 <div className="bg-[#FAF7F0] p-4 rounded-2xl border border-amber-900/10 space-y-2">
-                  <span className="text-[10px] font-bold uppercase tracking-widest text-[#5c0f1c]">Komposisi / Bahan Utama</span>
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-[#5c0f1c] flex items-center gap-1.5">
+                    <FontAwesomeIcon icon={faSeedling} className="text-amber-600" />
+                    <span>Komposisi / Bahan Utama</span>
+                  </span>
                   <p className="text-sm text-gray-700 font-medium whitespace-pre-line leading-relaxed">
                     {product.ingredients || 'Menggunakan bahan-bahan alami pilihan berkualitas tinggi tanpa pengawet buatan.'}
                   </p>
                 </div>
+
+                {/* ICON FONT AWESOME PADA STANDAR KEMASAN */}
                 <div className="bg-[#FAF7F0] p-4 rounded-2xl border border-amber-900/10 space-y-2">
                   <span className="text-[10px] font-bold uppercase tracking-widest text-[#5c0f1c] flex items-center gap-1.5">
                     <FontAwesomeIcon icon={faBoxArchive} className="text-amber-600" />
@@ -462,6 +484,7 @@ export default function ProductDetailClient({ product }: ProductDetailClientProp
                     {product.packaging_standard || 'Dikemas menggunakan plastik kedap udara (food grade) tebal untuk menjamin kerenyahan dan aroma khas tetap terjaga.'}
                   </p>
                 </div>
+
               </div>
             </div>
           )}
@@ -473,7 +496,7 @@ export default function ProductDetailClient({ product }: ProductDetailClientProp
                 {orderSteps.map(([title, desc], idx) => (
                   <div key={idx} className="bg-[#FAF7F0] p-4 rounded-2xl border border-amber-900/10 space-y-1.5 hover:border-amber-900/20 transition">
                     <h4 className="font-bold text-sm text-[#3b0912]">{title}</h4>
-                    <p className="text-xs text-gray-600 leading-relaxed leading-relaxed">{desc}</p>
+                    <p className="text-xs text-gray-600 leading-relaxed">{desc}</p>
                   </div>
                 ))}
               </div>

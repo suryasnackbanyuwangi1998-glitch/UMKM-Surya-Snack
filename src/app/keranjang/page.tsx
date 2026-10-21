@@ -25,12 +25,12 @@ export default function KeranjangPage() {
   const [customerName, setCustomerName] = useState('');
   const [customerAddress, setCustomerAddress] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const waNumber = '6289509604700';
+  const waNumber = '6289509604700'; // Nomor WhatsApp Admin Surya Snack
 
   const handleCheckoutWA = () => {
     if (cart.length === 0) return;
 
-    let message = `*PESANAN BARU - SURYA SNACK BANYUWANGI*\n\n`;
+    let message = `*KONSULTASI / TANYA PRODUK - SURYA SNACK*\n\n`;
 
     if (customerName) {
       message += `👤 *Nama Pembeli:* ${customerName}\n`;
@@ -39,19 +39,19 @@ export default function KeranjangPage() {
       message += `📍 *Alamat/Kecamatan:* ${customerAddress}\n`;
     }
 
-    message += `\n📦 *Daftar Belanjaan (${totalItems} pcs):*\n`;
+    message += `\n📦 *Daftar Produk yang Ingin Ditanyakan (${totalItems} pcs):*\n`;
     message += `-----------------------------------\n`;
 
     cart.forEach((item, index) => {
       const priceVal = item.product.price ?? 0;
       const itemTotal = priceVal * item.quantity;
       message += `${index + 1}. *${item.product.name}*\n`;
-      message += `   └ ${item.quantity} x ${formatRupiah(item.product.price)} = *${formatRupiah(itemTotal)}*\n`;
+      message += `   └ Jumlah: ${item.quantity} pcs | Harga: ${formatRupiah(item.product.price)} = *${formatRupiah(itemTotal)}*\n`;
     });
 
     message += `-----------------------------------\n`;
-    message += `💰 *TOTAL ESTIMASI:* *${formatRupiah(totalPrice)}*\n\n`;
-    message += `Halo Admin, mohon info total ketersediaan stok dan ongkos kirimnya ya. Terima kasih!`;
+    message += `💰 *ESTIMASI TOTAL:* *${formatRupiah(totalPrice)}*\n\n`;
+    message += `Halo Kak Admin, saya ingin bertanya-tanya seputar ketersediaan, rasa, dan detail dari produk-produk di atas ya. Mohon informasinya, terima kasih! 🙏`;
 
     const encodedMessage = encodeURIComponent(message);
     window.open(`https://wa.me/${waNumber}?text=${encodedMessage}`, '_blank');
@@ -253,7 +253,7 @@ export default function KeranjangPage() {
 
                 <Link
                   href="/katalog"
-                  className="w-full bg-amber-50 hover:bg-amber-100 text-[#5c0f1c] border border-amber-900/10 font-bold py-3 rounded-xl transition-all flex items-center justify-center gap-2 text-xs uppercase tracking-wider block text-center"
+                  className="w-full bg-amber-50 hover:bg-amber-100 text-[#5c0f1c] border border-amber-900/10 font-bold py-3 rounded-xl transition-all flex items-center justify-center gap-2 text-xs uppercase tracking-wider text-center"
                 >
                   <FontAwesomeIcon icon={faCartPlus} />
                   <span>+ Tambah Produk Lain dari Katalog</span>

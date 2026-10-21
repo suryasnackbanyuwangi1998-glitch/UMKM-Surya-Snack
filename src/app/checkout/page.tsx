@@ -30,7 +30,7 @@ function CheckoutContent() {
   const [deliveryLocation, setDeliveryLocation] = useState('');
   const [note, setNote] = useState('');
 
-  const waNumber = '6289509604700';
+  const waNumber = '6289509604700'; // Nomor WhatsApp Admin Surya Snack
 
   useEffect(() => {
     async function fetchProduct() {
@@ -84,7 +84,7 @@ function CheckoutContent() {
     message += `• *${product.name}*\n`;
     message += `• Jumlah: ${quantity} pcs x ${formatRupiah(product.price)}\n`;
     message += `-----------------------------------\n`;
-    message += `💰 *TOTAL HIKMAH ESTIMASI:* *${formatRupiah(totalPrice)}*\n\n`;
+    message += `💰 *TOTAL ESTIMASI:* *${formatRupiah(totalPrice)}*\n\n`;
     message += `Halo Admin, mohon proses pesanan ini dan infokan stok & total ongkirnya ya. Terima kasih!`;
 
     const encoded = encodeURIComponent(message);
@@ -155,7 +155,7 @@ function CheckoutContent() {
             </h2>
 
             <div>
-              <label className="block text-[11px] font-bold uppercase tracking-wider text-gray-700 mb-1 flex items-center gap-1.5">
+              <label className="text-[11px] font-bold uppercase tracking-wider text-gray-700 mb-1 flex items-center gap-1.5">
                 <FontAwesomeIcon icon={faUser} className="text-[#5c0f1c]" />
                 <span>Nama Lengkap Anda (Opsional)</span>
               </label>
@@ -169,7 +169,7 @@ function CheckoutContent() {
             </div>
 
             <div>
-              <label className="block text-[11px] font-bold uppercase tracking-wider text-gray-700 mb-1 flex items-center gap-1.5">
+              <label className="text-[11px] font-bold uppercase tracking-wider text-gray-700 mb-1 flex items-center gap-1.5">
                 <FontAwesomeIcon icon={faLocationDot} className="text-[#5c0f1c]" />
                 <span>Lokasi / Alamat Pengiriman</span>
               </label>
@@ -183,7 +183,7 @@ function CheckoutContent() {
             </div>
 
             <div>
-              <label className="block text-[11px] font-bold uppercase tracking-wider text-gray-700 mb-1 flex items-center gap-1.5">
+              <label className="text-[11px] font-bold uppercase tracking-wider text-gray-700 mb-1 flex items-center gap-1.5">
                 <FontAwesomeIcon icon={faNoteSticky} className="text-[#5c0f1c]" />
                 <span>Catatan Opsional</span>
               </label>
