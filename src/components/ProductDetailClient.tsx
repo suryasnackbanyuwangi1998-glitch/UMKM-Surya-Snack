@@ -10,7 +10,6 @@ import {
   faLocationDot,
   faWeightHanging,
   faBoxOpen,
-  faCircleCheck,
   faFire,
   faMagnifyingGlassPlus,
   faXmark,
@@ -23,6 +22,7 @@ import {
   faCartPlus,
   faBagShopping,
   faStore,
+  faHeart, // Gunakan ikon hati
 } from '@fortawesome/free-solid-svg-icons';
 import { useCart } from '@/context/CartProvider';
 import type { Product } from '@/types';
@@ -87,31 +87,33 @@ export default function ProductDetailClient({ product }: ProductDetailClientProp
     };
   }, [zoomOpen]);
 
-  // LOGIKA PEMISAHAN KEUNGGULAN UTAMA (Mendukung baris baru \n atau titik .)
+  // =========================================================================
+  // LOGIKA PEMISAHAN KEUNGGULAN UTAMA (Mendukung Input Admin yang Smart)
+  // Tetap dipertahankan dari Solusi 2 sebelumnya
+  // =========================================================================
   const rawKeyFeatures = product.key_features;
   let highlights: string[] = [];
 
   if (Array.isArray(rawKeyFeatures)) {
-    // Jika dari database sudah berbentuk array, ratakan dan bersihkan simbol sisa bintang/tanda hubung
     highlights = rawKeyFeatures
       .flatMap((item) => String(item).split(/\r?\n/))
-      .map((item) => item.replace(/^[*•-]\s*/, '').trim())
+      .map((item) => item.replace(/^[*•\d.-]\s*/, '').trim())
       .filter((item) => item.length > 0);
   } else if (typeof rawKeyFeatures === 'string' && rawKeyFeatures.trim() !== '') {
-    // Jika berupa string panjang dari admin panel, pisahkan berdasarkan baris baru atau titik
     highlights = rawKeyFeatures
-      .split(/\r?\n/)
-      .flatMap((line) => line.split('.'))
-      .map((item) => item.replace(/^[*•-]\s*/, '').trim())
-      .filter((item) => item.length > 0)
-      .map((item) => (item.endsWith('.') ? item : item + '.'));
+      .split(/[\r\n*]+/) // REGEX: Potong di Enter, newline, atau Bintang
+      .flatMap((line) => line.split(',')) // Dan potong juga di Koma
+      .map((item) => item.trim()) // Bersihkan spasi
+      .filter((item) => item.length > 0); // Buang jika ada potongan kosong
   } else {
+    // Fallback jika data kosong
     highlights = [
-      'Dibuat fresh setiap hari dengan resep khas turun-temurun.',
-      'Bahan baku pilihan dari hasil bumi petani lokal berkualitas tinggi.',
-      'Higienis, halal, dan tanpa pengawet buatan.',
+      'Perpaduan kulit bakpia yang lembut berlapis dengan isian padat legit yang lumer di mulut!',
+      'Camilan manis istimewa favorit keluarga yang pas dinikmati dalam berbagai suasana',
+      'Oleh-oleh wajib khas Banyuwangi yang sayang banget kalau dilewatkan',
     ];
   }
+  // =========================================================================
 
   const orderSteps: [string, string][] = [
     ['1. Tentukan Kuantitas', 'Pilih jumlah pesanan sesuai kebutuhan lalu klik Tambah Pesanan.'],
@@ -403,29 +405,39 @@ export default function ProductDetailClient({ product }: ProductDetailClientProp
             <div className="space-y-6">
               <div>
                 <h3 className="text-xl font-serif font-bold text-[#3b0912] mb-3">Tentang Produk Ini</h3>
-                <div className="text-gray-600 text-sm sm:text-base leading-relaxed whitespace-pre-line">
+                <div className="text-gray-600 text-sm sm:text-base leading-relaxed whitespace-pre-line leading-relaxed">
                   {product.long_description || product.description || 'Belum ada deskripsi lengkap.'}
                 </div>
               </div>
 
-              <div className="pt-4 border-t border-amber-900/10">
-                <h4 className="font-serif font-bold text-base text-[#3b0912] mb-3 flex items-center gap-2">
+              <div className="pt-4 border-t border-amber-900/10 space-y-4">
+                <h4 className="font-serif font-bold text-base text-[#3b0912] flex items-center gap-2">
                   <FontAwesomeIcon icon={faStar} className="text-amber-500" />
                   <span>Keunggulan Utama:</span>
                 </h4>
                 
-                {/* SETIAP KEUNGGULAN UTAMA DIBUAT KOTAK SENDIRI DENGAN IKON CENTANG MASING-MASING */}
-                <div className="space-y-2.5">
+                {/* ========================================================================= */}
+                {/* TAMPILAN BARU KEUNGGULAN UTAMA: TERSUSUN KE BAWAH DENGAN IKON HATI */}
+                {/* ========================================================================= */}
+                <div className="space-y-3 font-serif">
                   {highlights.map((item, idx) => (
                     <div 
                       key={idx} 
-                      className="flex items-start gap-3 bg-amber-50/50 p-3.5 rounded-2xl border border-amber-900/10 text-xs sm:text-sm text-gray-700 shadow-2xs"
+                      className="flex items-start gap-3 text-sm sm:text-base text-gray-700"
                     >
-                      <FontAwesomeIcon icon={faCircleCheck} className="text-emerald-600 mt-0.5 shrink-0 text-base" />
-                      <span className="font-medium leading-relaxed">{item}</span>
+                      {/* Ikon Hati Kuning/Oranye khas Surya Snack */}
+                      <FontAwesomeIcon 
+                        icon={faHeart} 
+                        className="text-amber-500 mt-1 shrink-0 text-sm" 
+                      />
+                      {/* Deskripsi Keunggulan */}
+                      <p className="leading-relaxed flex-1">
+                        {item}
+                      </p>
                     </div>
                   ))}
                 </div>
+                {/* ========================================================================= */}
 
               </div>
             </div>
@@ -437,7 +449,7 @@ export default function ProductDetailClient({ product }: ProductDetailClientProp
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="bg-[#FAF7F0] p-4 rounded-2xl border border-amber-900/10 space-y-2">
                   <span className="text-[10px] font-bold uppercase tracking-widest text-[#5c0f1c]">Komposisi / Bahan Utama</span>
-                  <p className="text-sm text-gray-700 font-medium whitespace-pre-line">
+                  <p className="text-sm text-gray-700 font-medium whitespace-pre-line leading-relaxed">
                     {product.ingredients || 'Menggunakan bahan-bahan alami pilihan berkualitas tinggi tanpa pengawet buatan.'}
                   </p>
                 </div>
@@ -446,7 +458,7 @@ export default function ProductDetailClient({ product }: ProductDetailClientProp
                     <FontAwesomeIcon icon={faBoxArchive} className="text-amber-600" />
                     <span>Standar Kemasan</span>
                   </span>
-                  <p className="text-sm text-gray-700 font-medium whitespace-pre-line">
+                  <p className="text-sm text-gray-700 font-medium whitespace-pre-line leading-relaxed">
                     {product.packaging_standard || 'Dikemas menggunakan plastik kedap udara (food grade) tebal untuk menjamin kerenyahan dan aroma khas tetap terjaga.'}
                   </p>
                 </div>
@@ -459,9 +471,9 @@ export default function ProductDetailClient({ product }: ProductDetailClientProp
               <h3 className="text-xl font-serif font-bold text-[#3b0912]">Alur Pemesanan Cepat & Transparan</h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {orderSteps.map(([title, desc], idx) => (
-                  <div key={idx} className="bg-[#FAF7F0] p-4 rounded-2xl border border-amber-900/10 space-y-1.5">
+                  <div key={idx} className="bg-[#FAF7F0] p-4 rounded-2xl border border-amber-900/10 space-y-1.5 hover:border-amber-900/20 transition">
                     <h4 className="font-bold text-sm text-[#3b0912]">{title}</h4>
-                    <p className="text-xs text-gray-600 leading-relaxed">{desc}</p>
+                    <p className="text-xs text-gray-600 leading-relaxed leading-relaxed">{desc}</p>
                   </div>
                 ))}
               </div>
