@@ -21,19 +21,16 @@ export default function Footer(): React.ReactElement {
 
   return (
     <footer className="bg-[#3b0912] text-gray-300 font-sans text-xs">
-      <div className="mx-auto max-w-7xl px-6 py-12 lg:px-12">
+      <div className="mx-auto max-w-7xl px-6 pt-12 pb-6 lg:px-12 space-y-8">
         <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-start">
           
-          {/* Kolom 1: Brand & Copyright (Lebar 5 Kolom) */}
+          {/* Kolom 1: Brand & Deskripsi (Lebar 5 Kolom) */}
           <div className="md:col-span-5 space-y-4">
             <h3 className="text-sm font-bold text-white tracking-wide">
               Surya Snack
             </h3>
-            <p className="text-gray-300 text-xs leading-relaxed max-w-md">
+            <p className="text-gray-300 text-xs leading-relaxed max-w-md text-justify">
               Menghadirkan kelezatan jajanan tradisional Banyuwangi dengan kualitas terbaik sejak bertahun-tahun.
-            </p>
-            <p className="text-gray-400 text-[11px] pt-4">
-              © 2026 Surya Snack. Authentic Indonesian Heritage.
             </p>
           </div>
 
@@ -97,6 +94,14 @@ export default function Footer(): React.ReactElement {
           </div>
 
         </div>
+
+        {/* Bagian Bawah: Garis Pembatas ditarik lebih ke atas dengan mt-8 (margin-top) */}
+        <div className="border-t border-white/10 pt-6 mt-8 text-center">
+          <p className="text-gray-400 text-[11px]">
+            © 2026 Surya Snack. Authentic Indonesian Heritage.
+          </p>
+        </div>
+
       </div>
     </footer>
   );
