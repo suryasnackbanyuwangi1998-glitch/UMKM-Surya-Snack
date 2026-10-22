@@ -8,6 +8,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faChartPie,
   faBoxesStacked,
+  faAddressBook,
   faGlobe,
   faRightFromBracket,
   faBars,
@@ -35,11 +36,11 @@ export default function AdminLayout({
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex font-sans">
+    <div className="min-h-screen bg-gray-50 text-slate-800 flex font-sans">
       
-      {/* ===== SIDEBAR KIRI (Dibuat Sticky di Layar Dekstop) ===== */}
+      {/* ===== SIDEBAR KIRI ===== */}
       <aside
-        className={`fixed inset-y-0 left-0 z-50 w-64 bg-gradient-to-b from-[#3b0912] via-[#5c0f1c] to-[#26050b] border-r border-[#7a1425]/40 flex flex-col transition-transform duration-300 md:sticky md:top-0 md:h-screen md:translate-x-0 shrink-0 shadow-2xl ${
+        className={`fixed inset-y-0 left-0 z-50 w-64 bg-linear-to-b from-[#3b0912] via-[#5c0f1c] to-[#26050b] border-r border-[#7a1425]/40 flex flex-col text-slate-100 transition-transform duration-300 md:sticky md:top-0 md:h-screen md:translate-x-0 shrink-0 shadow-2xl ${
           isSidebarOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
@@ -79,7 +80,7 @@ export default function AdminLayout({
             href="/admin/dashboard"
             className={`flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-bold transition ${
               pathname === "/admin/dashboard"
-                ? "bg-gradient-to-r from-amber-400 to-amber-500 text-[#3b0912] shadow-lg shadow-amber-500/20 font-extrabold"
+                ? "bg-linear-to-r from-amber-400 to-amber-500 text-[#3b0912] shadow-lg shadow-amber-500/20 font-extrabold"
                 : "text-gray-200 hover:bg-white/10 hover:text-white"
             }`}
           >
@@ -91,12 +92,24 @@ export default function AdminLayout({
             href="/admin/produk"
             className={`flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-bold transition ${
               pathname === "/admin/produk"
-                ? "bg-gradient-to-r from-amber-400 to-amber-500 text-[#3b0912] shadow-lg shadow-amber-500/20 font-extrabold"
+                ? "bg-linear-to-r from-amber-400 to-amber-500 text-[#3b0912] shadow-lg shadow-amber-500/20 font-extrabold"
                 : "text-gray-200 hover:bg-white/10 hover:text-white"
             }`}
           >
             <FontAwesomeIcon icon={faBoxesStacked} className="w-4 h-4 shrink-0" />
             <span>Kelola Produk</span>
+          </Link>
+
+          <Link
+            href="/admin/kontak"
+            className={`flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-bold transition ${
+              pathname === "/admin/kontak"
+                ? "bg-linear-to-r from-amber-400 to-amber-500 text-[#3b0912] shadow-lg shadow-amber-500/20 font-extrabold"
+                : "text-gray-200 hover:bg-white/10 hover:text-white"
+            }`}
+          >
+            <FontAwesomeIcon icon={faAddressBook} className="w-4 h-4 shrink-0" />
+            <span>Kontak</span>
           </Link>
         </nav>
 
@@ -138,7 +151,7 @@ export default function AdminLayout({
         </header>
 
         {/* Area isi halaman */}
-        <main className="flex-1 bg-slate-950">
+        <main className="flex-1 bg-gray-50">
           {children}
         </main>
       </div>
