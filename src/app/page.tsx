@@ -2,7 +2,6 @@
 import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { motion } from 'framer-motion'; // Catatan: Untuk framer-motion di Server Component, pastikan aman atau gunakan wrapper client jika diperlukan
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faWhatsapp } from '@fortawesome/free-brands-svg-icons';
 import {
@@ -14,7 +13,7 @@ import {
   faQuoteLeft,
 } from '@fortawesome/free-solid-svg-icons';
 import ProductCard from '@/components/ProductCard';
-import { getFeaturedProducts } from '@/lib/products'; // <-- Import fungsi getFeaturedProducts
+import { getFeaturedProducts } from '@/lib/products';
 
 // Memastikan data selalu diperbarui (tidak menggunakan cache lama)
 export const revalidate = 0;
@@ -50,7 +49,7 @@ export default async function HomePage() {
     <div className="min-h-screen bg-[#FDFBF7] text-[#2D241E] font-serif selection:bg-[#5c0f1c] selection:text-amber-100 antialiased overflow-x-hidden">
       
       {/* ================= 1. HERO SECTION ================= */}
-      <section className="relative w-full h-screen min-h-[700px] flex items-center justify-center text-center overflow-hidden border-b-4 border-[#5c0f1c] bg-[#1a120e]">
+      <section className="relative w-full h-screen min-h-175 flex items-center justify-center text-center overflow-hidden border-b-4 border-[#5c0f1c] bg-[#1a120e]">
         <div className="absolute inset-0">
           <Image
             src="/hero-background.jpg"
@@ -60,7 +59,7 @@ export default async function HomePage() {
             className="object-cover object-center filter brightness-[0.55] contrast-110"
           />
         </div>
-        <div className="absolute inset-0 bg-gradient-to-t from-[#1a120e]/80 via-black/30 to-black/50" />
+        <div className="absolute inset-0 bg-linear-to-t from-[#1a120e]/80 via-black/30 to-black/50" />
 
         <div className="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 space-y-6 pt-16">
           <div className="inline-flex items-center gap-3 px-5 py-2 rounded-full border border-amber-400/40 bg-[#3b0912]/80 backdrop-blur-md shadow-xl mx-auto">
@@ -98,7 +97,7 @@ export default async function HomePage() {
             </a>
           </div>
         </div>
-        <div className="absolute bottom-0 left-0 right-0 h-3 bg-gradient-to-r from-amber-600 via-amber-400 to-amber-600 z-20" />
+        <div className="absolute bottom-0 left-0 right-0 h-3 bg-linear-to-r from-amber-600 via-amber-400 to-amber-600 z-20" />
       </section>
 
       {/* ================= 2. QUOTE STATEMENT SECTION ================= */}
@@ -170,7 +169,7 @@ export default async function HomePage() {
               Menjaga Tradisi, <br />
               <span className="text-amber-300 italic font-normal">Memahat Cita Rasa</span>
             </h2>
-            <p className="text-gray-300 font-sans text-sm sm:text-base leading-relaxed font-light">
+            <p className="text-gray-300 font-sans text-sm sm:text-base leading-relaxed font-light text-justify">
               Berawal dari dapur rumahan di Banyuwangi, Surya Snack tumbuh dengan memegang teguh prinsip keaslian resep leluhur. Kami percaya bahwa makanan terbaik dibuat bukan dari mesin, melainkan dari ketelitian dan bahan-bahan pilihan berkualitas tinggi.
             </p>
             <div className="grid grid-cols-2 gap-6 pt-4 border-t border-white/10 font-sans">
@@ -185,7 +184,7 @@ export default async function HomePage() {
             </div>
           </div>
 
-          <div className="relative h-80 sm:h-[420px] rounded-lg overflow-hidden border-4 border-amber-400/30 shadow-2xl">
+          <div className="relative h-80 sm:h-105 rounded-lg overflow-hidden border-4 border-amber-400/30 shadow-2xl">
             <Image
               src="https://images.unsplash.com/photo-1556910103-1c02745aae4d?q=80&w=600"
               alt="Proses Pembuatan Tradisional"
@@ -218,7 +217,7 @@ export default async function HomePage() {
                 <FontAwesomeIcon icon={item.icon} />
               </div>
               <h3 className="font-serif font-bold text-lg text-[#3b0912]">{item.title}</h3>
-              <p className="text-gray-600 text-xs leading-relaxed">{item.desc}</p>
+              <p className="text-gray-600 text-xs leading-relaxed text-justify">{item.desc}</p>
             </div>
           ))}
         </div>
@@ -230,7 +229,7 @@ export default async function HomePage() {
           <h2 className="text-2xl sm:text-4xl font-serif font-bold text-[#3b0912]">
             Siap Menikmati Kelezatan Khas Banyuwangi?
           </h2>
-          <p className="text-gray-600 text-sm max-w-xl mx-auto">
+          <p className="text-gray-600 text-sm max-w-xl mx-auto text-justify sm:text-center">
             Pesan langsung melalui katalog digital kami atau hubungi admin via WhatsApp untuk pemesanan khusus dan pengiriman ke seluruh wilayah.
           </p>
           <div className="flex flex-wrap items-center justify-center gap-4 pt-2">
