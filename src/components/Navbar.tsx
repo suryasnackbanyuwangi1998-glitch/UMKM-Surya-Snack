@@ -12,11 +12,16 @@ import {
   faStore,
 } from '@fortawesome/free-solid-svg-icons';
 import { faWhatsapp, faInstagram } from '@fortawesome/free-brands-svg-icons';
+import { supabase } from '@/lib/supabase';
 
 export default function Navbar(): React.ReactElement {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const pathname = usePathname();
+
+  // State untuk menyimpan informasi toko dari database Supabase
+  const [storeName, setStoreName] = useState('Surya Snack');
+  const [storeLabel, setStoreLabel] = useState('Khas Banyuwangi');
 
   const isHomePage = pathname === '/';
 
@@ -26,6 +31,27 @@ export default function Navbar(): React.ReactElement {
     }
     return pathname.startsWith(path);
   };
+
+  // Mengambil data informasi toko dari database Supabase saat komponen dimuat
+  useEffect(() => {
+    async function fetchStoreInfo() {
+      try {
+        const { data, error } = await supabase
+          .from('store_settings')
+          .select('*')
+          .single();
+
+        if (data && !error) {
+          if (data.store_name) setStoreName(data.store_name);
+          if (data.store_label) setStoreLabel(data.store_label);
+        }
+      } catch (err) {
+        console.error('Gagal memuat informasi toko:', err);
+      }
+    }
+
+    fetchStoreInfo();
+  }, []);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -57,7 +83,7 @@ export default function Navbar(): React.ReactElement {
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 flex items-center justify-between">
           
-          {/* Logo Brand */}
+          {/* Logo Brand & Sinkronisasi Nama Toko */}
           <Link href="/" className="group flex items-center gap-3 hover:opacity-95 transition">
             <div className="relative shrink-0">
               <Image
@@ -79,14 +105,14 @@ export default function Navbar(): React.ReactElement {
                     : 'text-white group-hover:text-amber-300'
                 }`}
               >
-                Surya Snack
+                {storeName}
               </span>
               <span
                 className={`text-[9px] sm:text-[10px] font-bold tracking-[0.2em] uppercase mt-1 hidden xs:block transition-colors ${
                   isScrolled || !isHomePage ? 'text-[#5c0f1c]' : 'text-amber-300'
                 }`}
               >
-                Khas Banyuwangi
+                {storeLabel}
               </span>
             </div>
           </Link>
@@ -161,10 +187,10 @@ export default function Navbar(): React.ReactElement {
             />
             <div className="flex flex-col leading-tight">
               <span className="text-base font-black tracking-wide text-white font-serif">
-                Surya Snack
+                {storeName}
               </span>
               <span className="text-[9px] font-bold tracking-[0.15em] uppercase text-amber-300">
-                Khas Banyuwangi
+                {storeLabel}
               </span>
             </div>
           </div>
@@ -178,7 +204,7 @@ export default function Navbar(): React.ReactElement {
           </button>
         </div>
 
-        <div className="flex-grow overflow-y-auto p-5 space-y-6 font-sans">
+        <div className="grow overflow-y-auto p-5 space-y-6 font-sans">
           <div>
             <p className="px-3 pb-2 text-[10px] font-extrabold uppercase tracking-widest text-gray-400">
               Navigasi Utama
@@ -229,7 +255,7 @@ export default function Navbar(): React.ReactElement {
                 href="https://www.instagram.com/suryasnack.banyuwangi"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex-1 bg-gradient-to-r from-purple-600 to-pink-500 text-white text-[11px] font-bold py-2 px-3 rounded-xl flex items-center justify-center gap-1.5 shadow-sm transition"
+                className="flex-1 bg-linear-to-r from-purple-600 to-pink-500 text-white text-[11px] font-bold py-2 px-3 rounded-xl flex items-center justify-center gap-1.5 shadow-sm transition"
               >
                 <FontAwesomeIcon icon={faInstagram} className="w-3.5 h-3.5" />
                 Instagram
@@ -240,7 +266,7 @@ export default function Navbar(): React.ReactElement {
 
         <div className="bg-gray-100 border-t border-gray-200 px-5 py-3.5 text-center font-sans">
           <p className="text-[10px] font-bold text-gray-500">
-            © 2026 Surya Snack Banyuwangi
+            © 2026 {storeName} Banyuwangi
           </p>
         </div>
       </aside>

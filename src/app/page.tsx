@@ -1,5 +1,7 @@
 // src/app/page.tsx
-import React from 'react';
+"use client";
+
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -14,13 +16,51 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import ProductCard from '@/components/ProductCard';
 import { getFeaturedProducts } from '@/lib/products';
+import { supabase } from '@/lib/supabase';
 
-// Memastikan data selalu diperbarui (tidak menggunakan cache lama)
-export const revalidate = 0;
+export default function HomePage() {
+  const [products, setProducts] = useState<any[]>([]);
+  const [banners, setBanners] = useState<any[]>([
+    {
+      id: 1,
+      banner_number: 1,
+      title: "Kelezatan Tradisional Kelas Artisan",
+      description: "Menghadirkan camilan dan jajanan khas berkualitas tinggi dengan resep pusaka leluhur, diolah penuh dedikasi untuk Anda.",
+      image_url: "/hero-background.jpg"
+    }
+  ]);
+  const [currentSlide, setCurrentSlide] = useState(0);
 
-export default async function HomePage() {
-  // Mengambil data produk unggulan langsung dari database Supabase
-  const products = await getFeaturedProducts(4);
+  // Ambil produk unggulan dan banner dari Supabase
+  useEffect(() => {
+    async function fetchData() {
+      try {
+        const prod = await getFeaturedProducts(4);
+        setProducts(prod);
+
+        const { data: bannerData } = await supabase
+          .from('store_banners')
+          .select('*')
+          .order('banner_number', { ascending: true });
+
+        if (bannerData && bannerData.length > 0) {
+          setBanners(bannerData);
+        }
+      } catch (err) {
+        console.error("Gagal memuat beranda:", err);
+      }
+    }
+    fetchData();
+  }, []);
+
+  // Timer Slideshow otomatis setiap 5 detik
+  useEffect(() => {
+    if (banners.length <= 1) return;
+    const timer = setInterval(() => {
+      setCurrentSlide((prev) => (prev + 1) % banners.length);
+    }, 5000);
+    return () => clearInterval(timer);
+  }, [banners.length]);
 
   const heritageFeatures = [
     {
@@ -45,15 +85,17 @@ export default async function HomePage() {
     },
   ];
 
+  const activeBanner = banners[currentSlide] || banners[0];
+
   return (
     <div className="min-h-screen bg-[#FDFBF7] text-[#2D241E] font-serif selection:bg-[#5c0f1c] selection:text-amber-100 antialiased overflow-x-hidden">
       
-      {/* ================= 1. HERO SECTION ================= */}
+      {/* ================= 1. HERO SECTION (SLIDESHOW OTOMATIS) ================= */}
       <section className="relative w-full h-screen min-h-175 flex items-center justify-center text-center overflow-hidden border-b-4 border-[#5c0f1c] bg-[#1a120e]">
-        <div className="absolute inset-0">
+        <div className="absolute inset-0 transition-opacity duration-1000">
           <Image
-            src="/hero-background.jpg"
-            alt="Surya Snack Heritage"
+            src={activeBanner.image_url || "/hero-background.jpg"}
+            alt={activeBanner.title}
             fill
             priority
             className="object-cover object-center filter brightness-[0.55] contrast-110"
@@ -61,7 +103,7 @@ export default async function HomePage() {
         </div>
         <div className="absolute inset-0 bg-linear-to-t from-[#1a120e]/80 via-black/30 to-black/50" />
 
-        <div className="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 space-y-6 pt-16">
+        <div className="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 space-y-6 pt-16 transition-all duration-500">
           <div className="inline-flex items-center gap-3 px-5 py-2 rounded-full border border-amber-400/40 bg-[#3b0912]/80 backdrop-blur-md shadow-xl mx-auto">
             <span className="text-amber-400 text-xs tracking-widest">★ EST. 1998 ★</span>
             <span className="w-1 h-1 rounded-full bg-amber-400"></span>
@@ -71,12 +113,11 @@ export default async function HomePage() {
           </div>
 
           <h1 className="text-4xl sm:text-6xl lg:text-7xl font-bold tracking-tight text-white leading-[1.1] font-serif drop-shadow-lg">
-            Kelezatan Tradisional <br />
-            <span className="italic font-normal text-amber-300">Kelas Artisan</span>
+            {activeBanner.title}
           </h1>
 
           <p className="max-w-2xl mx-auto text-gray-200 text-sm sm:text-lg font-sans font-light leading-relaxed">
-            Menghadirkan camilan dan jajanan khas berkualitas tinggi dengan resep pusaka leluhur, diolah penuh dedikasi untuk Anda.
+            {activeBanner.description}
           </p>
 
           <div className="flex flex-wrap items-center justify-center gap-4 pt-4 font-sans">
@@ -97,6 +138,21 @@ export default async function HomePage() {
             </a>
           </div>
         </div>
+
+        {/* Indikator Titik (Dots) untuk Slide Aktif */}
+        {banners.length > 1 && (
+          <div className="absolute bottom-6 z-20 flex items-center gap-2">
+            {banners.map((_, idx) => (
+              <button
+                key={idx}
+                onClick={() => setCurrentSlide(idx)}
+                className={`w-3 h-3 rounded-full transition-all cursor-pointer ${currentSlide === idx ? 'bg-amber-400 w-8' : 'bg-white/50'}`}
+                aria-label={`Pilih slide ${idx + 1}`}
+              />
+            ))}
+          </div>
+        )}
+
         <div className="absolute bottom-0 left-0 right-0 h-3 bg-linear-to-r from-amber-600 via-amber-400 to-amber-600 z-20" />
       </section>
 
@@ -114,7 +170,7 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* ================= 3. PRODUK UNGGULAN (FEATURED PRODUCTS) ================= */}
+      {/* ================= 3. PRODUK UNGGULAN ================= */}
       <section className="py-20 sm:py-28 max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 space-y-12">
         <div className="text-center max-w-2xl mx-auto space-y-3">
           <span className="text-[#5c0f1c] text-xs font-bold tracking-[0.3em] uppercase font-sans">
@@ -131,7 +187,7 @@ export default async function HomePage() {
 
         {products.length === 0 ? (
           <div className="text-center py-16 text-gray-500 font-sans text-sm bg-white rounded-xl border border-amber-900/10 shadow-xs">
-            Belum ada produk unggulan di database. Silakan centang "Jadikan Produk Unggulan" melalui panel admin.
+            Belum ada produk unggulan di database.
           </div>
         ) : (
           <div className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
@@ -153,13 +209,6 @@ export default async function HomePage() {
 
       {/* ================= 4. HERITAGE STORY SECTION ================= */}
       <section className="bg-[#3b0912] text-amber-100 py-20 sm:py-28 relative overflow-hidden">
-        <div
-          className="absolute inset-0 opacity-5 pointer-events-none"
-          style={{
-            backgroundImage: 'radial-gradient(#f59e0b 1px, transparent 1px)',
-            backgroundSize: '24px 24px',
-          }}
-        />
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 grid md:grid-cols-2 gap-12 items-center">
           <div className="space-y-6">
             <span className="text-amber-400 text-xs font-sans font-bold uppercase tracking-[0.25em]">
@@ -170,20 +219,9 @@ export default async function HomePage() {
               <span className="text-amber-300 italic font-normal">Memahat Cita Rasa</span>
             </h2>
             <p className="text-gray-300 font-sans text-sm sm:text-base leading-relaxed font-light text-justify">
-              Berawal dari dapur rumahan di Banyuwangi, Surya Snack tumbuh dengan memegang teguh prinsip keaslian resep leluhur. Kami percaya bahwa makanan terbaik dibuat bukan dari mesin, melainkan dari ketelitian dan bahan-bahan pilihan berkualitas tinggi.
+              Berawal dari dapur rumahan di Banyuwangi, Surya Snack tumbuh dengan memegang teguh prinsip keaslian resep leluhur.
             </p>
-            <div className="grid grid-cols-2 gap-6 pt-4 border-t border-white/10 font-sans">
-              <div>
-                <h4 className="text-3xl font-serif font-bold text-amber-400">25+</h4>
-                <p className="text-xs text-gray-300 uppercase tracking-wider mt-1">Tahun Pengalaman</p>
-              </div>
-              <div>
-                <h4 className="text-3xl font-serif font-bold text-amber-400">100%</h4>
-                <p className="text-xs text-gray-300 uppercase tracking-wider mt-1">Bahan Alami Lokal</p>
-              </div>
-            </div>
           </div>
-
           <div className="relative h-80 sm:h-105 rounded-lg overflow-hidden border-4 border-amber-400/30 shadow-2xl">
             <Image
               src="https://images.unsplash.com/photo-1556910103-1c02745aae4d?q=80&w=600"
@@ -229,9 +267,6 @@ export default async function HomePage() {
           <h2 className="text-2xl sm:text-4xl font-serif font-bold text-[#3b0912]">
             Siap Menikmati Kelezatan Khas Banyuwangi?
           </h2>
-          <p className="text-gray-600 text-sm max-w-xl mx-auto text-justify sm:text-center">
-            Pesan langsung melalui katalog digital kami atau hubungi admin via WhatsApp untuk pemesanan khusus dan pengiriman ke seluruh wilayah.
-          </p>
           <div className="flex flex-wrap items-center justify-center gap-4 pt-2">
             <Link
               href="/katalog"
