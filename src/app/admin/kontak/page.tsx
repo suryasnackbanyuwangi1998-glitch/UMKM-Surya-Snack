@@ -1,3 +1,4 @@
+// src/app/admin/kontak/page.tsx
 "use client";
 
 import React, { useState, useEffect } from "react";
@@ -14,7 +15,7 @@ import {
   faTiktok,
 } from "@fortawesome/free-brands-svg-icons";
 import { faLocationDot } from "@fortawesome/free-solid-svg-icons";
-// import { supabase } from "@/lib/supabase";
+import { supabase } from "@/lib/supabase";
 
 interface ContactsState {
   whatsapp1: string;
@@ -26,17 +27,18 @@ interface ContactsState {
 
 export default function AdminKontakPage() {
   const [contacts, setContacts] = useState<ContactsState>({
-    whatsapp1: "081234567890",
-    whatsapp2: "080987654321",
-    instagram: "suryasnack_banyuwangi",
-    alamat: "Jl. Diponegoro No. 45, Banyuwangi",
-    tiktok: "@suryasnack",
+    whatsapp1: "",
+    whatsapp2: "",
+    instagram: "",
+    alamat: "",
+    tiktok: "",
   });
 
-  const [loading, setLoading] = useState<boolean>(false);
+  const [loading, setLoading] = useState<boolean>(true);
   const [savingSection, setSavingSection] = useState<string | null>(null);
   const [notification, setNotification] = useState<string>("");
 
+  // Ambil data kontak dari tabel "contacts" di Supabase saat halaman dimuat
   useEffect(() => {
     fetchContacts();
   }, []);
@@ -44,8 +46,25 @@ export default function AdminKontakPage() {
   const fetchContacts = async () => {
     try {
       setLoading(true);
-    } catch (error: unknown) {
-      console.error("Gagal memuat kontak:", error);
+      const { data, error } = await supabase
+        .from("contacts")
+        .select("*")
+        .eq("id", "informasi_utama")
+        .maybeSingle();
+
+      if (error) throw error;
+
+      if (data) {
+        setContacts({
+          whatsapp1: data.whatsapp1 || "",
+          whatsapp2: data.whatsapp2 || "",
+          instagram: data.instagram || "",
+          alamat: data.alamat || "",
+          tiktok: data.tiktok || "",
+        });
+      }
+    } catch (error: any) {
+      console.error("Gagal memuat kontak:", error.message);
     } finally {
       setLoading(false);
     }
@@ -58,7 +77,7 @@ export default function AdminKontakPage() {
     }));
   };
 
-  const handleDelete = (fieldsToClear: (keyof ContactsState)[]) => {
+  const handleDelete = async (fieldsToClear: (keyof ContactsState)[]) => {
     setContacts((prev) => {
       const updated = { ...prev };
       fieldsToClear.forEach((field) => {
@@ -66,16 +85,46 @@ export default function AdminKontakPage() {
       });
       return updated;
     });
-    setNotification("Berhasil mengosongkan data!");
-    setTimeout(() => setNotification(""), 3000);
+
+    try {
+      const clearData: any = {};
+      fieldsToClear.forEach((field) => {
+        clearData[field] = "";
+      });
+
+      // Update tabel "contacts" di Supabase untuk mengosongkan kolom
+      const { error } = await supabase
+        .from("contacts")
+        .update({ ...clearData })
+        .eq("id", "informasi_utama");
+
+      if (error) throw error;
+
+      setNotification("Berhasil mengosongkan dan menyimpan data!");
+      setTimeout(() => setNotification(""), 3000);
+    } catch (error: any) {
+      alert("Gagal menghapus data: " + error.message);
+    }
   };
 
   const handleSave = async (sectionName: string) => {
     setSavingSection(sectionName);
     try {
+      // Simpan/upsert data ke tabel "contacts" dengan id "informasi_utama"
+      const { error } = await supabase.from("contacts").upsert({
+        id: "informasi_utama",
+        whatsapp1: contacts.whatsapp1,
+        whatsapp2: contacts.whatsapp2,
+        instagram: contacts.instagram,
+        alamat: contacts.alamat,
+        tiktok: contacts.tiktok,
+      });
+
+      if (error) throw error;
+
       setNotification(`Berhasil menyimpan data ${sectionName} ke Database!`);
       setTimeout(() => setNotification(""), 3000);
-    } catch (error: unknown) {
+    } catch (error: any) {
       const errMessage = error instanceof Error ? error.message : "Terjadi kesalahan";
       alert("Gagal menyimpan: " + errMessage);
     } finally {
@@ -297,7 +346,7 @@ export default function AdminKontakPage() {
               className="flex-1 bg-amber-500 hover:bg-amber-600 text-white font-bold py-2 px-3 rounded-xl text-xs flex items-center justify-center gap-2 transition cursor-pointer shadow-sm disabled:opacity-50"
             >
               {savingSection === "TikTok" ? (
-                <FontAwesomeIcon icon= {faSpinner} className="animate-spin" />
+                <FontAwesomeIcon icon={faSpinner} className="animate-spin" />
               ) : (
                 <FontAwesomeIcon icon={faFloppyDisk} />
               )}

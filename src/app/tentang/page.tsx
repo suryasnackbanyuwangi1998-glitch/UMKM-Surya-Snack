@@ -1,3 +1,4 @@
+// src/app/tentang/page.tsx
 import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -127,7 +128,7 @@ export default function TentangKamiPage(): React.ReactElement {
   ];
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-[#FAF8F5] font-sans text-gray-800 antialiased selection:bg-[#5c0f1c] selection:text-white">
+    <div className="relative min-h-screen overflow-hidden bg-[#FAF8F5] font-sans text-gray-800 antialiased selection:bg-[#5c0f1c] selection:text-amber-100">
       
       {/* ============================================================
           BACKGROUND PREMIUM (konsisten dengan halaman detail)
@@ -143,9 +144,9 @@ export default function TentangKamiPage(): React.ReactElement {
           WebkitMaskImage: 'radial-gradient(ellipse at center, transparent 8%, black 72%)',
         }}
       />
-      <div className="pointer-events-none absolute -top-48 -left-24 -z-10 h-[680px] w-[680px] rounded-full bg-gradient-to-br from-amber-200/50 via-orange-100/25 to-transparent blur-[140px]" />
-      <div className="pointer-events-none absolute top-1/3 -right-32 -z-10 h-[620px] w-[620px] rounded-full bg-gradient-to-bl from-rose-200/40 via-amber-100/20 to-transparent blur-[130px]" />
-      <div className="pointer-events-none absolute -bottom-40 left-1/4 -z-10 h-[650px] w-[650px] rounded-full bg-gradient-to-tr from-[rgba(92,15,28,0.08)] via-amber-100/25 to-transparent blur-[150px]" />
+      <div className="pointer-events-none absolute -top-48 -left-24 -z-10 h-170 w-170 rounded-full bg-linear-to-br from-amber-200/50 via-orange-100/25 to-transparent blur-[140px]" />
+      <div className="pointer-events-none absolute top-1/3 -right-32 -z-10 h-155 w-155 rounded-full bg-linear-to-bl from-rose-200/40 via-amber-100/20 to-transparent blur-[130px]" />
+      <div className="pointer-events-none absolute -bottom-40 left-1/4 -z-10 h-162.5 w-162.5 rounded-full bg-linear-to-tr from-[rgba(92,15,28,0.08)] via-amber-100/25 to-transparent blur-[150px]" />
 
       <div className="relative z-10">
         
@@ -157,26 +158,29 @@ export default function TentangKamiPage(): React.ReactElement {
             
             {/* Kiri: Judul & Intro */}
             <div className="space-y-6 lg:col-span-7">
-              <span className="inline-flex items-center gap-2 rounded-full border border-[#5c0f1c]/10 bg-[#5c0f1c]/10 px-4 py-1.5 text-[11px] font-extrabold uppercase tracking-[0.2em] text-[#5c0f1c]">
-                <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-[#5c0f1c]" />
-                Tentang Surya Snack
-              </span>
+              <div className="inline-flex items-center gap-3 px-5 py-2 rounded-full border border-amber-400/40 bg-[#3b0912]/90 backdrop-blur-md shadow-xl">
+                <span className="text-amber-400 text-xs tracking-widest font-serif">★ EST. 1998 ★</span>
+                <span className="w-1 h-1 rounded-full bg-amber-400"></span>
+                <span className="text-amber-200 text-xs uppercase tracking-wider font-sans font-semibold">
+                  Tentang Surya Snack
+                </span>
+              </div>
 
-              <h1 className="text-4xl font-black leading-[1.08] tracking-tight text-gray-900 sm:text-5xl md:text-6xl">
+              <h1 className="text-4xl font-serif font-bold leading-[1.08] tracking-tight text-[#3b0912] sm:text-5xl md:text-6xl">
                 Warisan Cita Rasa,{' '}
-                <span className="bg-gradient-to-r from-[#5c0f1c] via-[#7a1425] to-[#5c0f1c] bg-clip-text text-transparent">
+                <span className="italic font-normal text-[#5c0f1c]">
                   Menjaga Rasa Asli
                 </span>
               </h1>
 
-              <p className="max-w-xl text-base leading-relaxed text-gray-600 md:text-lg">
+              <p className="max-w-xl text-base leading-relaxed text-gray-600 md:text-lg font-sans font-light">
                 Berawal dari dapur sederhana di Banyuwangi pada tahun 1998, kami
                 mendedikasikan diri untuk menghadirkan camilan tradisional
-                terbaik yang penuh kehangatan keluarga.
+                berkualitas tinggi dengan resep pusaka leluhur.
               </p>
 
               {/* Chips kepercayaan */}
-              <div className="flex flex-wrap gap-2 pt-1">
+              <div className="flex flex-wrap gap-2 pt-1 font-sans">
                 {heroChips.map((chip) => (
                   <span
                     key={chip.label}
@@ -190,7 +194,7 @@ export default function TentangKamiPage(): React.ReactElement {
             </div>
 
             {/* Kanan: Stats 2x2 */}
-            <div className="grid grid-cols-2 gap-4 lg:col-span-5">
+            <div className="grid grid-cols-2 gap-4 lg:col-span-5 font-sans">
               {stats.map((stat) => (
                 <div
                   key={stat.label}
@@ -198,8 +202,8 @@ export default function TentangKamiPage(): React.ReactElement {
                     stat.tone === 'dark'
                       ? 'bg-[#5c0f1c] text-white shadow-lg shadow-[#5c0f1c]/25'
                       : stat.tone === 'amber'
-                        ? 'border border-amber-200/60 bg-amber-50 shadow-sm hover:shadow-md'
-                        : 'border border-[#EBE3D5] bg-white shadow-sm hover:shadow-md'
+                      ? 'border border-amber-200/60 bg-amber-50 shadow-sm hover:shadow-md'
+                      : 'border border-[#EBE3D5] bg-white shadow-sm hover:shadow-md'
                   }`}
                 >
                   <span
@@ -207,21 +211,21 @@ export default function TentangKamiPage(): React.ReactElement {
                       stat.tone === 'dark'
                         ? 'text-amber-300'
                         : stat.tone === 'amber'
-                          ? 'text-amber-700'
-                          : 'text-[#5c0f1c]'
+                        ? 'text-amber-700'
+                        : 'text-[#5c0f1c]'
                     }`}
                   >
                     {stat.label}
                   </span>
                   <p
-                    className={`text-3xl font-extrabold tracking-tight sm:text-4xl ${
-                      stat.tone === 'dark' ? 'text-white' : 'text-gray-900'
+                    className={`text-3xl font-serif font-extrabold tracking-tight sm:text-4xl ${
+                      stat.tone === 'dark' ? 'text-white' : 'text-[#3b0912]'
                     }`}
                   >
                     {stat.value}
                   </p>
                   <p
-                    className={`text-[11px] leading-relaxed sm:text-xs ${
+                    className={`text-[11px] leading-relaxed sm:text-xs font-light ${
                       stat.tone === 'dark' ? 'text-white/70' : 'text-gray-500'
                     }`}
                   >
@@ -236,7 +240,7 @@ export default function TentangKamiPage(): React.ReactElement {
         {/* ============================================================
             SECTION 1 — SEJARAH (TIMELINE VERTIKAL)
             ============================================================ */}
-        <section className="mx-auto max-w-6xl px-4 py-12 sm:px-6 sm:py-16">
+        <section className="mx-auto max-w-6xl px-4 py-12 sm:px-6 sm:py-16 font-sans">
           <div className="grid items-stretch overflow-hidden rounded-3xl border border-[#EBE3D5] bg-white shadow-xl lg:grid-cols-12">
             
             {/* Gambar + quote overlay */}
@@ -252,8 +256,8 @@ export default function TentangKamiPage(): React.ReactElement {
               <span className="absolute left-6 top-6 rounded-full bg-[#5c0f1c] px-3.5 py-1.5 text-[11px] font-bold uppercase tracking-widest text-white shadow-md">
                 Sejak 1998
               </span>
-              <p className="absolute inset-x-6 bottom-6 text-sm font-medium italic leading-relaxed text-white sm:text-base">
-                &ldquo;Konsistensi adalah resep utama kami bertahan hingga hari ini.&rdquo;
+              <p className="absolute inset-x-6 bottom-6 text-sm font-serif italic leading-relaxed text-white sm:text-base">
+                &ldquo;Konsistensi rasa otentik adalah resep utama kami bertahan hingga hari ini.&rdquo;
               </p>
             </div>
 
@@ -263,7 +267,7 @@ export default function TentangKamiPage(): React.ReactElement {
                 <span className="text-xs font-bold uppercase tracking-widest text-[#5c0f1c]">
                   Perjalanan Waktu
                 </span>
-                <h2 className="text-2xl font-bold text-gray-900 md:text-3xl">
+                <h2 className="text-2xl font-serif font-bold text-[#3b0912] md:text-3xl">
                   Jejak Langkah Surya Snack
                 </h2>
               </div>
@@ -283,10 +287,10 @@ export default function TentangKamiPage(): React.ReactElement {
                     <span className="text-xs font-black uppercase tracking-widest text-[#5c0f1c]">
                       {item.year}
                     </span>
-                    <h3 className="mt-1 text-base font-bold text-gray-900 md:text-lg">
+                    <h3 className="mt-1 text-base font-serif font-bold text-gray-900 md:text-lg">
                       {item.title}
                     </h3>
-                    <p className="mt-2 text-sm leading-relaxed text-gray-600 md:text-base">
+                    <p className="mt-2 text-sm leading-relaxed text-gray-600 md:text-base font-light">
                       {item.desc}
                     </p>
                   </div>
@@ -299,10 +303,10 @@ export default function TentangKamiPage(): React.ReactElement {
         {/* ============================================================
             SECTION 2 — VISI & PILAR MISI
             ============================================================ */}
-        <section className="mx-auto max-w-6xl space-y-10 px-4 py-12 sm:px-6 sm:py-16">
+        <section className="mx-auto max-w-6xl space-y-10 px-4 py-12 sm:px-6 sm:py-16 font-sans">
           
           {/* Banner Visi */}
-          <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-[#5c0f1c] to-[#3a0911] p-8 text-white shadow-xl md:p-14">
+          <div className="relative overflow-hidden rounded-3xl bg-linear-to-r from-[#5c0f1c] to-[#3a0911] p-8 text-white shadow-xl md:p-14">
             <div
               className="pointer-events-none absolute inset-0 opacity-[0.07]"
               style={{
@@ -321,9 +325,7 @@ export default function TentangKamiPage(): React.ReactElement {
                 className="mx-auto h-7 w-7 text-amber-300/50"
               />
               <blockquote className="font-serif text-xl italic leading-relaxed text-gray-100 md:text-2xl">
-                &ldquo;Menjadi ikon kuliner oleh-oleh khas Banyuwangi yang
-                terdepan, terpercaya, dan mendunia dengan mengusung kekuatan
-                budaya serta cita rasa nusantara.&rdquo;
+                &ldquo;Menjadi pusat oleh-oleh khas Banyuwangi terdepan dan terpercaya dengan menjunjung tinggi kualitas rasa tradisional serta kearifan lokal.&rdquo;
               </blockquote>
             </div>
           </div>
@@ -336,22 +338,22 @@ export default function TentangKamiPage(): React.ReactElement {
                 className="group relative flex flex-col justify-between space-y-4 overflow-hidden rounded-2xl border border-[#EBE3D5] bg-white p-6 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-[#5c0f1c]/30 hover:shadow-xl"
               >
                 {/* Garis aksen saat hover */}
-                <span className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-[#5c0f1c] to-amber-400 opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+                <span className="absolute inset-x-0 top-0 h-1 bg-linear-to-r from-[#5c0f1c] to-amber-400 opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
 
                 <div className="flex items-center justify-between">
                   <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#FAF8F5] text-[#5c0f1c] shadow-sm transition-colors duration-300 group-hover:bg-[#5c0f1c] group-hover:text-white">
                     <FontAwesomeIcon icon={item.icon} className="h-5 w-5" />
                   </div>
-                  <span className="text-2xl font-black text-gray-200 transition-colors duration-300 group-hover:text-[#5c0f1c]/20">
+                  <span className="text-2xl font-black text-gray-200 transition-colors duration-300 group-hover:text-[#5c0f1c]/20 font-serif">
                     {item.num}
                   </span>
                 </div>
 
                 <div className="space-y-1.5">
-                  <h3 className="text-sm font-bold uppercase tracking-wide text-gray-900">
+                  <h3 className="text-sm font-serif font-bold text-[#3b0912]">
                     {item.title}
                   </h3>
-                  <p className="text-xs leading-relaxed text-gray-500">{item.desc}</p>
+                  <p className="text-xs leading-relaxed text-gray-500 font-light">{item.desc}</p>
                 </div>
               </div>
             ))}
@@ -361,7 +363,7 @@ export default function TentangKamiPage(): React.ReactElement {
         {/* ============================================================
             SECTION 3 — NILAI (EDITORIAL SPLIT, JUDUL STICKY)
             ============================================================ */}
-        <section className="mx-auto max-w-6xl px-4 py-12 sm:px-6 sm:py-16">
+        <section className="mx-auto max-w-6xl px-4 py-12 sm:px-6 sm:py-16 font-sans">
           <div className="grid gap-10 lg:grid-cols-12 lg:gap-14">
             
             {/* Kiri: judul sticky */}
@@ -370,15 +372,15 @@ export default function TentangKamiPage(): React.ReactElement {
                 <span className="text-xs font-bold uppercase tracking-widest text-[#5c0f1c]">
                   Kearifan Lokal
                 </span>
-                <h2 className="text-2xl font-bold text-gray-900 md:text-3xl">
+                <h2 className="text-2xl font-serif font-bold text-[#3b0912] md:text-3xl">
                   Nilai yang Kami Jaga
                 </h2>
-                <p className="text-sm leading-relaxed text-gray-500 md:text-base">
+                <p className="text-sm leading-relaxed text-gray-500 md:text-base font-light">
                   Pilar moral dan etika kerja yang dipegang teguh oleh seluruh
                   tim Surya Snack — dari dapur produksi hingga sampai ke tangan
-                  Anda.
+                  Anda dengan penuh kepuasan.
                 </p>
-                <div className="hidden h-1 w-16 rounded-full bg-gradient-to-r from-[#5c0f1c] to-amber-400 lg:block" />
+                <div className="hidden h-1 w-16 rounded-full bg-linear-to-r from-[#5c0f1c] to-amber-400 lg:block" />
               </div>
             </div>
 
@@ -393,12 +395,12 @@ export default function TentangKamiPage(): React.ReactElement {
                     <FontAwesomeIcon icon={item.icon} className="h-4 w-4" />
                   </div>
                   <div className="min-w-0 flex-1 space-y-1.5">
-                    <h3 className="text-base font-bold text-gray-900 md:text-lg">
+                    <h3 className="text-base font-serif font-bold text-[#3b0912] md:text-lg">
                       {item.title}
                     </h3>
-                    <p className="text-sm leading-relaxed text-gray-600">{item.desc}</p>
+                    <p className="text-sm leading-relaxed text-gray-600 font-light">{item.desc}</p>
                   </div>
-                  <span className="text-2xl font-black text-gray-200 transition-colors duration-300 group-hover:text-[#5c0f1c]/20">
+                  <span className="text-2xl font-black text-gray-200 transition-colors duration-300 group-hover:text-[#5c0f1c]/20 font-serif">
                     0{idx + 1}
                   </span>
                 </div>
@@ -410,8 +412,8 @@ export default function TentangKamiPage(): React.ReactElement {
         {/* ============================================================
             SECTION 4 — CTA GRADIEN MAROON
             ============================================================ */}
-        <section className="mx-auto max-w-6xl px-4 pb-20 pt-4 sm:px-6 sm:pb-24">
-          <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#5c0f1c] via-[#6b1220] to-[#3a0911] p-10 text-center shadow-2xl shadow-[#5c0f1c]/25 md:p-16">
+        <section className="mx-auto max-w-5xl px-4 pb-20 pt-4 sm:px-6 sm:pb-24 font-sans">
+          <div className="relative overflow-hidden rounded-3xl bg-linear-to-br from-[#5c0f1c] via-[#6b1220] to-[#3a0911] p-10 text-center shadow-2xl shadow-[#5c0f1c]/25 md:p-16">
             <div
               className="pointer-events-none absolute inset-0 opacity-[0.08]"
               style={{
@@ -428,31 +430,31 @@ export default function TentangKamiPage(): React.ReactElement {
                 Cita Rasa Khas Banyuwangi
               </span>
 
-              <h2 className="text-3xl font-black leading-tight tracking-tight text-white md:text-5xl">
+              <h2 className="text-3xl font-serif font-bold leading-tight tracking-tight text-white md:text-4xl">
                 Siap Menikmati Kelezatan Tradisi Kami?
               </h2>
 
-              <p className="text-sm leading-relaxed text-white/70 md:text-base">
-                Temukan berbagai pilihan camilan renyah dan gurih terbaik yang
-                siap melengkapi momen santai Anda hari ini.
+              <p className="text-sm leading-relaxed text-white/70 md:text-base font-light">
+                Temukan berbagai pilihan camilan renyah dan gurih berkualitas tinggi yang
+                siap melengkapi momen santai dan kebersamaan Anda.
               </p>
 
               <div className="flex flex-col justify-center gap-3 pt-2 sm:flex-row">
                 <Link
                   href="/katalog"
-                  className="inline-flex items-center justify-center gap-2 rounded-xl bg-white px-7 py-3.5 text-sm font-bold text-[#5c0f1c] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-xl"
+                  className="inline-flex items-center justify-center gap-2 rounded-xl bg-white px-7 py-3.5 text-xs font-bold uppercase tracking-widest text-[#5c0f1c] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-xl"
                 >
-                  Jelajah Katalog
+                  Jelajahi Katalog
                   <FontAwesomeIcon icon={faArrowRight} className="h-3.5 w-3.5" />
                 </Link>
                 <a
                   href={waHref}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center justify-center gap-2 rounded-xl border-2 border-white/25 px-7 py-3.5 text-sm font-bold text-white transition-all duration-300 hover:border-white/60 hover:bg-white/10"
+                  className="inline-flex items-center justify-center gap-2 rounded-xl border-2 border-white/25 px-7 py-3.5 text-xs font-bold uppercase tracking-widest text-white transition-all duration-300 hover:border-white/60 hover:bg-white/10"
                 >
                   <FontAwesomeIcon icon={faWhatsapp} className="h-4 w-4" />
-                  Chat Admin
+                  <span>Chat Admin</span>
                 </a>
               </div>
             </div>

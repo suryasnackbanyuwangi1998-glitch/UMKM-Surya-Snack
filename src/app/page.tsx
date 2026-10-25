@@ -29,22 +29,37 @@ export default function HomePage() {
       image_url: "/hero-background.jpg"
     }
   ]);
+  
+  const [storeLabel, setStoreLabel] = useState<string>("Oleh-Oleh Khas Banyuwangi");
   const [currentSlide, setCurrentSlide] = useState(0);
 
-  // Ambil produk unggulan dan banner dari Supabase
   useEffect(() => {
     async function fetchData() {
       try {
-        const prod = await getFeaturedProducts(4);
-        setProducts(prod);
+        const prod = await getFeaturedProducts(10);
+        if (prod) {
+          setProducts(prod);
+        }
 
-        const { data: bannerData } = await supabase
+        const { data: bannerData, error: bannerError } = await supabase
           .from('store_banners')
           .select('*')
           .order('banner_number', { ascending: true });
 
+        if (bannerError) throw bannerError;
         if (bannerData && bannerData.length > 0) {
           setBanners(bannerData);
+        }
+
+        const { data: storeData, error: storeError } = await supabase
+          .from('store_settings')
+          .select('store_label')
+          .eq('id', 'main')
+          .maybeSingle();
+
+        if (storeError) throw storeError;
+        if (storeData && storeData.store_label) {
+          setStoreLabel(storeData.store_label);
         }
       } catch (err) {
         console.error("Gagal memuat beranda:", err);
@@ -53,7 +68,6 @@ export default function HomePage() {
     fetchData();
   }, []);
 
-  // Timer Slideshow otomatis setiap 5 detik
   useEffect(() => {
     if (banners.length <= 1) return;
     const timer = setInterval(() => {
@@ -98,17 +112,18 @@ export default function HomePage() {
             alt={activeBanner.title}
             fill
             priority
-            className="object-cover object-center filter brightness-[0.55] contrast-110"
+            className="object-cover object-center filter brightness-[0.6] contrast-105"
           />
         </div>
         <div className="absolute inset-0 bg-linear-to-t from-[#1a120e]/80 via-black/30 to-black/50" />
 
         <div className="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 space-y-6 pt-16 transition-all duration-500">
+          
           <div className="inline-flex items-center gap-3 px-5 py-2 rounded-full border border-amber-400/40 bg-[#3b0912]/80 backdrop-blur-md shadow-xl mx-auto">
             <span className="text-amber-400 text-xs tracking-widest">★ EST. 1998 ★</span>
             <span className="w-1 h-1 rounded-full bg-amber-400"></span>
             <span className="text-amber-200 text-xs uppercase tracking-wider font-sans font-semibold">
-              Oleh-Oleh Khas Banyuwangi
+              {storeLabel}
             </span>
           </div>
 
@@ -139,7 +154,6 @@ export default function HomePage() {
           </div>
         </div>
 
-        {/* Indikator Titik (Dots) untuk Slide Aktif */}
         {banners.length > 1 && (
           <div className="absolute bottom-6 z-20 flex items-center gap-2">
             {banners.map((_, idx) => (
@@ -170,8 +184,8 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ================= 3. PRODUK UNGGULAN ================= */}
-      <section className="py-20 sm:py-28 max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 space-y-12">
+      {/* ================= 3. PRODUK UNGGULAN (SCROLL KESAMPING / HORIZONTAL) ================= */}
+      <section className="py-20 sm:py-28 max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 space-y-12 overflow-hidden">
         <div className="text-center max-w-2xl mx-auto space-y-3">
           <span className="text-[#5c0f1c] text-xs font-bold tracking-[0.3em] uppercase font-sans">
             ✦ Koleksi Pilihan ✦
@@ -180,7 +194,7 @@ export default function HomePage() {
             Produk Unggulan Kami
           </h2>
           <p className="text-gray-600 font-sans text-sm">
-            Camilan terlaris yang selalu dirindukan para penikmat kuliner tradisional.
+            Camilan terlaris yang selalu dirindukan para penikmat kuliner tradisional. (Geser ke samping untuk melihat lainnya)
           </p>
           <div className="w-24 h-px bg-amber-500/50 mx-auto pt-2" />
         </div>
@@ -190,14 +204,16 @@ export default function HomePage() {
             Belum ada produk unggulan di database.
           </div>
         ) : (
-          <div className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+          <div className="flex overflow-x-auto gap-6 pb-6 pt-2 px-2 snap-x snap-mandatory scrollbar-thin scrollbar-thumb-amber-700 scrollbar-track-amber-100">
             {products.map((product) => (
-              <ProductCard key={product.id} product={product} />
+              <div key={product.id} className="min-w-65 sm:min-w-70 md:min-w-75 snap-start shrink-0">
+                <ProductCard product={product} />
+              </div>
             ))}
           </div>
         )}
 
-        <div className="text-center pt-6 font-sans">
+        <div className="text-center pt-2 font-sans">
           <Link
             href="/katalog"
             className="inline-flex items-center gap-2 bg-[#3b0912] hover:bg-[#5c0f1c] text-amber-200 font-bold px-8 py-3.5 rounded-md transition text-xs uppercase tracking-widest shadow-md hover:scale-105"

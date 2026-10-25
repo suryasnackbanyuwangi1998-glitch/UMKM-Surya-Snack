@@ -11,7 +11,6 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faBoxesStacked,
   faTags,
-  faCircleCheck,
   faArrowRight,
   faStore,
   faFloppyDisk,
@@ -20,7 +19,7 @@ import {
   faPlus,
   faTrashCan,
   faXmark,
-  faCloudArrowUp,
+  faStar,
 } from "@fortawesome/free-solid-svg-icons";
 
 interface StoreInfo {
@@ -63,6 +62,7 @@ export default function AdminDashboardPage() {
       try {
         setLoading(true);
         
+        // Ambil semua produk untuk statistik total
         const { data: productData } = await supabase.from("products").select("*");
         if (productData) {
           setTotalProducts(productData.length);
@@ -72,8 +72,11 @@ export default function AdminDashboardPage() {
           setTotalCategories(uniqueCategories.size);
         }
 
-        const featured = await getFeaturedProducts(10);
-        setFeaturedProducts(featured);
+        // Ambil produk unggulan menggunakan fungsi yang sama dengan beranda
+        const featured = await getFeaturedProducts(20);
+        if (featured) {
+          setFeaturedProducts(featured);
+        }
 
         const { data: storeData } = await supabase
           .from("store_settings")
@@ -157,7 +160,6 @@ export default function AdminDashboardPage() {
     try {
       let imageUrl = selectedBanner.image_url;
 
-      // Jika user mengunggah file gambar baru di pop-up edit
       if (newImageFile) {
         const fileExt = newImageFile.name.split(".").pop();
         const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
@@ -217,7 +219,7 @@ export default function AdminDashboardPage() {
           href="/admin/produk"
           className="bg-[#3b0912] hover:bg-[#5c0f1c] text-amber-200 text-xs font-bold px-5 py-3.5 rounded-xl transition shadow-md flex items-center gap-2 w-fit font-sans uppercase tracking-widest cursor-pointer"
         >
-          <span>📦 Kelola Produk</span>
+          <span>Kelola Produk</span>
           <FontAwesomeIcon icon={faArrowRight} className="w-3 h-3 text-amber-400" />
         </Link>
       </div>
@@ -244,12 +246,59 @@ export default function AdminDashboardPage() {
         </div>
       </div>
 
+      {/* SECTION PREVIEW PRODUK UNGGULAN (DARI HALAMAN PRODUK) */}
+      <div className="bg-white border border-amber-900/15 p-6 md:p-8 rounded-3xl shadow-sm space-y-6 font-sans">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-lg font-serif font-bold text-[#3b0912] flex items-center gap-2">
+              Daftar Produk Terlaris
+            </h2>
+            <p className="text-xs text-gray-500">
+              Produk di bawah ini adalah produk yang sedang aktif tampil sebagai unggulan di beranda. Atur melalui menu Kelola Produk.
+            </p>
+          </div>
+          <Link
+            href="/admin/produk"
+            className="text-xs font-bold text-amber-700 hover:underline flex items-center gap-1"
+          >
+            Atur di Kelola Produk →
+          </Link>
+        </div>
+
+        {featuredProducts.length === 0 ? (
+          <div className="text-center py-12 bg-gray-50 rounded-2xl border border-dashed border-gray-200 text-gray-400 text-xs">
+            Belum ada produk yang ditandai sebagai unggulan. Silakan centang produk di halaman Kelola Produk.
+          </div>
+        ) : (
+          <div className="flex overflow-x-auto gap-4 pb-4 pt-1 snap-x scrollbar-thin scrollbar-thumb-amber-600">
+            {featuredProducts.map((prod) => (
+              <div
+                key={prod.id}
+                className="min-w-55 max-w-55 bg-[#FDFBF7] border border-amber-900/10 rounded-2xl p-4 flex flex-col justify-between shrink-0 shadow-xs"
+              >
+                <div>
+                  <div className="relative h-28 rounded-xl overflow-hidden bg-gray-100 mb-3">
+                    <img src={prod.image_url || "/placeholder.png"} alt={prod.name} className="w-full h-full object-cover" />
+                    <span className="absolute top-2 left-2 bg-amber-500 text-white text-[9px] font-bold px-2 py-0.5 rounded-md uppercase tracking-wider">
+                      Unggulan
+                    </span>
+                  </div>
+                  <h3 className="text-xs font-serif font-bold text-[#3b0912] line-clamp-1">{prod.name}</h3>
+                  <p className="text-[11px] font-sans font-semibold text-amber-800 mt-1">
+                    Rp {Number(prod.price).toLocaleString("id-ID")}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
       {/* INFORMASI TOKO */}
       <div className="bg-white border border-amber-900/15 p-6 md:p-8 rounded-3xl shadow-sm space-y-5 font-sans">
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-sm font-serif font-bold text-[#3b0912] flex items-center gap-2 uppercase tracking-wider">
-              <FontAwesomeIcon icon={faStore} className="text-amber-600" />
               <span>Informasi Toko</span>
             </h2>
             <p className="text-xs text-gray-500 mt-0.5">Kelola nama dan label identitas toko.</p>
