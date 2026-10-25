@@ -243,8 +243,8 @@ export default function TentangKamiPage(): React.ReactElement {
         <section className="mx-auto max-w-6xl px-4 py-12 sm:px-6 sm:py-16 font-sans">
           <div className="grid items-stretch overflow-hidden rounded-3xl border border-[#EBE3D5] bg-white shadow-xl lg:grid-cols-12">
             
-            {/* Gambar + quote overlay */}
-            <div className="relative min-h-[280px] sm:min-h-[360px] lg:col-span-5 lg:min-h-0">
+            {/* Gambar + quote overlay (diperbaiki ke min-h-70 & sm:min-h-90) */}
+            <div className="relative min-h-70 sm:min-h-90 lg:col-span-5 lg:min-h-0">
               <Image
                 src="/foto-depan.jpeg"
                 alt="Toko Surya Snack Banyuwangi"
@@ -252,7 +252,8 @@ export default function TentangKamiPage(): React.ReactElement {
                 sizes="(max-width: 1024px) 100vw, 40vw"
                 className="object-cover"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/10 to-transparent" />
+              {/* Diperbaiki ke bg-linear-to-t */}
+              <div className="absolute inset-0 bg-linear-to-t from-black/75 via-black/10 to-transparent" />
               <span className="absolute left-6 top-6 rounded-full bg-[#5c0f1c] px-3.5 py-1.5 text-[11px] font-bold uppercase tracking-widest text-white shadow-md">
                 Sejak 1998
               </span>
@@ -273,10 +274,10 @@ export default function TentangKamiPage(): React.ReactElement {
               </div>
 
               <div className="relative mt-8 space-y-9">
-                {/* Garis timeline */}
+                {/* Garis timeline (diperbaiki ke left-2.25) */}
                 <span
                   aria-hidden="true"
-                  className="absolute bottom-2 left-[9px] top-2 w-0.5 bg-[#EBE3D5]"
+                  className="absolute bottom-2 left-2.25 top-2 w-0.5 bg-[#EBE3D5]"
                 />
                 {timeline.map((item) => (
                   <div key={item.year} className="relative pl-10">
