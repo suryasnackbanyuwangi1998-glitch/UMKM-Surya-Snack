@@ -20,27 +20,19 @@ export default async function KatalogPage({ searchParams }: PageProps) {
   const currentPage = Number(page) || 1;
   const itemsPerPage = 8; 
 
-  // Mengambil daftar kategori unik secara dinamis langsung dari produk di database
-  const uniqueCategoryNames = Array.from(
-    new Set(
-      allProducts
-        .map((p) => p.category?.trim())
-        .filter((cat): cat is string => Boolean(cat && cat !== ''))
-    )
-  ).sort((a, b) => {
-    // Menempatkan kategori seperti 'Lainnya' atau 'Other' di urutan paling bawah
-    if (a.toLowerCase() === 'lainnya' || a.toLowerCase() === 'other') return 1;
-    if (b.toLowerCase() === 'lainnya' || b.toLowerCase() === 'other') return -1;
-    return a.localeCompare(b); // Urutkan abjad A-Z untuk kategori lainnya
-  });
-
+  // Kategori dibatasi secara tetap (fix) hanya Makanan dan Minuman
   const categories = [
     { id: 'semua', label: 'Semua Produk', count: allProducts.length },
-    ...uniqueCategoryNames.map((catName) => ({
-      id: catName,
-      label: catName,
-      count: allProducts.filter((p) => p.category?.trim() === catName).length,
-    })),
+    { 
+      id: 'Makanan', 
+      label: 'Makanan', 
+      count: allProducts.filter((p) => p.category?.trim().toLowerCase() === 'makanan').length 
+    },
+    { 
+      id: 'Minuman', 
+      label: 'Minuman', 
+      count: allProducts.filter((p) => p.category?.trim().toLowerCase() === 'minuman').length 
+    },
   ];
 
   // 1. Filter produk berdasarkan pencarian & kategori yang dipilih
@@ -87,7 +79,7 @@ export default async function KatalogPage({ searchParams }: PageProps) {
                   type="text"
                   name="search"
                   defaultValue={search || ''}
-                  placeholder="Ketik nama camilan..."
+                  placeholder="Ketik nama makanan atau minuman..."
                   className="w-full bg-white text-gray-900 text-xs placeholder:text-gray-400 pl-3 pr-9 py-2.5 rounded-xl border border-amber-900/20 focus:outline-none focus:ring-2 focus:ring-[#5c0f1c] transition-all"
                 />
                 <button type="submit" className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-[#5c0f1c] transition-colors">
@@ -98,7 +90,7 @@ export default async function KatalogPage({ searchParams }: PageProps) {
               </form>
             </div>
 
-            {/* Daftar Kategori Sidebar (Dinamis sesuai Database) */}
+            {/* Daftar Kategori Sidebar (Makanan & Minuman) */}
             <div className="bg-[#FAF7F0] p-5 rounded-2xl border border-amber-900/10 shadow-sm font-sans space-y-3 transition-all duration-300 hover:shadow-md">
               <h3 className="font-serif font-bold text-sm text-[#3b0912] uppercase tracking-wider border-b border-amber-900/10 pb-2">
                 Kategori Pilihan
@@ -154,7 +146,7 @@ export default async function KatalogPage({ searchParams }: PageProps) {
               <div className="bg-[#FAF7F0] rounded-3xl p-12 text-center border-2 border-dashed border-amber-900/25 space-y-4 font-sans shadow-sm">
                 <h3 className="text-lg font-serif font-bold text-[#3b0912]">Produk Tidak Ditemukan</h3>
                 <p className="text-xs text-gray-600 max-w-md mx-auto">
-                  Maaf, tidak ada produk yang cocok dengan kriteria pencarian atau kategori yang Anda pilih.
+                  Maaf, tidak ada produk makanan atau minuman yang cocok dengan kriteria pencarian atau kategori yang Anda pilih.
                 </p>
                 <div>
                   <Link href="/katalog" className="bg-[#3b0912] hover:bg-[#5c0f1c] text-amber-200 font-bold px-6 py-3 rounded-xl text-xs uppercase tracking-widest transition-all duration-300 inline-block shadow-md hover:scale-105 active:scale-95">
