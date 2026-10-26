@@ -23,31 +23,61 @@ import {
   faBagShopping,
   faStore,
   faHeart,
-  faSeedling, 
+  faSeedling,
+  faLayerGroup,
 } from '@fortawesome/free-solid-svg-icons';
 import { faWhatsapp } from '@fortawesome/free-brands-svg-icons';
 import { useCart } from '@/context/CartProvider';
 import type { Product } from '@/types';
 
 interface ProductDetailClientProps {
-  product: Product;
+  product: Product & {
+    variants?: Array<{
+      id: string;
+      name: string;
+      price: number;
+      stock: number;
+      image_url?: string | null;
+    }>;
+  };
 }
 
 export default function ProductDetailClient({ product }: ProductDetailClientProps) {
   const router = useRouter();
   const { addToCart } = useCart();
 
+  // Validasi Varian
+  const validVariants = Array.isArray(product.variants)
+    ? product.variants.filter((v: any) => v && v.name && v.name.trim() !== '')
+    : [];
+  const hasVariants = validVariants.length > 0;
+
+  // State Varian yang Dipilih (default ke indeks 0 jika ada varian)
+  const [selectedVariantIndex, setSelectedVariantIndex] = useState<number>(hasVariants ? 0 : -1);
+  const activeVariant = hasVariants && selectedVariantIndex >= 0 ? validVariants[selectedVariantIndex] : null;
+
+  // Harga & Stok Aktif (berdasarkan varian atau produk utama)
+  const currentPrice = activeVariant ? activeVariant.price : product.price;
+  const currentStock = activeVariant ? activeVariant.stock : product.stock;
+
+  // ==========================================
+  // SUSUNAN GAMBAR: UTAMA DI PALING KIRI, LALU VARIAN
+  // ==========================================
+  const mainProductImage = product.image_url || (Array.isArray(product.images) && product.images.length > 0 ? product.images[0] : null) || 'https://images.unsplash.com/photo-1599490659213-e2b9527bd087?q=80&w=800';
+  
+  // Kumpulkan gambar varian
+  const variantImages = validVariants
+    .map((v) => v.image_url)
+    .filter(Boolean) as string[];
+
+  // Gabungkan: [Gambar Utama, ...Gambar Varian]
+  const images: string[] = Array.from(new Set([mainProductImage, ...variantImages]));
+
   const [selectedImage, setSelectedImage] = useState(0);
   const [zoomOpen, setZoomOpen] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [activeTab, setActiveTab] = useState<'deskripsi' | 'komposisi' | 'pemesanan'>('deskripsi');
-  
   const [quantity, setQuantity] = useState(0);
-
-  const images: string[] = [
-    product.image_url || 'https://images.unsplash.com/photo-1599490659213-e2b9527bd087?q=80&w=800',
-    ...(Array.isArray(product.images) ? product.images : product.images ? [product.images] : []),
-  ].filter(Boolean) as string[];
 
   const formatRupiah = (price: number | null | undefined): string =>
     price === null || price === undefined
@@ -64,22 +94,31 @@ export default function ProductDetailClient({ product }: ProductDetailClientProp
     setQuantity((prev) => prev + 1);
   };
 
-  const totalPrice = (product.price || 0) * quantity;
+  const totalPrice = (currentPrice || 0) * quantity;
 
   const handleAddToCartAndOpenModal = () => {
     if (quantity > 0) {
-      addToCart(product, quantity);
+      const activeVariantImage = activeVariant?.image_url;
+      const productWithVariant = {
+        ...product,
+        price: currentPrice,
+        stock: currentStock,
+        image_url: activeVariantImage || product.image_url,
+        selectedVariant: activeVariant ? activeVariant.name : undefined,
+      };
+      addToCart(productWithVariant, quantity);
       setShowModal(true);
     } else {
       alert('Silakan pilih jumlah pesanan terlebih dahulu minimal 1 pcs.');
     }
   };
 
-  // Fungsi untuk langsung bertanya via WhatsApp tanpa keranjang
+  // Fungsi bertanya via WhatsApp dengan detail varian
   const handleAskWhatsApp = () => {
     const phoneNumber = '6289509604700'; // Nomor WhatsApp Admin Surya Snack
+    const variantInfo = activeVariant ? ` (Varian: ${activeVariant.name})` : '';
     const text = encodeURIComponent(
-      `Halo Kak Admin Surya Snack 👋, saya ingin bertanya-tanya mengenai produk *${product.name}* (${formatRupiah(product.price)}). Mohon informasinya ya, terima kasih!`
+      `Halo Kak Admin Surya Snack 👋, saya ingin bertanya-tanya mengenai produk *${product.name}${variantInfo}* seharga *${formatRupiah(currentPrice)}*. Mohon informasinya ya, terima kasih!`
     );
     window.open(`https://wa.me/${phoneNumber}?text=${text}`, '_blank');
   };
@@ -98,9 +137,7 @@ export default function ProductDetailClient({ product }: ProductDetailClientProp
     };
   }, [zoomOpen]);
 
-  // =========================================================================
-  // LOGIKA PEMISAHAN KEUNGGULAN UTAMA
-  // =========================================================================
+  // Logika Keunggulan Utama
   const rawKeyFeatures = product.key_features;
   let highlights: string[] = [];
 
@@ -117,16 +154,15 @@ export default function ProductDetailClient({ product }: ProductDetailClientProp
       .filter((item) => item.length > 0);
   } else {
     highlights = [
-      'Perpaduan kulit bakpia yang lembut berlapis dengan isian padat legit yang lumer di mulut!',
+      'Perpaduan kulit kue yang lembut berlapis dengan isian padat legit berkualitas tinggi!',
       'Camilan manis istimewa favorit keluarga yang pas dinikmati dalam berbagai suasana',
-      'Oleh-oleh wajib khas Banyuwangi yang sayang banget kalau dilewatkan',
+      'Oleh-oleh wajib khas Banyuwangi dari Surya Snack yang sayang banget kalau dilewatkan',
     ];
   }
-  // =========================================================================
 
   const orderSteps: [string, string][] = [
-    ['1. Tentukan Kuantitas', 'Pilih jumlah pesanan sesuai kebutuhan lalu klik Tambah Pesanan.'],
-    ['2. Masuk Keranjang', 'Produk akan otomatis tersimpan aman di keranjang belanja multi-item.'],
+    ['1. Tentukan Varian & Jumlah', 'Pilih varian rasa/ukuran serta jumlah pesanan sesuai kebutuhan lalu klik Tambah Pesanan.'],
+    ['2. Masuk Keranjang', 'Produk beserta varian pilihannya akan otomatis tersimpan aman di keranjang belanja.'],
     ['3. Tambah Produk Lain', 'Anda bisa kembali ke katalog untuk memilih camilan lezat lainnya.'],
     ['4. Kirim ke WhatsApp', 'Buka halaman keranjang untuk melihat rincian nota dan kirim pesanan ke WhatsApp admin.'],
   ];
@@ -159,7 +195,7 @@ export default function ProductDetailClient({ product }: ProductDetailClientProp
             className="group relative block aspect-square w-full cursor-zoom-in overflow-hidden rounded-2xl border border-amber-900/10 bg-[#FAF7F0] shadow-inner"
           >
             <Image
-              src={images[selectedImage] || images[0]}
+              src={images[selectedImage] || mainProductImage}
               alt={product.name}
               fill
               unoptimized
@@ -172,6 +208,7 @@ export default function ProductDetailClient({ product }: ProductDetailClientProp
             </span>
           </button>
 
+          {/* THUMBNAIL: UTAMA DI KIRI, DIIKUTI VARIAN */}
           {images.length > 1 && (
             <div className="flex gap-3 overflow-x-auto pb-1">
               {images.map((img, idx) => (
@@ -186,6 +223,10 @@ export default function ProductDetailClient({ product }: ProductDetailClientProp
                   }`}
                 >
                   <Image src={img} alt="" fill unoptimized className="object-cover" />
+                  {idx === 0 && (
+                    <span className="absolute bottom-0 inset-x-0 bg-black/60 text-[9px] text-white text-center font-bold py-0.5">
+                    </span>
+                  )}
                 </button>
               ))}
             </div>
@@ -212,9 +253,48 @@ export default function ProductDetailClient({ product }: ProductDetailClientProp
             </h1>
 
             <div className="text-3xl font-black text-[#5c0f1c] pt-2 font-serif">
-              {formatRupiah(product.price)}
+              {formatRupiah(currentPrice)}
             </div>
           </div>
+
+          {/* PILIHAN VARIAN PRODUK */}
+          {hasVariants && (
+            <div className="space-y-3 pt-2 border-t border-amber-900/10">
+              <label className="text-xs font-bold uppercase tracking-widest text-[#3b0912] flex items-center gap-1.5">
+                <FontAwesomeIcon icon={faLayerGroup} className="text-amber-600" />
+                <span>Pilih Varian: <strong className="text-[#5c0f1c]">{activeVariant?.name}</strong></span>
+              </label>
+              <div className="flex flex-wrap gap-2">
+                {validVariants.map((variant, idx) => (
+                  <button
+                    key={variant.id || idx}
+                    type="button"
+                    onClick={() => {
+                      setSelectedVariantIndex(idx);
+                      // Jika varian punya gambar khusus, langsung arahkan preview ke gambar varian tersebut (indeks idx + 1 karena indeks 0 adalah utama)
+                      if (variant.image_url) {
+                        const targetImgIndex = images.indexOf(variant.image_url);
+                        if (targetImgIndex !== -1) setSelectedImage(targetImgIndex);
+                      }
+                    }}
+                    className={`px-4 py-2.5 rounded-xl text-xs font-bold transition border cursor-pointer flex items-center gap-2 ${
+                      selectedVariantIndex === idx
+                        ? 'bg-[#3b0912] text-amber-200 border-[#3b0912] shadow-sm'
+                        : 'bg-white text-gray-700 border-gray-200 hover:border-amber-900/30'
+                    }`}
+                  >
+                    {variant.image_url && (
+                      <div className="relative w-5 h-5 rounded-md overflow-hidden shrink-0 border border-gray-200">
+                        <Image src={variant.image_url} alt="" fill unoptimized className="object-cover" />
+                      </div>
+                    )}
+                    <span>{variant.name}</span>
+                    <span className="text-[10px] opacity-80">({formatRupiah(variant.price)})</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
 
           <div className="grid grid-cols-2 gap-3 py-3 border-y border-amber-900/10 text-xs font-semibold text-gray-700">
             {product.weight && (
@@ -225,7 +305,7 @@ export default function ProductDetailClient({ product }: ProductDetailClientProp
             )}
             <div className="flex items-center gap-2">
               <FontAwesomeIcon icon={faBoxOpen} className="text-[#5c0f1c]" />
-              <span>{(product.stock ?? 0) > 0 ? `Stok: ${product.stock} Tersedia` : 'Stok Pre-Order'}</span>
+              <span>{(currentStock ?? 0) > 0 ? `Stok: ${currentStock} Tersedia` : 'Stok Pre-Order'}</span>
             </div>
             {(product.sales ?? 0) > 0 && (
               <div className="flex items-center gap-2">
@@ -349,10 +429,10 @@ export default function ProductDetailClient({ product }: ProductDetailClientProp
               </div>
               <div className="flex-1 min-w-0">
                 <h4 className="font-bold text-gray-900 text-sm truncate">
-                  {product.name}
+                  {product.name} {activeVariant ? `(${activeVariant.name})` : ''}
                 </h4>
                 <p className="text-xs text-[#5c0f1c] font-bold mt-0.5">
-                  {quantity} pcs x {formatRupiah(product.price)}
+                  {quantity} pcs x {formatRupiah(currentPrice)}
                 </p>
                 <p className="text-xs font-extrabold text-gray-700 mt-1">
                   Subtotal: <span className="text-[#5c0f1c]">{formatRupiah(totalPrice)}</span>
@@ -430,13 +510,11 @@ export default function ProductDetailClient({ product }: ProductDetailClientProp
               </div>
 
               <div className="pt-4 border-t border-amber-900/10 space-y-4">
-                {/* ICON FONT AWESOME PADA JUDUL KEUNGGULAN UTAMA */}
                 <h4 className="font-serif font-bold text-base text-[#3b0912] flex items-center gap-2">
                   <FontAwesomeIcon icon={faStar} className="text-amber-500" />
                   <span>Keunggulan Utama:</span>
                 </h4>
                 
-                {/* KEUNGGULAN UTAMA DENGAN IKON HATI */}
                 <div className="space-y-3 font-serif">
                   {highlights.map((item, idx) => (
                     <div 
@@ -463,7 +541,6 @@ export default function ProductDetailClient({ product }: ProductDetailClientProp
               <h3 className="text-xl font-serif font-bold text-[#3b0912]">Detail Komposisi & Standar Kemasan</h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 
-                {/* ICON FONT AWESOME PADA KOMPOSISI / BAHAN UTAMA */}
                 <div className="bg-[#FAF7F0] p-4 rounded-2xl border border-amber-900/10 space-y-2">
                   <span className="text-[10px] font-bold uppercase tracking-widest text-[#5c0f1c] flex items-center gap-1.5">
                     <FontAwesomeIcon icon={faSeedling} className="text-amber-600" />
@@ -474,7 +551,6 @@ export default function ProductDetailClient({ product }: ProductDetailClientProp
                   </p>
                 </div>
 
-                {/* ICON FONT AWESOME PADA STANDAR KEMASAN */}
                 <div className="bg-[#FAF7F0] p-4 rounded-2xl border border-amber-900/10 space-y-2">
                   <span className="text-[10px] font-bold uppercase tracking-widest text-[#5c0f1c] flex items-center gap-1.5">
                     <FontAwesomeIcon icon={faBoxArchive} className="text-amber-600" />

@@ -11,11 +11,11 @@ export function formatRupiah(price: number | null | undefined): string {
   }).format(price);
 }
 
-// Ambil semua produk aktif
+// Ambil semua produk aktif beserta variannya
 export async function getAllProducts(): Promise<Product[]> {
   const { data, error } = await supabase
     .from("products")
-    .select("*")
+    .select("*, variants:variant_products(*)")
     .eq("is_active", true)
     .order("created_at", { ascending: false });
 
@@ -27,11 +27,11 @@ export async function getAllProducts(): Promise<Product[]> {
   return data || [];
 }
 
-// Ambil produk unggulan untuk halaman utama (featured products)
+// Ambil produk unggulan untuk halaman utama (featured products) beserta variannya
 export async function getFeaturedProducts(limit: number = 4): Promise<Product[]> {
   const { data, error } = await supabase
     .from("products")
-    .select("*")
+    .select("*, variants:variant_products(*)")
     .eq("is_active", true)
     .eq("is_popular", true) // Memfilter produk yang dicentang sebagai unggulan di admin
     .limit(limit);
@@ -44,11 +44,11 @@ export async function getFeaturedProducts(limit: number = 4): Promise<Product[]>
   return data || [];
 }
 
-// Ambil detail produk berdasarkan slug
+// Ambil detail produk berdasarkan slug beserta variannya
 export async function getProductBySlug(slug: string): Promise<Product | null> {
   const { data, error } = await supabase
     .from("products")
-    .select("*")
+    .select("*, variants:variant_products(*)")
     .eq("slug", slug)
     .single();
 
@@ -60,11 +60,11 @@ export async function getProductBySlug(slug: string): Promise<Product | null> {
   return data;
 }
 
-// Ambil detail produk berdasarkan ID
+// Ambil detail produk berdasarkan ID beserta variannya
 export async function getProductById(id: string): Promise<Product | null> {
   const { data, error } = await supabase
     .from("products")
-    .select("*")
+    .select("*, variants:variant_products(*)")
     .eq("id", id)
     .single();
 
