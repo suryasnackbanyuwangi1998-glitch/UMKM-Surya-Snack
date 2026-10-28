@@ -21,47 +21,100 @@ import {
 import { faInstagram, faWhatsapp, faTiktok } from '@fortawesome/free-brands-svg-icons';
 import { supabase } from '@/lib/supabase';
 
+interface FaqItem {
+  q: string;
+  a: string;
+}
+
 export default function KontakPage(): React.ReactElement {
   const [copied, setCopied] = useState(false);
   const [openFaq, setOpenFaq] = useState<number | null>(0);
 
-  // State untuk data kontak dari database Supabase
+  // State untuk data kontak, jam operasional, dan FAQ dari Supabase
   const [contactData, setContactData] = useState({
     whatsapp1: '089509604700',
     whatsapp2: '',
     instagram: 'suryasnack.banyuwangi',
     alamat: 'Pusat Oleh-Oleh Khas Banyuwangi Surya Snack, Jl. Barong No.110, Lingkungan Watu Ulo R, Bakungan, Kec. Glagah, Kabupaten Banyuwangi, Jawa Timur 68431',
     tiktok: '@suryasnack',
+    jam_operasional_senin_sabtu: '08.00 – 21.30 WIB',
+    jam_operasional_minggu: '08.30 – 21.00 WIB',
   });
+
+  const [faqs, setFaqs] = useState<FaqItem[]>([]);
   const [loadingContact, setLoadingContact] = useState(true);
 
   useEffect(() => {
-    async function fetchContactInfo() {
+    async function fetchContactAndFaqs() {
       try {
-        const { data, error } = await supabase
+        // 1. Ambil data kontak & jam operasional dari tabel "contacts"
+        const { data: contactRes, error: contactErr } = await supabase
           .from('contacts')
           .select('*')
           .eq('id', 'informasi_utama')
           .maybeSingle();
 
-        if (error) throw error;
-        if (data) {
+        if (contactErr) throw contactErr;
+        if (contactRes) {
           setContactData({
-            whatsapp1: data.whatsapp1 || '089509604700',
-            whatsapp2: data.whatsapp2 || '',
-            instagram: data.instagram || 'suryasnack.banyuwangi',
-            alamat: data.alamat || 'Pusat Oleh-Oleh Khas Banyuwangi Surya Snack, Jl. Barong No.110, Lingkungan Watu Ulo R, Bakungan, Kec. Glagah, Kabupaten Banyuwangi, Jawa Timur 68431',
-            tiktok: data.tiktok || '@suryasnack',
+            whatsapp1: contactRes.whatsapp1 || '089509604700',
+            whatsapp2: contactRes.whatsapp2 || '',
+            instagram: contactRes.instagram || 'suryasnack.banyuwangi',
+            alamat: contactRes.alamat || 'Pusat Oleh-Oleh Khas Banyuwangi Surya Snack, Jl. Barong No.110, Lingkungan Watu Ulo R, Bakungan, Kec. Glagah, Kabupaten Banyuwangi, Jawa Timur 68431',
+            tiktok: contactRes.tiktok || '@suryasnack',
+            jam_operasional_senin_sabtu: contactRes.jam_operasional_senin_sabtu || '08.00 – 21.30 WIB',
+            jam_operasional_minggu: contactRes.jam_operasional_minggu || '08.30 – 21.00 WIB',
           });
         }
+
+        // 2. Ambil data FAQ secara dinamis dari tabel "faqs"
+        const { data: faqRes, error: faqErr } = await supabase
+          .from('faqs')
+          .select('*')
+          .order('created_at', { ascending: true });
+
+        if (faqErr) throw faqErr;
+
+        if (faqRes && faqRes.length > 0) {
+          setFaqs(
+            faqRes.map((item: any) => ({
+              q: item.question,
+              a: item.answer,
+            }))
+          );
+        } else {
+          // Fallback default jika tabel FAQ kosong
+          setFaqs([
+            {
+              q: 'Apakah bisa pesan untuk dikirim ke luar kota?',
+              a: 'Tentu! Kami melayani pengiriman ke seluruh Indonesia via ekspedisi JNE, J&T, SiCepat, dan Pos Indonesia. Kemasan kami sudah food-grade dan dirancang khusus agar camilan tetap utuh sampai tujuan.',
+            },
+            {
+              q: 'Berapa lama waktu produksi pesanan?',
+              a: 'Pesanan diproses dalam 1x24 jam pada hari kerja. Produk dibuat fresh dari dapur produksi kami di hari yang sama sebelum dikemas dan dikirim.',
+            },
+            {
+              q: 'Apakah ada minimum order untuk pengiriman?',
+              a: 'Tidak ada minimum order khusus untuk pembelian retail. Untuk pembelian grosir atau reseller, silakan chat admin untuk penawaran harga khusus.',
+            },
+            {
+              q: 'Bisakah saya mengunjungi toko langsung?',
+              a: 'Bisa banget! Toko kami buka setiap hari. Silakan datang langsung ke alamat pusat kami. Tersedia area parkir yang luas.',
+            },
+            {
+              q: 'Metode pembayaran apa saja yang tersedia?',
+              a: 'Kami menerima transfer bank (BCA, Mandiri, BRI, BNI), e-wallet (OVO, DANA, GoPay, ShopeePay), QRIS, serta COD untuk area Banyuwangi.',
+            },
+          ]);
+        }
       } catch (err) {
-        console.error('Gagal memuat informasi kontak:', err);
+        console.error('Gagal memuat informasi kontak dan FAQ:', err);
       } finally {
         setLoadingContact(false);
       }
     }
 
-    fetchContactInfo();
+    fetchContactAndFaqs();
   }, []);
 
   const formatWaNumber = (num: string) => {
@@ -97,10 +150,6 @@ export default function KontakPage(): React.ReactElement {
     : `https://www.tiktok.com/@${rawTiktok}`;
 
   const fullAddress = contactData.alamat;
-  
-  const shortAddress = fullAddress.length > 70 
-    ? fullAddress.substring(0, 70) + '...' 
-    : fullAddress;
 
   const mapSearchAddress = encodeURIComponent(fullAddress);
   const mapEmbedUrl = `https://maps.google.com/maps?q=${mapSearchAddress}&t=&z=17&ie=UTF8&iwloc=&output=embed`;
@@ -113,7 +162,6 @@ export default function KontakPage(): React.ReactElement {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  // Quick Contact Chips di atas (Email dihapus, WhatsApp 2 otomatis ikut jika diisi)
   const quickContacts = [
     {
       icon: faWhatsapp,
@@ -142,29 +190,6 @@ export default function KontakPage(): React.ReactElement {
       href: `tel:+${waNumber}`,
       color: 'from-amber-500/15 to-amber-500/5',
       iconBg: 'bg-amber-500/15 text-amber-600',
-    },
-  ];
-
-  const faqs = [
-    {
-      q: 'Apakah bisa pesan untuk dikirim ke luar kota?',
-      a: 'Tentu! Kami melayani pengiriman ke seluruh Indonesia via ekspedisi JNE, J&T, SiCepat, dan Pos Indonesia. Kemasan kami sudah food-grade dan dirancang khusus agar camilan tetap utuh sampai tujuan.',
-    },
-    {
-      q: 'Berapa lama waktu produksi pesanan?',
-      a: 'Pesanan diproses dalam 1x24 jam pada hari kerja. Produk dibuat fresh dari dapur produksi kami di hari yang sama sebelum dikemas dan dikirim.',
-    },
-    {
-      q: 'Apakah ada minimum order untuk pengiriman?',
-      a: 'Tidak ada minimum order khusus untuk pembelian retail. Untuk pembelian grosir atau reseller, silakan chat admin untuk penawaran harga khusus.',
-    },
-    {
-      q: 'Bisakah saya mengunjungi toko langsung?',
-      a: `Bisa banget! Toko kami buka setiap hari jam 08.00–21.30 WIB. Silakan datang langsung ke ${shortAddress}. Tersedia area parkir yang luas.`,
-    },
-    {
-      q: 'Metode pembayaran apa saja yang tersedia?',
-      a: 'Kami menerima transfer bank (BCA, Mandiri, BRI, BNI), e-wallet (OVO, DANA, GoPay, ShopeePay), QRIS, serta COD untuk area Banyuwangi.',
     },
   ];
 
@@ -210,7 +235,6 @@ export default function KontakPage(): React.ReactElement {
             Mau belanja langsung di toko atau pesan oleh-oleh khas berkualitas tinggi dengan resep pusaka leluhur? Tim kami siap melayani Anda sepenuh hati.
           </p>
 
-          {/* Quick Contact Chips (Disesuaikan grid-nya agar pas dengan jumlah item) */}
           <div className={`mx-auto mt-8 grid max-w-3xl grid-cols-1 gap-3 sm:gap-4 font-sans ${quickContacts.length === 3 ? 'sm:grid-cols-3' : 'sm:grid-cols-2'}`}>
             {quickContacts.map((item) => (
               <a
@@ -238,10 +262,8 @@ export default function KontakPage(): React.ReactElement {
         <section className="mx-auto max-w-6xl px-4 pb-16 sm:px-6 sm:pb-20">
           <div className="grid items-start gap-8 lg:grid-cols-12">
             
-            {/* ===== KOLOM KIRI: LOKASI & MAPS (7 kolom) ===== */}
+            {/* KOLOM KIRI: LOKASI & MAPS */}
             <div className="space-y-6 lg:col-span-7">
-              
-              {/* Card Lokasi */}
               <div className="flex flex-col space-y-6 rounded-3xl border border-[#EBE3D5] bg-white p-6 shadow-xl shadow-gray-200/40 md:p-8 font-sans">
                 <div className="space-y-4">
                   <div className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-[#5c0f1c]">
@@ -263,7 +285,6 @@ export default function KontakPage(): React.ReactElement {
                     </div>
                   </div>
 
-                  {/* Tombol Aksi Lokasi */}
                   <div className="flex flex-wrap gap-3 pt-2">
                     <a
                       href={googleMapsDirectionsUrl}
@@ -291,16 +312,12 @@ export default function KontakPage(): React.ReactElement {
                           : 'border-[#EBE3D5] bg-white text-gray-700 hover:border-[#5c0f1c]/30 hover:text-[#5c0f1c]'
                       }`}
                     >
-                      <FontAwesomeIcon
-                        icon={copied ? faCheck : faCopy}
-                        className="h-3.5 w-3.5"
-                      />
+                      <FontAwesomeIcon icon={copied ? faCheck : faCopy} className="h-3.5 w-3.5" />
                       {copied ? 'Tersalin!' : 'Salin Alamat'}
                     </button>
                   </div>
                 </div>
 
-                {/* Google Maps Embed */}
                 <div className="group relative h-95 w-full overflow-hidden rounded-2xl border border-[#EBE3D5] bg-[#FAF6F0] shadow-inner">
                   <iframe
                     title="Pusat Oleh-Oleh Khas Banyuwangi Surya Snack"
@@ -314,7 +331,6 @@ export default function KontakPage(): React.ReactElement {
                     className="absolute inset-0 h-full w-full"
                   />
                   
-                  {/* Overlay "Buka di Maps" saat hover */}
                   <a
                     href={googleMapsViewUrl}
                     target="_blank"
@@ -345,10 +361,9 @@ export default function KontakPage(): React.ReactElement {
               </div>
             </div>
 
-            {/* ===== KOLOM KANAN: KONTAK & JAM OPERASIONAL (5 kolom) ===== */}
+            {/* KOLOM KANAN: KONTAK & JAM OPERASIONAL */}
             <div className="flex flex-col gap-6 lg:col-span-5 lg:sticky lg:top-24 font-sans">
               
-              {/* Box Kontak Media Sosial */}
               <div className="space-y-5 rounded-3xl border border-[#EBE3D5] bg-white p-6 shadow-xl shadow-gray-200/40 md:p-8">
                 <div className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-[#5c0f1c]">
                   <span className="h-0.5 w-4 rounded-full bg-[#5c0f1c]" />
@@ -359,15 +374,9 @@ export default function KontakPage(): React.ReactElement {
                   Hubungi Langsung
                 </h3>
 
-                <p className="text-sm leading-relaxed text-gray-500 font-light">
-                  Pilih channel favoritmu untuk respon personal dan hangat dari tim kami.
-                </p>
-
                 {/* WhatsApp 1 */}
                 <a
-                  href={`https://wa.me/${waNumber}?text=${encodeURIComponent(
-                    'Halo Surya Snack, saya ingin bertanya tentang produk oleh-oleh.'
-                  )}`}
+                  href={`https://wa.me/${waNumber}?text=${encodeURIComponent('Halo Surya Snack, saya ingin bertanya tentang produk oleh-oleh.')}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="group flex items-center gap-4 rounded-2xl border-2 border-emerald-100 bg-emerald-50/50 p-4 transition-all duration-200 hover:-translate-y-0.5 hover:border-emerald-400 hover:bg-emerald-50 hover:shadow-lg"
@@ -376,25 +385,16 @@ export default function KontakPage(): React.ReactElement {
                     <FontAwesomeIcon icon={faWhatsapp} className="h-6 w-6" />
                   </div>
                   <div className="min-w-0 flex-1">
-                    <p className="text-[10px] font-black uppercase tracking-widest text-emerald-700">
-                      WhatsApp Admin 1
-                    </p>
-                    <p className="truncate text-base font-bold tracking-wide text-gray-900 md:text-lg">
-                      {waDisplay}
-                    </p>
+                    <p className="text-[10px] font-black uppercase tracking-widest text-emerald-700">WhatsApp Admin 1</p>
+                    <p className="truncate text-base font-bold text-gray-900 md:text-lg">{waDisplay}</p>
                   </div>
-                  <FontAwesomeIcon
-                    icon={faArrowRight}
-                    className="h-4 w-4 shrink-0 text-emerald-600 transition-transform duration-200 group-hover:translate-x-1"
-                  />
+                  <FontAwesomeIcon icon={faArrowRight} className="h-4 w-4 shrink-0 text-emerald-600" />
                 </a>
 
                 {/* WhatsApp 2 */}
                 {contactData.whatsapp2 && (
                   <a
-                    href={`https://wa.me/${secondaryWa}?text=${encodeURIComponent(
-                      'Halo Surya Snack, saya ingin bertanya tentang produk oleh-oleh.'
-                    )}`}
+                    href={`https://wa.me/${secondaryWa}?text=${encodeURIComponent('Halo Surya Snack, saya ingin bertanya tentang produk oleh-oleh.')}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="group flex items-center gap-4 rounded-2xl border-2 border-teal-100 bg-teal-50/50 p-4 transition-all duration-200 hover:-translate-y-0.5 hover:border-teal-400 hover:bg-teal-50 hover:shadow-lg"
@@ -403,17 +403,10 @@ export default function KontakPage(): React.ReactElement {
                       <FontAwesomeIcon icon={faWhatsapp} className="h-6 w-6" />
                     </div>
                     <div className="min-w-0 flex-1">
-                      <p className="text-[10px] font-black uppercase tracking-widest text-teal-700">
-                        WhatsApp Admin 2
-                      </p>
-                      <p className="truncate text-base font-bold tracking-wide text-gray-900 md:text-lg">
-                        {contactData.whatsapp2}
-                      </p>
+                      <p className="text-[10px] font-black uppercase tracking-widest text-teal-700">WhatsApp Admin 2</p>
+                      <p className="truncate text-base font-bold text-gray-900 md:text-lg">{contactData.whatsapp2}</p>
                     </div>
-                    <FontAwesomeIcon
-                      icon={faArrowRight}
-                      className="h-4 w-4 shrink-0 text-teal-600 transition-transform duration-200 group-hover:translate-x-1"
-                    />
+                    <FontAwesomeIcon icon={faArrowRight} className="h-4 w-4 shrink-0 text-teal-600" />
                   </a>
                 )}
 
@@ -428,17 +421,10 @@ export default function KontakPage(): React.ReactElement {
                     <FontAwesomeIcon icon={faInstagram} className="h-6 w-6" />
                   </div>
                   <div className="min-w-0 flex-1">
-                    <p className="text-[10px] font-black uppercase tracking-widest text-pink-700">
-                      Instagram Resmi
-                    </p>
-                    <p className="truncate text-base font-bold tracking-wide text-gray-900 md:text-lg">
-                      {igHandle}
-                    </p>
+                    <p className="text-[10px] font-black uppercase tracking-widest text-pink-700">Instagram Resmi</p>
+                    <p className="truncate text-base font-bold text-gray-900 md:text-lg">{igHandle}</p>
                   </div>
-                  <FontAwesomeIcon
-                    icon={faArrowRight}
-                    className="h-4 w-4 shrink-0 text-pink-600 transition-transform duration-200 group-hover:translate-x-1"
-                  />
+                  <FontAwesomeIcon icon={faArrowRight} className="h-4 w-4 shrink-0 text-pink-600" />
                 </a>
 
                 {/* TikTok */}
@@ -452,32 +438,15 @@ export default function KontakPage(): React.ReactElement {
                     <FontAwesomeIcon icon={faTiktok} className="h-5 w-5" />
                   </div>
                   <div className="min-w-0 flex-1">
-                    <p className="text-[10px] font-black uppercase tracking-widest text-zinc-700">
-                      TikTok Resmi
-                    </p>
-                    <p className="truncate text-base font-bold tracking-wide text-gray-900 md:text-lg">
-                      {tiktokHandle}
-                    </p>
+                    <p className="text-[10px] font-black uppercase tracking-widest text-zinc-700">TikTok Resmi</p>
+                    <p className="truncate text-base font-bold text-gray-900 md:text-lg">{tiktokHandle}</p>
                   </div>
-                  <FontAwesomeIcon
-                    icon={faArrowRight}
-                    className="h-4 w-4 shrink-0 text-black transition-transform duration-200 group-hover:translate-x-1"
-                  />
+                  <FontAwesomeIcon icon={faArrowRight} className="h-4 w-4 shrink-0 text-black" />
                 </a>
               </div>
 
-              {/* Box Jam Operasional */}
+              {/* JAM OPERASIONAL (DINAMIS DARI DATABASE) */}
               <div className="relative overflow-hidden rounded-3xl bg-linear-to-br from-[#5c0f1c] via-[#4a0c16] to-[#2e070e] p-6 text-white shadow-xl md:p-8 font-sans">
-                {/* Pattern titik */}
-                <div
-                  className="pointer-events-none absolute inset-0 opacity-[0.06]"
-                  style={{
-                    backgroundImage: 'radial-gradient(#ffffff 1px, transparent 1px)',
-                    backgroundSize: '20px 20px',
-                  }}
-                />
-                <div className="pointer-events-none absolute -right-12 -top-12 h-40 w-40 rounded-full bg-white/5 blur-2xl" />
-
                 <div className="relative flex items-center gap-3">
                   <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white/10 text-amber-300">
                     <FontAwesomeIcon icon={faClock} className="h-5 w-5" />
@@ -499,7 +468,7 @@ export default function KontakPage(): React.ReactElement {
                       Senin – Sabtu
                     </span>
                     <span className="text-sm font-bold text-amber-300">
-                      08.00 – 21.30 WIB
+                      {contactData.jam_operasional_senin_sabtu}
                     </span>
                   </div>
                   <div className="flex items-center justify-between">
@@ -508,24 +477,22 @@ export default function KontakPage(): React.ReactElement {
                       Minggu
                     </span>
                     <span className="text-sm font-bold text-amber-300">
-                      08.30 – 21.00 WIB
+                      {contactData.jam_operasional_minggu}
                     </span>
                   </div>
 
                   <div className="mt-5 rounded-xl bg-white/5 p-3 text-center text-xs text-gray-300 font-light">
-                    <FontAwesomeIcon
-                      icon={faShieldHalved}
-                      className="mr-1.5 h-3 w-3 text-amber-300"
-                    />
+                    <FontAwesomeIcon icon={faShieldHalved} className="mr-1.5 h-3 w-3 text-amber-300" />
                     Respon chat cepat pada jam operasional
                   </div>
                 </div>
               </div>
+
             </div>
           </div>
         </section>
 
-        {/* ===== SECTION FAQ ===== */}
+        {/* ===== SECTION FAQ (DINAMIS DARI DATABASE) ===== */}
         <section className="mx-auto max-w-4xl px-4 pb-16 sm:px-6 sm:pb-20 font-sans">
           <div className="text-center">
             <span className="inline-flex items-center gap-2 rounded-full border border-[#5c0f1c]/10 bg-[#5c0f1c]/10 px-4 py-1.5 text-[11px] font-extrabold uppercase tracking-[0.2em] text-[#5c0f1c]">
@@ -602,18 +569,9 @@ export default function KontakPage(): React.ReactElement {
 
             <div className="relative z-10 mx-auto max-w-2xl space-y-5">
               <div className="flex justify-center gap-3">
-                <FontAwesomeIcon
-                  icon={faTruckFast}
-                  className="h-5 w-5 text-amber-300"
-                />
-                <FontAwesomeIcon
-                  icon={faShieldHalved}
-                  className="h-5 w-5 text-amber-300"
-                />
-                <FontAwesomeIcon
-                  icon={faStore}
-                  className="h-5 w-5 text-amber-300"
-                />
+                <FontAwesomeIcon icon={faTruckFast} className="h-5 w-5 text-amber-300" />
+                <FontAwesomeIcon icon={faShieldHalved} className="h-5 w-5 text-amber-300" />
+                <FontAwesomeIcon icon={faStore} className="h-5 w-5 text-amber-300" />
               </div>
 
               <h2 className="text-2xl font-serif font-bold leading-tight tracking-tight text-white md:text-4xl">
@@ -645,6 +603,7 @@ export default function KontakPage(): React.ReactElement {
             </div>
           </div>
         </section>
+
       </div>
     </div>
   );

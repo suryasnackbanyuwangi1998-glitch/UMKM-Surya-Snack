@@ -8,13 +8,16 @@ import {
   faFloppyDisk,
   faTrashCan,
   faSpinner,
+  faClock,
+  faCircleQuestion,
+  faPlus,
+  faLocationDot,
 } from "@fortawesome/free-solid-svg-icons";
 import {
   faWhatsapp,
   faInstagram,
   faTiktok,
 } from "@fortawesome/free-brands-svg-icons";
-import { faLocationDot } from "@fortawesome/free-solid-svg-icons";
 import { supabase } from "@/lib/supabase";
 
 interface ContactsState {
@@ -23,6 +26,14 @@ interface ContactsState {
   instagram: string;
   alamat: string;
   tiktok: string;
+  jam_operasional_senin_sabtu: string;
+  jam_operasional_minggu: string;
+}
+
+interface FaqItem {
+  id?: string;
+  question: string;
+  answer: string;
 }
 
 export default function AdminKontakPage() {
@@ -32,52 +43,122 @@ export default function AdminKontakPage() {
     instagram: "",
     alamat: "",
     tiktok: "",
+    jam_operasional_senin_sabtu: "08.00 – 21.30 WIB",
+    jam_operasional_minggu: "08.30 – 21.00 WIB",
   });
 
+  const [faqs, setFaqs] = useState<FaqItem[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [savingSection, setSavingSection] = useState<string | null>(null);
   const [notification, setNotification] = useState<string>("");
 
-  // Ambil data kontak dari tabel "contacts" di Supabase saat halaman dimuat
   useEffect(() => {
-    fetchContacts();
+    fetchData();
   }, []);
 
-  const fetchContacts = async () => {
+  const fetchData = async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
+      const { data: contactData } = await supabase
         .from("contacts")
         .select("*")
         .eq("id", "informasi_utama")
         .maybeSingle();
 
-      if (error) throw error;
-
-      if (data) {
+      if (contactData) {
         setContacts({
-          whatsapp1: data.whatsapp1 || "",
-          whatsapp2: data.whatsapp2 || "",
-          instagram: data.instagram || "",
-          alamat: data.alamat || "",
-          tiktok: data.tiktok || "",
+          whatsapp1: contactData.whatsapp1 || "",
+          whatsapp2: contactData.whatsapp2 || "",
+          instagram: contactData.instagram || "",
+          alamat: contactData.alamat || "",
+          tiktok: contactData.tiktok || "",
+          jam_operasional_senin_sabtu: contactData.jam_operasional_senin_sabtu || "08.00 – 21.30 WIB",
+          jam_operasional_minggu: contactData.jam_operasional_minggu || "08.30 – 21.00 WIB",
         });
       }
+
+      const { data: faqData } = await supabase
+        .from("faqs")
+        .select("*")
+        .order("created_at", { ascending: true });
+
+      if (faqData && faqData.length > 0) {
+        setFaqs(faqData);
+      } else {
+        setFaqs([
+          { 
+            question: "Apakah bisa pesan untuk dikirim ke luar kota?", 
+            answer: "Tentu! Kami melayani pengiriman ke seluruh Indonesia via ekspedisi JNE, J&T, SiCepat, dan Pos Indonesia. Kemasan kami sudah food-grade dan dirancang khusus agar camilan tetap utuh sampai tujuan." 
+          },
+          { 
+            question: "Berapa lama waktu produksi pesanan?", 
+            answer: "Pesanan diproses dalam 1x24 jam pada hari kerja. Produk dibuat fresh dari dapur produksi kami di hari yang sama sebelum dikemas dan dikirim." 
+          },
+          { 
+            question: "Apakah ada minimum order untuk pengiriman?", 
+            answer: "Tidak ada minimum order khusus untuk pembelian retail. Untuk pembelian grosir atau reseller, silakan chat admin untuk penawaran harga khusus." 
+          },
+          { 
+            question: "Bisakah saya mengunjungi toko langsung?", 
+            answer: "Bisa banget! Toko kami buka setiap hari. Silakan datang langsung ke alamat pusat kami. Tersedia area parkir yang luas." 
+          },
+          { 
+            question: "Metode pembayaran apa saja yang tersedia?", 
+            answer: "Kami menerima transfer bank (BCA, Mandiri, BRI, BNI), e-wallet (OVO, DANA, GoPay, ShopeePay), QRIS, serta COD untuk area Banyuwangi." 
+          }
+        ]);
+      }
     } catch (error: any) {
-      console.error("Gagal memuat kontak:", error.message);
+      console.error("Gagal memuat data kontak:", error.message);
     } finally {
       setLoading(false);
     }
   };
 
   const handleChange = (field: keyof ContactsState, value: string) => {
-    setContacts((prev) => ({
-      ...prev,
-      [field]: value,
-    }));
+    setContacts((prev) => ({ ...prev, [field]: value }));
   };
 
-  const handleDelete = async (fieldsToClear: (keyof ContactsState)[]) => {
+  const handleFaqChange = (index: number, field: 'question' | 'answer', value: string) => {
+    const updatedFaqs = [...faqs];
+    updatedFaqs[index][field] = value;
+    setFaqs(updatedFaqs);
+  };
+
+  const handleAddFaq = () => {
+    setFaqs([...faqs, { question: "", answer: "" }]);
+  };
+
+  const handleDeleteFaq = async (index: number, id?: string) => {
+    if (id) {
+      await supabase.from("faqs").delete().eq("id", id);
+    }
+    const updatedFaqs = faqs.filter((_, i) => i !== index);
+    setFaqs(updatedFaqs);
+    setNotification("Pertanyaan Umum (FAQ) berhasil dihapus!");
+    setTimeout(() => setNotification(""), 3000);
+  };
+
+  const handleSaveContact = async (sectionName: string) => {
+    setSavingSection(sectionName);
+    try {
+      const { error } = await supabase.from("contacts").upsert({
+        id: "informasi_utama",
+        ...contacts,
+      });
+
+      if (error) throw error;
+      setNotification(`Berhasil menyimpan data ${sectionName} ke Database!`);
+      setTimeout(() => setNotification(""), 3000);
+    } catch (error: any) {
+      alert("Gagal menyimpan: " + error.message);
+    } finally {
+      setSavingSection(null);
+    }
+  };
+
+  // Fungsi khusus untuk mengosongkan field tertentu di database
+  const handleDeleteFields = async (fieldsToClear: (keyof ContactsState)[], sectionName: string) => {
     setContacts((prev) => {
       const updated = { ...prev };
       fieldsToClear.forEach((field) => {
@@ -92,7 +173,6 @@ export default function AdminKontakPage() {
         clearData[field] = "";
       });
 
-      // Update tabel "contacts" di Supabase untuk mengosongkan kolom
       const { error } = await supabase
         .from("contacts")
         .update({ ...clearData })
@@ -100,33 +180,41 @@ export default function AdminKontakPage() {
 
       if (error) throw error;
 
-      setNotification("Berhasil mengosongkan dan menyimpan data!");
+      setNotification(`Berhasil mengosongkan data ${sectionName}!`);
       setTimeout(() => setNotification(""), 3000);
     } catch (error: any) {
       alert("Gagal menghapus data: " + error.message);
     }
   };
 
-  const handleSave = async (sectionName: string) => {
-    setSavingSection(sectionName);
+  const handleSaveFaqs = async () => {
+    setSavingSection("FAQ");
     try {
-      // Simpan/upsert data ke tabel "contacts" dengan id "informasi_utama"
-      const { error } = await supabase.from("contacts").upsert({
-        id: "informasi_utama",
-        whatsapp1: contacts.whatsapp1,
-        whatsapp2: contacts.whatsapp2,
-        instagram: contacts.instagram,
-        alamat: contacts.alamat,
-        tiktok: contacts.tiktok,
-      });
+      for (const faq of faqs) {
+        if (!faq.question.trim()) continue;
 
-      if (error) throw error;
+        if (faq.id) {
+          const { error } = await supabase
+            .from("faqs")
+            .update({ question: faq.question, answer: faq.answer })
+            .eq("id", faq.id);
 
-      setNotification(`Berhasil menyimpan data ${sectionName} ke Database!`);
+          if (error) throw error;
+        } else {
+          const { error } = await supabase
+            .from("faqs")
+            .insert({ question: faq.question, answer: faq.answer });
+
+          if (error) throw error;
+        }
+      }
+
+      setNotification("Berhasil menyimpan seluruh Perubahan FAQ ke Database!");
       setTimeout(() => setNotification(""), 3000);
+      await fetchData();
     } catch (error: any) {
-      const errMessage = error instanceof Error ? error.message : "Terjadi kesalahan";
-      alert("Gagal menyimpan: " + errMessage);
+      alert("Gagal menyimpan FAQ: " + error.message);
+      console.error("Error detail:", error);
     } finally {
       setSavingSection(null);
     }
@@ -134,87 +222,83 @@ export default function AdminKontakPage() {
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center min-h-[60vh] text-slate-500 text-xs">
-        Memuat data kontak...
+      <div className="flex justify-center items-center min-h-[60vh] text-[#5c0f1c] font-serif text-sm">
+        Memuat panel admin kontak...
       </div>
     );
   }
 
   return (
-    <div className="p-6 md:p-8 space-y-6 max-w-7xl mx-auto bg-gray-50 min-h-screen text-slate-800">
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-gray-200 pb-5">
-        <div className="flex items-center gap-3">
-          <div className="p-2.5 bg-amber-500/10 border border-amber-500/20 rounded-xl text-amber-600">
+    <div className="p-6 md:p-10 space-y-8 max-w-7xl mx-auto bg-[#FAF8F5] min-h-screen text-gray-800 font-sans">
+      
+      {/* Header Halaman Admin */}
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-[#EBE3D5] pb-6">
+        <div className="flex items-center gap-3.5">
+          <div className="p-3 bg-[#5c0f1c]/10 border border-[#5c0f1c]/20 rounded-2xl text-[#5c0f1c]">
             <FontAwesomeIcon icon={faAddressBook} className="w-5 h-5" />
           </div>
           <div>
-            <h1 className="text-xl font-bold text-slate-900 font-serif">Kelola Kontak & Informasi</h1>
-            <p className="text-xs text-slate-500 mt-0.5">
-              Atur tautan dan informasi kontak yang tampil di website utama Surya Snack.
+            <h1 className="text-2xl font-serif font-bold text-[#3b0912]">Kelola Kontak & Informasi Toko</h1>
+            <p className="text-xs text-gray-500 mt-1 font-light">
+              Sesuaikan nomor layanan, media sosial, alamat, jam operasional, dan FAQ yang tampil di halaman website utama.
             </p>
           </div>
         </div>
       </div>
 
       {notification && (
-        <div className="bg-emerald-50 border border-emerald-200 text-emerald-700 px-4 py-3 rounded-xl text-xs font-semibold shadow-sm">
+        <div className="bg-emerald-50 border border-emerald-200 text-emerald-800 px-5 py-3.5 rounded-2xl text-xs font-semibold shadow-sm flex items-center gap-2.5">
+          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
           {notification}
         </div>
       )}
 
+      {/* Grid Kartu Pengaturan Kontak */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        
         {/* WhatsApp */}
-        <div className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm flex flex-col justify-between hover:border-amber-400 transition">
+        <div className="bg-white border border-[#EBE3D5] rounded-3xl p-6 shadow-sm flex flex-col justify-between hover:border-[#5c0f1c]/30 transition">
           <div>
             <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 rounded-xl bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-600">
+              <div className="w-10 h-10 rounded-xl bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-600 shadow-inner">
                 <FontAwesomeIcon icon={faWhatsapp} className="w-5 h-5" />
               </div>
-              <div>
-                <h3 className="text-sm font-bold text-slate-900">WhatsApp</h3>
-                <p className="text-[10px] text-slate-500">Nomor Utama & Cadangan</p>
-              </div>
+              <h3 className="text-sm font-serif font-bold text-gray-900">WhatsApp</h3>
             </div>
-
-            <div className="space-y-3 mb-4">
+            <div className="space-y-3 mb-5">
               <div>
-                <label className="text-[10px] uppercase font-bold text-slate-500 mb-1 block">Nomor 1</label>
+                <label className="text-[10px] uppercase font-bold tracking-wider text-gray-500 mb-1 block">Nomor Utama (Admin 1)</label>
                 <input
                   type="text"
                   value={contacts.whatsapp1}
                   onChange={(e) => handleChange("whatsapp1", e.target.value)}
-                  className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs text-slate-800 focus:outline-none focus:border-amber-500 focus:bg-white"
+                  className="w-full bg-[#FAF8F5] border border-[#EBE3D5] rounded-xl px-3 py-2 text-xs text-gray-800 focus:outline-none focus:border-[#5c0f1c]"
                 />
               </div>
               <div>
-                <label className="text-[10px] uppercase font-bold text-slate-500 mb-1 block">Nomor 2</label>
+                <label className="text-[10px] uppercase font-bold tracking-wider text-gray-500 mb-1 block">Nomor Cadangan (Admin 2)</label>
                 <input
                   type="text"
                   value={contacts.whatsapp2}
                   onChange={(e) => handleChange("whatsapp2", e.target.value)}
-                  className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs text-slate-800 focus:outline-none focus:border-amber-500 focus:bg-white"
+                  className="w-full bg-[#FAF8F5] border border-[#EBE3D5] rounded-xl px-3 py-2 text-xs text-gray-800 focus:outline-none focus:border-[#5c0f1c]"
                 />
               </div>
             </div>
           </div>
-
-          <div className="flex items-center gap-2 pt-3 border-t border-gray-100">
+          <div className="flex items-center gap-2">
             <button
-              onClick={() => handleSave("WhatsApp")}
+              onClick={() => handleSaveContact("WhatsApp")}
               disabled={savingSection === "WhatsApp"}
-              className="flex-1 bg-amber-500 hover:bg-amber-600 text-white font-bold py-2 px-3 rounded-xl text-xs flex items-center justify-center gap-2 transition cursor-pointer shadow-sm disabled:opacity-50"
+              className="flex-1 bg-[#3b0912] hover:bg-[#5c0f1c] text-amber-200 font-bold py-2.5 rounded-xl text-xs flex items-center justify-center gap-2 transition cursor-pointer shadow-sm"
             >
-              {savingSection === "WhatsApp" ? (
-                <FontAwesomeIcon icon={faSpinner} className="animate-spin" />
-              ) : (
-                <FontAwesomeIcon icon={faFloppyDisk} />
-              )}
+              {savingSection === "WhatsApp" ? <FontAwesomeIcon icon={faSpinner} className="animate-spin" /> : <FontAwesomeIcon icon={faFloppyDisk} />}
               Simpan
             </button>
             <button
-              onClick={() => handleDelete(["whatsapp1", "whatsapp2"])}
+              onClick={() => handleDeleteFields(["whatsapp1", "whatsapp2"], "WhatsApp")}
               className="bg-rose-50 hover:bg-rose-100 border border-rose-200 text-rose-600 p-2.5 rounded-xl text-xs transition cursor-pointer"
-              title="Kosongkan"
+              title="Kosongkan WhatsApp"
             >
               <FontAwesomeIcon icon={faTrashCan} />
             </button>
@@ -222,93 +306,37 @@ export default function AdminKontakPage() {
         </div>
 
         {/* Instagram */}
-        <div className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm flex flex-col justify-between hover:border-amber-400 transition">
+        <div className="bg-white border border-[#EBE3D5] rounded-3xl p-6 shadow-sm flex flex-col justify-between hover:border-[#5c0f1c]/30 transition">
           <div>
             <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 rounded-xl bg-pink-50 border border-pink-100 flex items-center justify-center text-pink-600">
+              <div className="w-10 h-10 rounded-xl bg-pink-50 border border-pink-100 flex items-center justify-center text-pink-600 shadow-inner">
                 <FontAwesomeIcon icon={faInstagram} className="w-5 h-5" />
               </div>
-              <div>
-                <h3 className="text-sm font-bold text-slate-900">Instagram</h3>
-                <p className="text-[10px] text-slate-500">Username Akun</p>
-              </div>
+              <h3 className="text-sm font-serif font-bold text-gray-900">Instagram</h3>
             </div>
-
-            <div className="mb-4">
-              <label className="text-[10px] uppercase font-bold text-slate-500 mb-1 block">Username / Link</label>
+            <div className="mb-5">
+              <label className="text-[10px] uppercase font-bold tracking-wider text-gray-500 mb-1 block">Username / Link</label>
               <input
                 type="text"
                 value={contacts.instagram}
                 onChange={(e) => handleChange("instagram", e.target.value)}
-                className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs text-slate-800 focus:outline-none focus:border-amber-500 focus:bg-white"
+                className="w-full bg-[#FAF8F5] border border-[#EBE3D5] rounded-xl px-3 py-2 text-xs text-gray-800 focus:outline-none focus:border-[#5c0f1c]"
               />
             </div>
           </div>
-
-          <div className="flex items-center gap-2 pt-3 border-t border-gray-100">
+          <div className="flex items-center gap-2">
             <button
-              onClick={() => handleSave("Instagram")}
+              onClick={() => handleSaveContact("Instagram")}
               disabled={savingSection === "Instagram"}
-              className="flex-1 bg-amber-500 hover:bg-amber-600 text-white font-bold py-2 px-3 rounded-xl text-xs flex items-center justify-center gap-2 transition cursor-pointer shadow-sm disabled:opacity-50"
+              className="flex-1 bg-[#3b0912] hover:bg-[#5c0f1c] text-amber-200 font-bold py-2.5 rounded-xl text-xs flex items-center justify-center gap-2 transition cursor-pointer shadow-sm"
             >
-              {savingSection === "Instagram" ? (
-                <FontAwesomeIcon icon={faSpinner} className="animate-spin" />
-              ) : (
-                <FontAwesomeIcon icon={faFloppyDisk} />
-              )}
+              {savingSection === "Instagram" ? <FontAwesomeIcon icon={faSpinner} className="animate-spin" /> : <FontAwesomeIcon icon={faFloppyDisk} />}
               Simpan
             </button>
             <button
-              onClick={() => handleDelete(["instagram"])}
+              onClick={() => handleDeleteFields(["instagram"], "Instagram")}
               className="bg-rose-50 hover:bg-rose-100 border border-rose-200 text-rose-600 p-2.5 rounded-xl text-xs transition cursor-pointer"
-              title="Kosongkan"
-            >
-              <FontAwesomeIcon icon={faTrashCan} />
-            </button>
-          </div>
-        </div>
-
-        {/* Alamat */}
-        <div className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm flex flex-col justify-between hover:border-amber-400 transition">
-          <div>
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 rounded-xl bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-600">
-                <FontAwesomeIcon icon={faLocationDot} className="w-5 h-5" />
-              </div>
-              <div>
-                <h3 className="text-sm font-bold text-slate-900">Alamat</h3>
-                <p className="text-[10px] text-slate-500">Lokasi Toko Fisik</p>
-              </div>
-            </div>
-
-            <div className="mb-4">
-              <label className="text-[10px] uppercase font-bold text-slate-500 mb-1 block">Alamat Toko</label>
-              <textarea
-                rows={3}
-                value={contacts.alamat}
-                onChange={(e) => handleChange("alamat", e.target.value)}
-                className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs text-slate-800 focus:outline-none focus:border-amber-500 focus:bg-white resize-none"
-              />
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2 pt-3 border-t border-gray-100">
-            <button
-              onClick={() => handleSave("Alamat")}
-              disabled={savingSection === "Alamat"}
-              className="flex-1 bg-amber-500 hover:bg-amber-600 text-white font-bold py-2 px-3 rounded-xl text-xs flex items-center justify-center gap-2 transition cursor-pointer shadow-sm disabled:opacity-50"
-            >
-              {savingSection === "Alamat" ? (
-                <FontAwesomeIcon icon={faSpinner} className="animate-spin" />
-              ) : (
-                <FontAwesomeIcon icon={faFloppyDisk} />
-              )}
-              Simpan
-            </button>
-            <button
-              onClick={() => handleDelete(["alamat"])}
-              className="bg-rose-50 hover:bg-rose-100 border border-rose-200 text-rose-600 p-2.5 rounded-xl text-xs transition cursor-pointer"
-              title="Kosongkan"
+              title="Kosongkan Instagram"
             >
               <FontAwesomeIcon icon={faTrashCan} />
             </button>
@@ -316,52 +344,195 @@ export default function AdminKontakPage() {
         </div>
 
         {/* TikTok */}
-        <div className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm flex flex-col justify-between hover:border-amber-400 transition">
+        <div className="bg-white border border-[#EBE3D5] rounded-3xl p-6 shadow-sm flex flex-col justify-between hover:border-[#5c0f1c]/30 transition">
           <div>
             <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 rounded-xl bg-purple-50 border border-purple-100 flex items-center justify-center text-purple-600">
+              <div className="w-10 h-10 rounded-xl bg-zinc-100 border border-zinc-200 flex items-center justify-center text-black shadow-inner">
                 <FontAwesomeIcon icon={faTiktok} className="w-5 h-5" />
               </div>
-              <div>
-                <h3 className="text-sm font-bold text-slate-900">TikTok Shop</h3>
-                <p className="text-[10px] text-slate-500">Tautan TikTok Toko</p>
-              </div>
+              <h3 className="text-sm font-serif font-bold text-gray-900">TikTok Shop</h3>
             </div>
-
-            <div className="mb-4">
-              <label className="text-[10px] uppercase font-bold text-slate-500 mb-1 block">Username / Link TikTok</label>
+            <div className="mb-5">
+              <label className="text-[10px] uppercase font-bold tracking-wider text-gray-500 mb-1 block">Username / Link</label>
               <input
                 type="text"
                 value={contacts.tiktok}
                 onChange={(e) => handleChange("tiktok", e.target.value)}
-                className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs text-slate-800 focus:outline-none focus:border-amber-500 focus:bg-white"
+                className="w-full bg-[#FAF8F5] border border-[#EBE3D5] rounded-xl px-3 py-2 text-xs text-gray-800 focus:outline-none focus:border-[#5c0f1c]"
               />
             </div>
           </div>
-
-          <div className="flex items-center gap-2 pt-3 border-t border-gray-100">
+          <div className="flex items-center gap-2">
             <button
-              onClick={() => handleSave("TikTok")}
+              onClick={() => handleSaveContact("TikTok")}
               disabled={savingSection === "TikTok"}
-              className="flex-1 bg-amber-500 hover:bg-amber-600 text-white font-bold py-2 px-3 rounded-xl text-xs flex items-center justify-center gap-2 transition cursor-pointer shadow-sm disabled:opacity-50"
+              className="flex-1 bg-[#3b0912] hover:bg-[#5c0f1c] text-amber-200 font-bold py-2.5 rounded-xl text-xs flex items-center justify-center gap-2 transition cursor-pointer shadow-sm"
             >
-              {savingSection === "TikTok" ? (
-                <FontAwesomeIcon icon={faSpinner} className="animate-spin" />
-              ) : (
-                <FontAwesomeIcon icon={faFloppyDisk} />
-              )}
+              {savingSection === "TikTok" ? <FontAwesomeIcon icon={faSpinner} className="animate-spin" /> : <FontAwesomeIcon icon={faFloppyDisk} />}
               Simpan
             </button>
             <button
-              onClick={() => handleDelete(["tiktok"])}
+              onClick={() => handleDeleteFields(["tiktok"], "TikTok")}
               className="bg-rose-50 hover:bg-rose-100 border border-rose-200 text-rose-600 p-2.5 rounded-xl text-xs transition cursor-pointer"
-              title="Kosongkan"
+              title="Kosongkan TikTok"
             >
               <FontAwesomeIcon icon={faTrashCan} />
             </button>
           </div>
         </div>
+
+        {/* Jam Operasional */}
+        <div className="bg-white border border-[#EBE3D5] rounded-3xl p-6 shadow-sm flex flex-col justify-between hover:border-[#5c0f1c]/30 transition">
+          <div>
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-xl bg-amber-50 border border-amber-100 flex items-center justify-center text-amber-600 shadow-inner">
+                <FontAwesomeIcon icon={faClock} className="w-5 h-5" />
+              </div>
+              <h3 className="text-sm font-serif font-bold text-gray-900">Jam Operasional</h3>
+            </div>
+            <div className="space-y-2 mb-5">
+              <div>
+                <label className="text-[9px] uppercase font-bold text-gray-400">Senin – Sabtu</label>
+                <input
+                  type="text"
+                  value={contacts.jam_operasional_senin_sabtu}
+                  onChange={(e) => handleChange("jam_operasional_senin_sabtu", e.target.value)}
+                  className="w-full bg-[#FAF8F5] border border-[#EBE3D5] rounded-xl px-3 py-1.5 text-xs text-gray-800 focus:outline-none focus:border-[#5c0f1c]"
+                />
+              </div>
+              <div>
+                <label className="text-[9px] uppercase font-bold text-gray-400">Minggu</label>
+                <input
+                  type="text"
+                  value={contacts.jam_operasional_minggu}
+                  onChange={(e) => handleChange("jam_operasional_minggu", e.target.value)}
+                  className="w-full bg-[#FAF8F5] border border-[#EBE3D5] rounded-xl px-3 py-1.5 text-xs text-gray-800 focus:outline-none focus:border-[#5c0f1c]"
+                />
+              </div>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => handleSaveContact("Jam Operasional")}
+              disabled={savingSection === "Jam Operasional"}
+              className="flex-1 bg-[#3b0912] hover:bg-[#5c0f1c] text-amber-200 font-bold py-2.5 rounded-xl text-xs flex items-center justify-center gap-2 transition cursor-pointer shadow-sm"
+            >
+              {savingSection === "Jam Operasional" ? <FontAwesomeIcon icon={faSpinner} className="animate-spin" /> : <FontAwesomeIcon icon={faFloppyDisk} />}
+              Simpan
+            </button>
+            <button
+              onClick={() => handleDeleteFields(["jam_operasional_senin_sabtu", "jam_operasional_minggu"], "Jam Operasional")}
+              className="bg-rose-50 hover:bg-rose-100 border border-rose-200 text-rose-600 p-2.5 rounded-xl text-xs transition cursor-pointer"
+              title="Kosongkan Jam Operasional"
+            >
+              <FontAwesomeIcon icon={faTrashCan} />
+            </button>
+          </div>
+        </div>
+
       </div>
+
+      {/* Alamat Lengkap Toko */}
+      <div className="bg-white border border-[#EBE3D5] rounded-3xl p-6 md:p-8 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div className="space-y-2 flex-1">
+          <div className="flex items-center gap-2.5">
+            <div className="p-2 bg-blue-50 text-blue-600 rounded-xl">
+              <FontAwesomeIcon icon={faLocationDot} className="w-4 h-4" />
+            </div>
+            <h3 className="text-base font-serif font-bold text-gray-900">Alamat Lengkap Toko & Titik Maps</h3>
+          </div>
+          <textarea
+            rows={2}
+            value={contacts.alamat}
+            onChange={(e) => handleChange("alamat", e.target.value)}
+            className="w-full bg-[#FAF8F5] border border-[#EBE3D5] rounded-2xl px-4 py-3 text-xs text-gray-800 focus:outline-none focus:border-[#5c0f1c] resize-none"
+          />
+        </div>
+        <div className="flex items-center gap-2 h-fit self-end md:self-center">
+          <button
+            onClick={() => handleSaveContact("Alamat")}
+            disabled={savingSection === "Alamat"}
+            className="bg-[#3b0912] hover:bg-[#5c0f1c] text-amber-200 font-bold px-7 py-3.5 rounded-2xl text-xs uppercase tracking-wider transition cursor-pointer shadow-md flex items-center gap-2"
+          >
+            {savingSection === "Alamat" ? <FontAwesomeIcon icon={faSpinner} className="animate-spin" /> : <FontAwesomeIcon icon={faFloppyDisk} />} Simpan Alamat
+          </button>
+          <button
+            onClick={() => handleDeleteFields(["alamat"], "Alamat")}
+            className="bg-rose-50 hover:bg-rose-100 border border-rose-200 text-rose-600 p-3.5 rounded-2xl text-xs transition cursor-pointer"
+            title="Kosongkan Alamat"
+          >
+            <FontAwesomeIcon icon={faTrashCan} />
+          </button>
+        </div>
+      </div>
+
+      {/* Kelola Pertanyaan Umum (FAQ) */}
+      <div className="bg-white border border-[#EBE3D5] rounded-3xl p-6 md:p-8 shadow-sm space-y-6">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-[#EBE3D5] pb-4">
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 bg-amber-50 text-amber-700 rounded-2xl border border-amber-200/50">
+              <FontAwesomeIcon icon={faCircleQuestion} className="w-5 h-5" />
+            </div>
+            <div>
+              <h2 className="text-lg font-serif font-bold text-[#3b0912]">Kelola Pertanyaan Umum (FAQ)</h2>
+              <p className="text-xs text-gray-500">Tambah, ubah, atau hapus daftar pertanyaan pelanggan di halaman kontak.</p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={handleAddFaq}
+            className="inline-flex items-center gap-2 bg-[#FAF8F5] border border-[#EBE3D5] hover:border-[#5c0f1c] text-gray-700 font-bold px-4 py-2.5 rounded-xl text-xs transition cursor-pointer"
+          >
+            <FontAwesomeIcon icon={faPlus} /> Tambah Pertanyaan Baru
+          </button>
+        </div>
+
+        <div className="space-y-4">
+          {faqs.map((faq, index) => (
+            <div key={faq.id || index} className="p-5 rounded-2xl border border-[#EBE3D5] bg-[#FAF8F5]/50 space-y-3">
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-xs font-serif font-bold text-[#5c0f1c]">Pertanyaan #{index + 1}</span>
+                <button
+                  type="button"
+                  onClick={() => handleDeleteFaq(index, faq.id)}
+                  className="text-rose-600 hover:text-rose-700 text-xs p-1.5 rounded-lg hover:bg-rose-50 transition cursor-pointer flex items-center gap-1.5 font-semibold"
+                >
+                  <FontAwesomeIcon icon={faTrashCan} /> Hapus
+                </button>
+              </div>
+              <div className="space-y-2.5">
+                <input
+                  type="text"
+                  value={faq.question}
+                  onChange={(e) => handleFaqChange(index, 'question', e.target.value)}
+                  placeholder="Tuliskan pertanyaan pelanggan..."
+                  className="w-full bg-white border border-[#EBE3D5] rounded-xl px-3.5 py-2.5 text-xs font-bold text-gray-800 focus:outline-none focus:border-[#5c0f1c]"
+                />
+                <textarea
+                  rows={2}
+                  value={faq.answer}
+                  onChange={(e) => handleFaqChange(index, 'answer', e.target.value)}
+                  placeholder="Tuliskan jawaban yang informatif..."
+                  className="w-full bg-white border border-[#EBE3D5] rounded-xl px-3.5 py-2.5 text-xs text-gray-700 focus:outline-none focus:border-[#5c0f1c] resize-none font-light"
+                />
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div className="pt-2">
+          <button
+            type="button"
+            onClick={handleSaveFaqs}
+            disabled={savingSection === "FAQ"}
+            className="bg-[#3b0912] hover:bg-[#5c0f1c] text-amber-200 font-bold px-7 py-3 rounded-2xl text-xs uppercase tracking-wider shadow-md transition flex items-center justify-center gap-2 cursor-pointer"
+          >
+            {savingSection === "FAQ" ? <FontAwesomeIcon icon={faSpinner} className="animate-spin" /> : <FontAwesomeIcon icon={faFloppyDisk} />}
+            Simpan Seluruh Perubahan FAQ
+          </button>
+        </div>
+      </div>
+
     </div>
   );
 }
