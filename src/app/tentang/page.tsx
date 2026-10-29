@@ -21,7 +21,7 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import { supabase } from '@/lib/supabase';
 
-export const revalidate = 60; // ISR cache tiap 60 detik
+export const revalidate = 60;
 
 export const metadata: Metadata = {
   title: 'Tentang Kami | Surya Snack',
@@ -34,11 +34,10 @@ const waHref = `https://wa.me/6289509604700?text=${encodeURIComponent(
 )}`;
 
 export default async function TentangKamiPage() {
-  // Ambil data teks dinamis dari Supabase
   const { data: aboutData } = await supabase
     .from('about_content')
     .select('*')
-    .eq('id', 'main_content')
+    .eq('id', 'main')
     .maybeSingle();
 
   const title = aboutData?.title || 'Warisan Cita Rasa, Menjaga Rasa Asli';
@@ -47,93 +46,29 @@ export default async function TentangKamiPage() {
   const visionText = aboutData?.vision_text || 'Menjadi pusat oleh-oleh khas Banyuwangi terdepan dan terpercaya dengan menjunjung tinggi kualitas rasa tradisional serta kearifan lokal.';
 
   const pilarMisi = [
-    {
-      num: '01',
-      icon: faLeaf,
-      title: 'Kualitas Rasa',
-      desc: 'Mengembangkan resep otentik dengan prinsip produksi tradisional untuk menghadirkan cita rasa terbaik.',
-    },
-    {
-      num: '02',
-      icon: faAward,
-      title: 'Mutu & Kualitas',
-      desc: 'Menggunakan bahan baku alami pilihan tanpa pengawet tambahan agar produk aman dikonsumsi.',
-    },
-    {
-      num: '03',
-      icon: faHandshake,
-      title: 'Pemberdayaan Lokal',
-      desc: 'Bermitra dengan UMKM dan petani lokal Banyuwangi dalam proses produksi untuk tumbuh bersama.',
-    },
-    {
-      num: '04',
-      icon: faHeart,
-      title: 'Kepuasan Pelanggan',
-      desc: 'Menghadirkan pelayanan hangat dan produk segar dengan konsistensi kualitas yang selalu terjaga.',
-    },
+    { num: '01', icon: faLeaf, title: 'Kualitas Rasa', desc: 'Mengembangkan resep otentik dengan prinsip produksi tradisional untuk menghadirkan cita rasa terbaik.' },
+    { num: '02', icon: faAward, title: 'Mutu & Kualitas', desc: 'Menggunakan bahan baku alami pilihan tanpa pengawet tambahan agar produk aman dikonsumsi.' },
+    { num: '03', icon: faHandshake, title: 'Pemberdayaan Lokal', desc: 'Bermitra dengan UMKM dan petani lokal Banyuwangi dalam proses produksi untuk tumbuh bersama.' },
+    { num: '04', icon: faHeart, title: 'Kepuasan Pelanggan', desc: 'Menghadirkan pelayanan hangat dan produk segar dengan konsistensi kualitas yang selalu terjaga.' },
   ];
 
   const nilaiItems = [
-    {
-      icon: faScroll,
-      title: 'Integritas & Kejujuran',
-      desc: 'Transparansi penuh dalam setiap bahan baku dan proses pembuatan produk.',
-    },
-    {
-      icon: faSeedling,
-      title: 'Komitmen Mutu',
-      desc: 'Konsistensi rasa otentik yang selalu dijaga dari generasi ke generasi.',
-    },
-    {
-      icon: faUsers,
-      title: 'Keberlanjutan',
-      desc: 'Kepedulian terhadap lingkungan dan kolaborasi erat bersama masyarakat lokal.',
-    },
+    { icon: faScroll, title: 'Integritas & Kejujuran', desc: 'Transparansi penuh dalam setiap bahan baku dan proses pembuatan produk.' },
+    { icon: faSeedling, title: 'Komitmen Mutu', desc: 'Konsistensi rasa otentik yang selalu dijaga dari generasi ke generasi.' },
+    { icon: faUsers, title: 'Keberlanjutan', desc: 'Kepedulian terhadap lingkungan dan kolaborasi erat bersama masyarakat lokal.' },
   ];
 
   const stats = [
-    {
-      value: '1998',
-      label: 'Berdiri Sejak',
-      desc: 'Dari dapur kecil di belakang rumah.',
-      tone: 'dark' as const,
-    },
-    {
-      value: '2000',
-      label: 'Resmi & Legal',
-      desc: 'Toko depan rumah & sertifikat lengkap.',
-      tone: 'light' as const,
-    },
-    {
-      value: '25+',
-      label: 'Tahun Pengalaman',
-      desc: 'Resep dijaga lintas generasi.',
-      tone: 'light' as const,
-    },
-    {
-      value: '10rb+',
-      label: 'Pelanggan Puas',
-      desc: 'Dikirim ke berbagai kota di Indonesia.',
-      tone: 'amber' as const,
-    },
+    { value: '1998', label: 'Berdiri Sejak', desc: 'Dari dapur kecil di belakang rumah.', tone: 'dark' as const },
+    { value: '2000', label: 'Resmi & Legal', desc: 'Toko depan rumah & sertifikat lengkap.', tone: 'light' as const },
+    { value: '25+', label: 'Tahun Pengalaman', desc: 'Resep dijaga lintas generasi.', tone: 'light' as const },
+    { value: '10rb+', label: 'Pelanggan Puas', desc: 'Dikirim ke berbagai kota di Indonesia.', tone: 'amber' as const },
   ];
 
   const timeline = [
-    {
-      year: '1998',
-      title: 'Awal yang Sederhana',
-      desc: 'Surya Snack dirintis sebagai usaha rumahan berskala kecil di bagian belakang rumah. Tanpa sertifikat formal, fokus utama saat itu hanyalah menghadirkan cita rasa terbaik bagi para tetangga.',
-    },
-    {
-      year: '2000',
-      title: 'Toko Resmi & Perizinan Lengkap',
-      desc: 'Langkah besar diambil dengan membuka toko di bagian depan rumah serta melengkapi seluruh perizinan dan sertifikasi usaha. Sejak saat itu, Surya Snack menjadi jujugan utama pusat oleh-oleh khas Banyuwangi.',
-    },
-    {
-      year: 'Sekarang',
-      title: 'Tumbuh di Era Digital',
-      desc: 'Kini Surya Snack melayani pemesanan online dan pengiriman ke berbagai kota, tanpa pernah mengubah resep dan cara tradisional yang menjadi jiwa setiap produknya.',
-    },
+    { year: '1998', title: 'Awal yang Sederhana', desc: 'Surya Snack dirintis sebagai usaha rumahan berskala kecil di bagian belakang rumah. Tanpa sertifikat formal, fokus utama saat itu hanyalah menghadirkan cita rasa terbaik bagi para tetangga.' },
+    { year: '2000', title: 'Toko Resmi & Perizinan Lengkap', desc: 'Langkah besar diambil dengan membuka toko di bagian depan rumah serta melengkapi seluruh perizinan dan sertifikasi usaha. Sejak saat itu, Surya Snack menjadi jujugan utama pusat oleh-oleh khas Banyuwangi.' },
+    { year: 'Sekarang', title: 'Tumbuh di Era Digital', desc: 'Kini Surya Snack melayani pemesanan online dan pengiriman ke berbagai kota, tanpa pernah mengubah resep dan cara tradisional yang menjadi jiwa setiap produknya.' },
   ];
 
   const heroChips = [
@@ -442,7 +377,7 @@ export default async function TentangKamiPage() {
                   href={waHref}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center justify-center gap-2 rounded-xl border-2 border-white/25 px-7 py-3.5 text-xs font-bold uppercase tracking-widest text-white transition-all duration-300 hover:border-white/60 hover:bg-white/10"
+                  className="inline-flex items-center justify-center gap-2 rounded-xl border-2 border-white/25 px-7 py-3.5 text-xs font-bold uppercase tracking-widest text-white transition-all duration-300 hover:border-white/60 hover:bg-white/15"
                 >
                   <FontAwesomeIcon icon={faWhatsapp} className="h-4 w-4" />
                   <span>Chat Admin</span>
