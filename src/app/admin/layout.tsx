@@ -1,3 +1,4 @@
+// src/app/admin/layout.tsx
 "use client";
 
 import React, { useState } from "react";
@@ -9,6 +10,7 @@ import {
   faChartPie,
   faBoxesStacked,
   faAddressBook,
+  faStore,
   faGlobe,
   faRightFromBracket,
   faBars,
@@ -98,6 +100,19 @@ export default function AdminLayout({
           >
             <FontAwesomeIcon icon={faBoxesStacked} className="w-4 h-4 shrink-0" />
             <span>Kelola Produk</span>
+          </Link>
+
+          {/* MENU BARU: KELOLA TENTANG KAMI */}
+          <Link
+            href="/admin/tentang"
+            className={`flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-bold transition ${
+              pathname === "/admin/tentang"
+                ? "bg-linear-to-r from-amber-400 to-amber-500 text-[#3b0912] shadow-lg shadow-amber-500/20 font-extrabold"
+                : "text-gray-200 hover:bg-white/10 hover:text-white"
+            }`}
+          >
+            <FontAwesomeIcon icon={faStore} className="w-4 h-4 shrink-0" />
+            <span>Kelola Tentang</span>
           </Link>
 
           <Link

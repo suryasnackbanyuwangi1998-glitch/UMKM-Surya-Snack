@@ -19,6 +19,9 @@ import {
   faCircleCheck,
   faStore,
 } from '@fortawesome/free-solid-svg-icons';
+import { supabase } from '@/lib/supabase';
+
+export const revalidate = 60; // ISR cache tiap 60 detik
 
 export const metadata: Metadata = {
   title: 'Tentang Kami | Surya Snack',
@@ -30,7 +33,19 @@ const waHref = `https://wa.me/6289509604700?text=${encodeURIComponent(
   'Halo Surya Snack, saya ingin bertanya tentang produk oleh-oleh khas Banyuwangi.'
 )}`;
 
-export default function TentangKamiPage(): React.ReactElement {
+export default async function TentangKamiPage() {
+  // Ambil data teks dinamis dari Supabase
+  const { data: aboutData } = await supabase
+    .from('about_content')
+    .select('*')
+    .eq('id', 'main_content')
+    .maybeSingle();
+
+  const title = aboutData?.title || 'Warisan Cita Rasa, Menjaga Rasa Asli';
+  const subtitle = aboutData?.subtitle || 'Tentang Surya Snack';
+  const description = aboutData?.description || 'Berawal dari dapur sederhana di Banyuwangi pada tahun 1998, kami mendedikasikan diri untuk menghadirkan camilan tradisional berkualitas tinggi dengan resep pusaka leluhur.';
+  const visionText = aboutData?.vision_text || 'Menjadi pusat oleh-oleh khas Banyuwangi terdepan dan terpercaya dengan menjunjung tinggi kualitas rasa tradisional serta kearifan lokal.';
+
   const pilarMisi = [
     {
       num: '01',
@@ -130,9 +145,6 @@ export default function TentangKamiPage(): React.ReactElement {
   return (
     <div className="relative min-h-screen overflow-hidden bg-[#FAF8F5] font-sans text-gray-800 antialiased selection:bg-[#5c0f1c] selection:text-amber-100">
       
-      {/* ============================================================
-          BACKGROUND PREMIUM (konsisten dengan halaman detail)
-          ============================================================ */}
       <div className="absolute inset-0 -z-30 bg-[#FAF8F5]" />
       <div
         className="pointer-events-none absolute inset-0 -z-20 opacity-[0.03]"
@@ -150,36 +162,33 @@ export default function TentangKamiPage(): React.ReactElement {
 
       <div className="relative z-10">
         
-        {/* ============================================================
-            HERO: MAGAZINE SPLIT + STATS 2x2
-            ============================================================ */}
+        {/* HERO */}
         <section className="mx-auto max-w-6xl px-4 pb-12 pt-24 sm:px-6 sm:pb-16 sm:pt-28">
           <div className="grid items-center gap-10 lg:grid-cols-12 lg:gap-14">
             
-            {/* Kiri: Judul & Intro */}
             <div className="space-y-6 lg:col-span-7">
               <div className="inline-flex items-center gap-3 px-5 py-2 rounded-full border border-amber-400/40 bg-[#3b0912]/90 backdrop-blur-md shadow-xl">
                 <span className="text-amber-400 text-xs tracking-widest font-serif">★ EST. 1998 ★</span>
                 <span className="w-1 h-1 rounded-full bg-amber-400"></span>
                 <span className="text-amber-200 text-xs uppercase tracking-wider font-sans font-semibold">
-                  Tentang Surya Snack
+                  {subtitle}
                 </span>
               </div>
 
               <h1 className="text-4xl font-serif font-bold leading-[1.08] tracking-tight text-[#3b0912] sm:text-5xl md:text-6xl">
-                Warisan Cita Rasa,{' '}
-                <span className="italic font-normal text-[#5c0f1c]">
-                  Menjaga Rasa Asli
-                </span>
+                {title.includes(',') ? (
+                  <>
+                    {title.split(',')[0]}, <span className="italic font-normal text-[#5c0f1c]">{title.split(',')[1]}</span>
+                  </>
+                ) : (
+                  title
+                )}
               </h1>
 
               <p className="max-w-xl text-base leading-relaxed text-gray-600 md:text-lg font-sans font-light">
-                Berawal dari dapur sederhana di Banyuwangi pada tahun 1998, kami
-                mendedikasikan diri untuk menghadirkan camilan tradisional
-                berkualitas tinggi dengan resep pusaka leluhur.
+                {description}
               </p>
 
-              {/* Chips kepercayaan */}
               <div className="flex flex-wrap gap-2 pt-1 font-sans">
                 {heroChips.map((chip) => (
                   <span
@@ -193,7 +202,6 @@ export default function TentangKamiPage(): React.ReactElement {
               </div>
             </div>
 
-            {/* Kanan: Stats 2x2 */}
             <div className="grid grid-cols-2 gap-4 lg:col-span-5 font-sans">
               {stats.map((stat) => (
                 <div
@@ -237,13 +245,10 @@ export default function TentangKamiPage(): React.ReactElement {
           </div>
         </section>
 
-        {/* ============================================================
-            SECTION 1 — SEJARAH (TIMELINE VERTIKAL)
-            ============================================================ */}
+        {/* SECTION 1 — SEJARAH */}
         <section className="mx-auto max-w-6xl px-4 py-12 sm:px-6 sm:py-16 font-sans">
           <div className="grid items-stretch overflow-hidden rounded-3xl border border-[#EBE3D5] bg-white shadow-xl lg:grid-cols-12">
             
-            {/* Gambar + quote overlay (diperbaiki ke min-h-70 & sm:min-h-90) */}
             <div className="relative min-h-70 sm:min-h-90 lg:col-span-5 lg:min-h-0">
               <Image
                 src="/foto-depan.jpeg"
@@ -252,7 +257,6 @@ export default function TentangKamiPage(): React.ReactElement {
                 sizes="(max-width: 1024px) 100vw, 40vw"
                 className="object-cover"
               />
-              {/* Diperbaiki ke bg-linear-to-t */}
               <div className="absolute inset-0 bg-linear-to-t from-black/75 via-black/10 to-transparent" />
               <span className="absolute left-6 top-6 rounded-full bg-[#5c0f1c] px-3.5 py-1.5 text-[11px] font-bold uppercase tracking-widest text-white shadow-md">
                 Sejak 1998
@@ -262,7 +266,6 @@ export default function TentangKamiPage(): React.ReactElement {
               </p>
             </div>
 
-            {/* Timeline */}
             <div className="flex flex-col justify-center p-8 md:p-12 lg:col-span-7">
               <div className="space-y-2">
                 <span className="text-xs font-bold uppercase tracking-widest text-[#5c0f1c]">
@@ -274,14 +277,12 @@ export default function TentangKamiPage(): React.ReactElement {
               </div>
 
               <div className="relative mt-8 space-y-9">
-                {/* Garis timeline (diperbaiki ke left-2.25) */}
                 <span
                   aria-hidden="true"
                   className="absolute bottom-2 left-2.25 top-2 w-0.5 bg-[#EBE3D5]"
                 />
                 {timeline.map((item) => (
                   <div key={item.year} className="relative pl-10">
-                    {/* Dot */}
                     <span className="absolute left-0 top-0.5 flex h-5 w-5 items-center justify-center rounded-full border-2 border-[#5c0f1c] bg-white shadow-sm">
                       <span className="h-1.5 w-1.5 rounded-full bg-[#5c0f1c]" />
                     </span>
@@ -301,12 +302,9 @@ export default function TentangKamiPage(): React.ReactElement {
           </div>
         </section>
 
-        {/* ============================================================
-            SECTION 2 — VISI & PILAR MISI
-            ============================================================ */}
+        {/* SECTION 2 — VISI & PILAR MISI */}
         <section className="mx-auto max-w-6xl space-y-10 px-4 py-12 sm:px-6 sm:py-16 font-sans">
           
-          {/* Banner Visi */}
           <div className="relative overflow-hidden rounded-3xl bg-linear-to-r from-[#5c0f1c] to-[#3a0911] p-8 text-white shadow-xl md:p-14">
             <div
               className="pointer-events-none absolute inset-0 opacity-[0.07]"
@@ -326,19 +324,17 @@ export default function TentangKamiPage(): React.ReactElement {
                 className="mx-auto h-7 w-7 text-amber-300/50"
               />
               <blockquote className="font-serif text-xl italic leading-relaxed text-gray-100 md:text-2xl">
-                &ldquo;Menjadi pusat oleh-oleh khas Banyuwangi terdepan dan terpercaya dengan menjunjung tinggi kualitas rasa tradisional serta kearifan lokal.&rdquo;
+                &ldquo;{visionText}&rdquo;
               </blockquote>
             </div>
           </div>
 
-          {/* Grid Pilar Misi */}
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
             {pilarMisi.map((item) => (
               <div
                 key={item.num}
                 className="group relative flex flex-col justify-between space-y-4 overflow-hidden rounded-2xl border border-[#EBE3D5] bg-white p-6 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-[#5c0f1c]/30 hover:shadow-xl"
               >
-                {/* Garis aksen saat hover */}
                 <span className="absolute inset-x-0 top-0 h-1 bg-linear-to-r from-[#5c0f1c] to-amber-400 opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
 
                 <div className="flex items-center justify-between">
@@ -361,13 +357,10 @@ export default function TentangKamiPage(): React.ReactElement {
           </div>
         </section>
 
-        {/* ============================================================
-            SECTION 3 — NILAI (EDITORIAL SPLIT, JUDUL STICKY)
-            ============================================================ */}
+        {/* SECTION 3 — NILAI */}
         <section className="mx-auto max-w-6xl px-4 py-12 sm:px-6 sm:py-16 font-sans">
           <div className="grid gap-10 lg:grid-cols-12 lg:gap-14">
             
-            {/* Kiri: judul sticky */}
             <div className="lg:col-span-4">
               <div className="space-y-4 lg:sticky lg:top-28">
                 <span className="text-xs font-bold uppercase tracking-widest text-[#5c0f1c]">
@@ -385,7 +378,6 @@ export default function TentangKamiPage(): React.ReactElement {
               </div>
             </div>
 
-            {/* Kanan: daftar nilai */}
             <div className="divide-y divide-[#EBE3D5] border-y border-[#EBE3D5] lg:col-span-8">
               {nilaiItems.map((item, idx) => (
                 <div
@@ -410,9 +402,7 @@ export default function TentangKamiPage(): React.ReactElement {
           </div>
         </section>
 
-        {/* ============================================================
-            SECTION 4 — CTA GRADIEN MAROON
-            ============================================================ */}
+        {/* SECTION 4 — CTA */}
         <section className="mx-auto max-w-5xl px-4 pb-20 pt-4 sm:px-6 sm:pb-24 font-sans">
           <div className="relative overflow-hidden rounded-3xl bg-linear-to-br from-[#5c0f1c] via-[#6b1220] to-[#3a0911] p-10 text-center shadow-2xl shadow-[#5c0f1c]/25 md:p-16">
             <div
