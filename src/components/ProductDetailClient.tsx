@@ -25,6 +25,7 @@ import {
   faHeart,
   faSeedling,
   faLayerGroup,
+  faCheck,
 } from '@fortawesome/free-solid-svg-icons';
 import { faWhatsapp } from '@fortawesome/free-brands-svg-icons';
 import { useCart } from '@/context/CartProvider';
@@ -38,6 +39,10 @@ interface ProductDetailClientProps {
       price: number;
       stock: number;
       image_url?: string | null;
+      description?: string | null;
+      ingredients?: string | null;
+      key_features?: string | null;
+      packaging_standard?: string | null;
     }>;
   };
 }
@@ -52,32 +57,51 @@ export default function ProductDetailClient({ product }: ProductDetailClientProp
     : [];
   const hasVariants = validVariants.length > 0;
 
-  // State Varian yang Dipilih (default ke indeks 0 jika ada varian)
-  const [selectedVariantIndex, setSelectedVariantIndex] = useState<number>(hasVariants ? 0 : -1);
+  // State Varian yang Dipilih (Mulai dengan -1 agar produk utama tampil default)
+  const [selectedVariantIndex, setSelectedVariantIndex] = useState<number>(-1);
   const activeVariant = hasVariants && selectedVariantIndex >= 0 ? validVariants[selectedVariantIndex] : null;
 
-  // Harga & Stok Aktif (berdasarkan varian atau produk utama)
+  // Harga & Stok Aktif
   const currentPrice = activeVariant ? activeVariant.price : product.price;
   const currentStock = activeVariant ? activeVariant.stock : product.stock;
 
   // ==========================================
-  // SUSUNAN GAMBAR: UTAMA DI PALING KIRI, LALU VARIAN
+  // KONTEN DINAMIS BERDASARKAN VARIAN YANG DIPILIH
   // ==========================================
+  const activeDescription = activeVariant?.description 
+    ? activeVariant.description 
+    : (activeVariant 
+        ? `Varian ${activeVariant.name} dari ${product.name}. Menghadirkan cita rasa khas berkualitas tinggi yang diolah secara higienis khusus untuk Anda.` 
+        : (product.long_description || product.description || 'Belum ada deskripsi lengkap.'));
+
+  const activeIngredients = activeVariant?.ingredients 
+    ? activeVariant.ingredients 
+    : (activeVariant 
+        ? `Bahan pilihan berkualitas tinggi untuk varian ${activeVariant.name}, diproses higienis tanpa bahan pengawet buatan.` 
+        : (product.ingredients || 'Menggunakan bahan-bahan alami pilihan berkualitas tinggi tanpa pengawet buatan.'));
+
+  const activePackaging = activeVariant?.packaging_standard 
+    ? activeVariant.packaging_standard 
+    : (activeVariant 
+        ? `Kemasan khusus untuk varian ${activeVariant.name}.` 
+        : (product.packaging_standard || 'Dikemas menggunakan plastik kedap udara (food grade) tebal untuk menjamin kerenyahan dan aroma khas tetap terjaga.'));
+
+  // Susunan Gambar
   const mainProductImage = product.image_url || (Array.isArray(product.images) && product.images.length > 0 ? product.images[0] : null) || 'https://images.unsplash.com/photo-1599490659213-e2b9527bd087?q=80&w=800';
   
-  // Kumpulkan gambar varian
   const variantImages = validVariants
     .map((v) => v.image_url)
     .filter(Boolean) as string[];
 
-  // Gabungkan: [Gambar Utama, ...Gambar Varian]
   const images: string[] = Array.from(new Set([mainProductImage, ...variantImages]));
 
   const [selectedImage, setSelectedImage] = useState(0);
+  const [hoveredImageUrl, setHoveredImageUrl] = useState<string | null>(null);
+
   const [zoomOpen, setZoomOpen] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [activeTab, setActiveTab] = useState<'deskripsi' | 'komposisi' | 'pemesanan'>('deskripsi');
-  const [quantity, setQuantity] = useState(0);
+  const [quantity, setQuantity] = useState(1);
 
   const formatRupiah = (price: number | null | undefined): string =>
     price === null || price === undefined
@@ -85,7 +109,7 @@ export default function ProductDetailClient({ product }: ProductDetailClientProp
       : `Rp ${price.toLocaleString('id-ID')}`;
 
   const handleDecrement = () => {
-    if (quantity > 0) {
+    if (quantity > 1) {
       setQuantity((prev) => prev - 1);
     }
   };
@@ -97,25 +121,28 @@ export default function ProductDetailClient({ product }: ProductDetailClientProp
   const totalPrice = (currentPrice || 0) * quantity;
 
   const handleAddToCartAndOpenModal = () => {
-    if (quantity > 0) {
-      const activeVariantImage = activeVariant?.image_url;
-      const productWithVariant = {
-        ...product,
-        price: currentPrice,
-        stock: currentStock,
-        image_url: activeVariantImage || product.image_url,
-        selectedVariant: activeVariant ? activeVariant.name : undefined,
-      };
-      addToCart(productWithVariant, quantity);
-      setShowModal(true);
+    if (!hasVariants || selectedVariantIndex !== -1) {
+      if (quantity > 0) {
+        const activeVariantImage = activeVariant?.image_url;
+        const productWithVariant = {
+          ...product,
+          price: currentPrice,
+          stock: currentStock,
+          image_url: activeVariantImage || product.image_url,
+          selectedVariant: activeVariant ? activeVariant.name : undefined,
+        };
+        addToCart(productWithVariant, quantity);
+        setShowModal(true);
+      } else {
+        alert('Silakan pilih jumlah pesanan terlebih dahulu minimal 1 pcs.');
+      }
     } else {
-      alert('Silakan pilih jumlah pesanan terlebih dahulu minimal 1 pcs.');
+      alert('Silakan pilih varian produk terlebih dahulu.');
     }
   };
 
-  // Fungsi bertanya via WhatsApp dengan detail varian
   const handleAskWhatsApp = () => {
-    const phoneNumber = '6289509604700'; // Nomor WhatsApp Admin Surya Snack
+    const phoneNumber = '6289509604700';
     const variantInfo = activeVariant ? ` (Varian: ${activeVariant.name})` : '';
     const text = encodeURIComponent(
       `Halo Kak Admin Surya Snack 👋, saya ingin bertanya-tanya mengenai produk *${product.name}${variantInfo}* seharga *${formatRupiah(currentPrice)}*. Mohon informasinya ya, terima kasih!`
@@ -137,11 +164,15 @@ export default function ProductDetailClient({ product }: ProductDetailClientProp
     };
   }, [zoomOpen]);
 
-  // Logika Keunggulan Utama
   const rawKeyFeatures = product.key_features;
   let highlights: string[] = [];
 
-  if (Array.isArray(rawKeyFeatures)) {
+  if (activeVariant?.key_features && activeVariant.key_features.trim() !== '') {
+    highlights = activeVariant.key_features
+      .split(/\r?\n/)
+      .map((item) => item.replace(/^[*•\d.-]\s*/, '').trim())
+      .filter((item) => item.length > 0);
+  } else if (Array.isArray(rawKeyFeatures)) {
     highlights = rawKeyFeatures
       .flatMap((item) => String(item).split(/\r?\n/))
       .map((item) => item.replace(/^[*•\d.-]\s*/, '').trim())
@@ -154,7 +185,7 @@ export default function ProductDetailClient({ product }: ProductDetailClientProp
       .filter((item) => item.length > 0);
   } else {
     highlights = [
-      'Perpaduan kulit kue yang lembut berlapis dengan isian padat legit berkualitas tinggi!',
+      'Perpaduan kue yang lembut berlapis dengan isian padat legit berkualitas tinggi!',
       'Camilan manis istimewa favorit keluarga yang pas dinikmati dalam berbagai suasana',
       'Oleh-oleh wajib khas Banyuwangi dari Surya Snack yang sayang banget kalau dilewatkan',
     ];
@@ -166,6 +197,11 @@ export default function ProductDetailClient({ product }: ProductDetailClientProp
     ['3. Tambah Produk Lain', 'Anda bisa kembali ke katalog untuk memilih camilan lezat lainnya.'],
     ['4. Kirim ke WhatsApp', 'Buka halaman keranjang untuk melihat rincian nota dan kirim pesanan ke WhatsApp admin.'],
   ];
+
+  const activeDisplayImage = 
+    hoveredImageUrl || 
+    (activeVariant?.image_url ? activeVariant.image_url : images[selectedImage]) || 
+    mainProductImage;
 
   return (
     <div className="relative mx-auto w-full max-w-6xl px-4 pb-28 pt-20 sm:px-6 lg:pb-16 font-sans">
@@ -195,7 +231,7 @@ export default function ProductDetailClient({ product }: ProductDetailClientProp
             className="group relative block aspect-square w-full cursor-zoom-in overflow-hidden rounded-2xl border border-amber-900/10 bg-[#FAF7F0] shadow-inner"
           >
             <Image
-              src={images[selectedImage] || mainProductImage}
+              src={activeDisplayImage}
               alt={product.name}
               fill
               unoptimized
@@ -208,27 +244,37 @@ export default function ProductDetailClient({ product }: ProductDetailClientProp
             </span>
           </button>
 
-          {/* THUMBNAIL: UTAMA DI KIRI, DIIKUTI VARIAN */}
           {images.length > 1 && (
             <div className="flex gap-3 overflow-x-auto pb-1">
-              {images.map((img, idx) => (
-                <button
-                  key={idx}
-                  type="button"
-                  onClick={() => setSelectedImage(idx)}
-                  className={`relative h-20 w-20 shrink-0 overflow-hidden rounded-xl border-2 transition ${
-                    selectedImage === idx
-                      ? 'border-[#5c0f1c] ring-2 ring-amber-400/40'
-                      : 'border-gray-200 opacity-60 hover:opacity-100'
-                  }`}
-                >
-                  <Image src={img} alt="" fill unoptimized className="object-cover" />
-                  {idx === 0 && (
-                    <span className="absolute bottom-0 inset-x-0 bg-black/60 text-[9px] text-white text-center font-bold py-0.5">
-                    </span>
-                  )}
-                </button>
-              ))}
+              {images.map((img, idx) => {
+                const isMainImage = idx === 0;
+                const isSelected = isMainImage 
+                  ? selectedVariantIndex === -1 && hoveredImageUrl === null 
+                  : selectedVariantIndex === idx - 1 && hoveredImageUrl === null;
+
+                return (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => {
+                      if (isMainImage) {
+                        setSelectedVariantIndex(-1);
+                      } else {
+                        setSelectedVariantIndex(idx - 1);
+                      }
+                      setSelectedImage(idx);
+                      setHoveredImageUrl(null);
+                    }}
+                    className={`relative h-20 w-20 shrink-0 overflow-hidden rounded-xl border-2 transition cursor-pointer ${
+                      isSelected
+                        ? 'border-[#5c0f1c] ring-2 ring-amber-400/40'
+                        : 'border-gray-200 opacity-60 hover:opacity-100'
+                    }`}
+                  >
+                    <Image src={img} alt="" fill unoptimized className="object-cover" />
+                  </button>
+                );
+              })}
             </div>
           )}
         </div>
@@ -252,46 +298,77 @@ export default function ProductDetailClient({ product }: ProductDetailClientProp
               {product.name}
             </h1>
 
-            <div className="text-3xl font-black text-[#5c0f1c] pt-2 font-serif">
-              {formatRupiah(currentPrice)}
+            {/* HARGA DINAMIS */}
+            <div className="text-3xl font-black text-[#5c0f1c] pt-2 font-serif bg-amber-50/50 px-4 py-2.5 rounded-2xl border border-amber-200/50 flex items-center justify-between">
+              <span>{formatRupiah(currentPrice)}</span>
+              {activeVariant && (
+                <span className="text-xs font-bold text-amber-800 bg-amber-200/60 px-2.5 py-1 rounded-lg">
+                  Varian: {activeVariant.name}
+                </span>
+              )}
             </div>
           </div>
 
-          {/* PILIHAN VARIAN PRODUK */}
+          {/* ========================================== */}
+          {/* PILIHAN VARIAN PRODUK                      */}
+          {/* ========================================== */}
           {hasVariants && (
-            <div className="space-y-3 pt-2 border-t border-amber-900/10">
-              <label className="text-xs font-bold uppercase tracking-widest text-[#3b0912] flex items-center gap-1.5">
-                <FontAwesomeIcon icon={faLayerGroup} className="text-amber-600" />
-                <span>Pilih Varian: <strong className="text-[#5c0f1c]">{activeVariant?.name}</strong></span>
-              </label>
-              <div className="flex flex-wrap gap-2">
-                {validVariants.map((variant, idx) => (
-                  <button
-                    key={variant.id || idx}
-                    type="button"
-                    onClick={() => {
-                      setSelectedVariantIndex(idx);
-                      // Jika varian punya gambar khusus, langsung arahkan preview ke gambar varian tersebut (indeks idx + 1 karena indeks 0 adalah utama)
-                      if (variant.image_url) {
-                        const targetImgIndex = images.indexOf(variant.image_url);
-                        if (targetImgIndex !== -1) setSelectedImage(targetImgIndex);
-                      }
-                    }}
-                    className={`px-4 py-2.5 rounded-xl text-xs font-bold transition border cursor-pointer flex items-center gap-2 ${
-                      selectedVariantIndex === idx
-                        ? 'bg-[#3b0912] text-amber-200 border-[#3b0912] shadow-sm'
-                        : 'bg-white text-gray-700 border-gray-200 hover:border-amber-900/30'
-                    }`}
-                  >
-                    {variant.image_url && (
-                      <div className="relative w-5 h-5 rounded-md overflow-hidden shrink-0 border border-gray-200">
-                        <Image src={variant.image_url} alt="" fill unoptimized className="object-cover" />
+            <div className="space-y-3.5 pt-3 border-t border-amber-900/10 font-sans">
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-extrabold uppercase tracking-widest text-[#3b0912] flex items-center gap-2">
+                  <FontAwesomeIcon icon={faLayerGroup} className="text-amber-600" />
+                  <span>Pilih Varian:</span>
+                </label>
+                <span className="text-xs font-bold text-[#5c0f1c] bg-amber-50 px-2.5 py-0.5 rounded-lg border border-amber-200">
+                  {activeVariant ? activeVariant.name : 'Belum dipilih (Produk Utama)'}
+                </span>
+              </div>
+
+              <div className="flex flex-wrap gap-2.5">
+                {validVariants.map((variant, idx) => {
+                  const isSelected = selectedVariantIndex === idx;
+
+                  return (
+                    <button
+                      key={variant.id || idx}
+                      type="button"
+                      onMouseEnter={() => {
+                        if (variant.image_url) setHoveredImageUrl(variant.image_url);
+                      }}
+                      onMouseLeave={() => {
+                        setHoveredImageUrl(null);
+                      }}
+                      onClick={() => {
+                        setSelectedVariantIndex(idx);
+                        setHoveredImageUrl(null);
+                      }}
+                      className={`relative px-4 py-3 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-3 border-2 ${
+                        isSelected
+                          ? 'border-[#5c0f1c] bg-[#3b0912] text-amber-100 shadow-md scale-[1.02]'
+                          : 'border-gray-200 bg-[#FAF7F0] text-gray-800 hover:border-amber-900/40 hover:bg-white'
+                      }`}
+                    >
+                      {variant.image_url && (
+                        <div className="relative w-6 h-6 rounded-lg overflow-hidden shrink-0 border border-black/10 bg-white">
+                          <Image src={variant.image_url} alt={variant.name} fill unoptimized className="object-cover" />
+                        </div>
+                      )}
+
+                      <div className="flex items-center gap-2">
+                        <span>{variant.name}</span>
+                        <span className={`text-[11px] font-semibold ${isSelected ? 'text-amber-200' : 'text-gray-500'}`}>
+                          ({formatRupiah(variant.price)})
+                        </span>
                       </div>
-                    )}
-                    <span>{variant.name}</span>
-                    <span className="text-[10px] opacity-80">({formatRupiah(variant.price)})</span>
-                  </button>
-                ))}
+
+                      {isSelected && (
+                        <span className="absolute -top-2 -right-2 w-5 h-5 bg-amber-400 text-[#3b0912] rounded-full flex items-center justify-center text-[10px] font-black shadow-sm border border-white">
+                          <FontAwesomeIcon icon={faCheck} />
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
               </div>
             </div>
           )}
@@ -305,7 +382,7 @@ export default function ProductDetailClient({ product }: ProductDetailClientProp
             )}
             <div className="flex items-center gap-2">
               <FontAwesomeIcon icon={faBoxOpen} className="text-[#5c0f1c]" />
-              <span>{(currentStock ?? 0) > 0 ? `Stok: ${currentStock} Tersedia` : 'Stok Pre-Order'}</span>
+              <span>{(currentStock ?? 0) > 0 ? `Stok: ${currentStock} Tersedia` : 'Stok Habis'}</span>
             </div>
             {(product.sales ?? 0) > 0 && (
               <div className="flex items-center gap-2">
@@ -319,7 +396,7 @@ export default function ProductDetailClient({ product }: ProductDetailClientProp
             </div>
           </div>
 
-          {/* AKSI: KUANTITAS & TOMBOL AKSI */}
+          {/* AKSI: KUANTITAS & TOMBOL */}
           <div className="space-y-4 pt-2">
             
             <div className="flex items-center justify-between bg-amber-50/60 p-3.5 rounded-2xl border border-amber-200/70">
@@ -329,9 +406,8 @@ export default function ProductDetailClient({ product }: ProductDetailClientProp
                 <button
                   type="button"
                   onClick={handleDecrement}
-                  disabled={quantity <= 0}
+                  disabled={quantity <= 1}
                   className="w-7 h-7 rounded-lg bg-gray-100 hover:bg-amber-100 text-gray-800 flex items-center justify-center font-bold disabled:opacity-40 disabled:cursor-not-allowed transition cursor-pointer"
-                  title="Kurangi Kuantitas"
                 >
                   <FontAwesomeIcon icon={faMinus} className="w-3 h-3" />
                 </button>
@@ -344,7 +420,6 @@ export default function ProductDetailClient({ product }: ProductDetailClientProp
                   type="button"
                   onClick={handleIncrement}
                   className="w-7 h-7 rounded-lg bg-amber-400 hover:bg-amber-300 text-[#3b0912] flex items-center justify-center font-bold transition cursor-pointer shadow-2xs"
-                  title="Tambah Kuantitas"
                 >
                   <FontAwesomeIcon icon={faPlus} className="w-3 h-3" />
                 </button>
@@ -359,7 +434,6 @@ export default function ProductDetailClient({ product }: ProductDetailClientProp
                 </span>
               </div>
 
-              {/* Tombol TAMBAH KE KERANJANG */}
               <button
                 type="button"
                 onClick={handleAddToCartAndOpenModal}
@@ -369,7 +443,6 @@ export default function ProductDetailClient({ product }: ProductDetailClientProp
                 <span>TAMBAHKAN KE KERANJANG</span>
               </button>
 
-              {/* Tombol TANYA-TANYA VIA WHATSAPP */}
               <button
                 type="button"
                 onClick={handleAskWhatsApp}
@@ -396,11 +469,10 @@ export default function ProductDetailClient({ product }: ProductDetailClientProp
         </div>
       </div>
 
-      {/* ===== POP-UP MODAL KELANJUTAN ===== */}
+      {/* POP-UP MODAL */}
       {showModal && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-amber-100 relative animate-in fade-in zoom-in-95 duration-200 font-sans space-y-5">
-            
+          <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-amber-100 relative font-sans space-y-5">
             <button
               onClick={() => setShowModal(false)}
               className="absolute top-4 right-4 w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-600 flex items-center justify-center transition cursor-pointer"
@@ -420,7 +492,7 @@ export default function ProductDetailClient({ product }: ProductDetailClientProp
             <div className="flex items-center gap-3.5 bg-gray-50 p-3.5 rounded-2xl border border-gray-100">
               <div className="relative w-16 h-16 rounded-xl overflow-hidden bg-white border border-gray-200 shrink-0">
                 <Image
-                  src={images[0]}
+                  src={activeVariant?.image_url || images[0]}
                   alt={product.name}
                   fill
                   unoptimized
@@ -459,12 +531,13 @@ export default function ProductDetailClient({ product }: ProductDetailClientProp
                 <span>Lihat Keranjang</span>
               </button>
             </div>
-
           </div>
         </div>
       )}
 
-      {/* SECTION TAB DESKRIPSI */}
+      {/* ========================================== */}
+      {/* SECTION TAB DESKRIPSI & KOMPOSISI DINAMIS  */}
+      {/* ========================================== */}
       <div className="mt-12 bg-white rounded-3xl border border-amber-900/10 p-6 sm:p-10 shadow-sm space-y-8">
         <div className="flex flex-wrap gap-2 border-b border-amber-900/10 pb-4">
           <button
@@ -503,9 +576,16 @@ export default function ProductDetailClient({ product }: ProductDetailClientProp
           {activeTab === 'deskripsi' && (
             <div className="space-y-6">
               <div>
-                <h3 className="text-xl font-serif font-bold text-[#3b0912] mb-3">Tentang Produk Ini</h3>
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-xl font-serif font-bold text-[#3b0912]">Tentang Produk Ini</h3>
+                  {activeVariant && (
+                    <span className="text-[11px] font-bold text-amber-800 bg-amber-50 px-3 py-1 rounded-full border border-amber-200">
+                      Menampilkan info untuk varian: {activeVariant.name}
+                    </span>
+                  )}
+                </div>
                 <div className="text-gray-600 text-sm sm:text-base leading-relaxed whitespace-pre-line">
-                  {product.long_description || product.description || 'Belum ada deskripsi lengkap.'}
+                  {activeDescription}
                 </div>
               </div>
 
@@ -517,37 +597,35 @@ export default function ProductDetailClient({ product }: ProductDetailClientProp
                 
                 <div className="space-y-3 font-serif">
                   {highlights.map((item, idx) => (
-                    <div 
-                      key={idx} 
-                      className="flex items-start gap-3 text-sm sm:text-base text-gray-700"
-                    >
-                      <FontAwesomeIcon 
-                        icon={faHeart} 
-                        className="text-amber-500 mt-1 shrink-0 text-sm" 
-                      />
-                      <p className="leading-relaxed flex-1">
-                        {item}
-                      </p>
+                    <div key={idx} className="flex items-start gap-3 text-sm sm:text-base text-gray-700">
+                      <FontAwesomeIcon icon={faHeart} className="text-amber-500 mt-1 shrink-0 text-sm" />
+                      <p className="leading-relaxed flex-1">{item}</p>
                     </div>
                   ))}
                 </div>
-
               </div>
             </div>
           )}
 
           {activeTab === 'komposisi' && (
             <div className="space-y-6">
-              <h3 className="text-xl font-serif font-bold text-[#3b0912]">Detail Komposisi & Standar Kemasan</h3>
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-xl font-serif font-bold text-[#3b0912]">Detail Komposisi & Standar Kemasan</h3>
+                {activeVariant && (
+                  <span className="text-[11px] font-bold text-amber-800 bg-amber-50 px-3 py-1 rounded-full border border-amber-200">
+                    Varian: {activeVariant.name}
+                  </span>
+                )}
+              </div>
+              
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                
                 <div className="bg-[#FAF7F0] p-4 rounded-2xl border border-amber-900/10 space-y-2">
                   <span className="text-[10px] font-bold uppercase tracking-widest text-[#5c0f1c] flex items-center gap-1.5">
                     <FontAwesomeIcon icon={faSeedling} className="text-amber-600" />
                     <span>Komposisi / Bahan Utama</span>
                   </span>
                   <p className="text-sm text-gray-700 font-medium whitespace-pre-line leading-relaxed">
-                    {product.ingredients || 'Menggunakan bahan-bahan alami pilihan berkualitas tinggi tanpa pengawet buatan.'}
+                    {activeIngredients}
                   </p>
                 </div>
 
@@ -557,10 +635,9 @@ export default function ProductDetailClient({ product }: ProductDetailClientProp
                     <span>Standar Kemasan</span>
                   </span>
                   <p className="text-sm text-gray-700 font-medium whitespace-pre-line leading-relaxed">
-                    {product.packaging_standard || 'Dikemas menggunakan plastik kedap udara (food grade) tebal untuk menjamin kerenyahan dan aroma khas tetap terjaga.'}
+                    {activePackaging}
                   </p>
                 </div>
-
               </div>
             </div>
           )}
@@ -596,7 +673,7 @@ export default function ProductDetailClient({ product }: ProductDetailClientProp
           </button>
           <div className="relative h-[75vh] w-full max-w-4xl" onClick={(e) => e.stopPropagation()}>
             <Image
-              src={images[selectedImage] || images[0]}
+              src={activeDisplayImage}
               alt={product.name}
               fill
               unoptimized

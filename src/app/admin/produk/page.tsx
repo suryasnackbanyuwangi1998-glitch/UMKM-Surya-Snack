@@ -27,13 +27,17 @@ const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
 const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
-// Interface untuk Varian Produk
+// Interface untuk Varian Produk di Admin
 interface ProductVariant {
   name: string;
   price: string;
   stock: string;
   image_url: string;
   imageFile?: File | null;
+  description?: string;
+  ingredients?: string;
+  key_features?: string;
+  packaging_standard?: string;
 }
 
 export default function AdminProdukPage() {
@@ -52,7 +56,7 @@ export default function AdminProdukPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
-  // Form State Utama (Kategori default diset "Makanan")
+  // Form State Utama Produk (1 Kolom Deskripsi Fleksibel)
   const [name, setName] = useState("");
   const [price, setPrice] = useState("");
   const [category, setCategory] = useState("Makanan");
@@ -60,7 +64,6 @@ export default function AdminProdukPage() {
   const [stock, setStock] = useState("50");
   const [badge, setBadge] = useState("Best Seller");
   const [description, setDescription] = useState("");
-  const [longDescription, setLongDescription] = useState("");
   const [ingredients, setIngredients] = useState("");
   const [packagingStandard, setPackagingStandard] = useState("Plastik Standing Pouch Foil Kedap Udara");
   const [keyFeatures, setKeyFeatures] = useState(
@@ -112,7 +115,20 @@ export default function AdminProdukPage() {
 
   // Handler untuk Varian & Gambar Varian
   const handleAddVariant = () => {
-    setVariants([...variants, { name: "", price: "", stock: "10", image_url: "", imageFile: null }]);
+    setVariants([
+      ...variants, 
+      { 
+        name: "", 
+        price: "", 
+        stock: "10", 
+        image_url: "", 
+        imageFile: null,
+        description: "",
+        ingredients: "",
+        key_features: "",
+        packaging_standard: ""
+      }
+    ]);
   };
 
   const handleRemoveVariant = (index: number) => {
@@ -159,7 +175,6 @@ export default function AdminProdukPage() {
     setStock("50");
     setBadge("Best Seller");
     setDescription("");
-    setLongDescription("");
     setIngredients("");
     setPackagingStandard("Plastik Standing Pouch Foil Kedap Udara");
     setKeyFeatures("Tanpa Pengawet.\nResep Asli Banyuwangi.\nRenyah & Gurih.");
@@ -177,15 +192,13 @@ export default function AdminProdukPage() {
     setCurrentId(item.id);
     setName(item.name || "");
     setPrice(item.price !== null ? String(item.price) : "");
-    // Pastikan jika kategori lama tidak sesuai, default fallback ke Makanan
     const matchCat = item.category?.trim();
     setCategory(matchCat === "Minuman" ? "Minuman" : "Makanan");
     
     setWeight(item.weight || "250 gram");
     setStock(item.stock !== null ? String(item.stock) : "0");
     setBadge(item.badge || "Best Seller");
-    setDescription(item.description || "");
-    setLongDescription(item.long_description || "");
+    setDescription(item.description || item.long_description || "");
     setIngredients(item.ingredients || "");
     setPackagingStandard(item.packaging_standard || "Plastik Standing Pouch Foil Kedap Udara");
     
@@ -214,7 +227,11 @@ export default function AdminProdukPage() {
         price: v.price ? String(v.price) : "",
         stock: v.stock ? String(v.stock) : "0",
         image_url: v.image_url || "",
-        imageFile: null
+        imageFile: null,
+        description: v.description || "",
+        ingredients: v.ingredients || "",
+        key_features: v.key_features || "",
+        packaging_standard: v.packaging_standard || ""
       })));
     } else {
       setVariants([]);
@@ -256,12 +273,12 @@ export default function AdminProdukPage() {
         name,
         slug: generateSlug(name),
         price: price ? parseFloat(price) : null,
-        category, // Hanya bernilai "Makanan" atau "Minuman"
+        category,
         weight,
         stock: parseInt(stock) || 0,
         badge,
-        description,
-        long_description: longDescription,
+        description: description,
+        long_description: description,
         ingredients,
         packaging_standard: packagingStandard,
         key_features: formattedKeyFeatures,
@@ -323,7 +340,11 @@ export default function AdminProdukPage() {
               name: variant.name,
               price: parseFloat(variant.price) || 0,
               stock: parseInt(variant.stock) || 0,
-              image_url: variantImgUrl
+              image_url: variantImgUrl,
+              description: variant.description || null,
+              ingredients: variant.ingredients || null,
+              key_features: variant.key_features || null,
+              packaging_standard: variant.packaging_standard || null
             });
           }
 
@@ -389,7 +410,7 @@ export default function AdminProdukPage() {
             Manajemen Produk & Varian
           </h1>
           <p className="text-xs text-gray-500">
-            Kelola daftar produk, varian rasa/ukuran beserta kategori Makanan dan Minuman.
+            Kelola informasi lengkap produk utama beserta varian rasanya.
           </p>
         </div>
         <button
@@ -583,7 +604,7 @@ export default function AdminProdukPage() {
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="Contoh: Bagiak Susu Super Banyuwangi"
-                  className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-800 focus:outline-none focus:border-[#5c0f1c] transition"
+                  className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-xs text-gray-800 focus:outline-none focus:border-[#5c0f1c] transition"
                 />
               </div>
 
@@ -595,16 +616,15 @@ export default function AdminProdukPage() {
                     value={price}
                     onChange={(e) => setPrice(e.target.value)}
                     placeholder="Contoh: 25000"
-                    className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-800 focus:outline-none focus:border-[#5c0f1c] transition"
+                    className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-xs text-gray-800 focus:outline-none focus:border-[#5c0f1c] transition"
                   />
                 </div>
                 <div>
                   <label className="block text-[11px] font-bold uppercase tracking-widest text-gray-500 mb-1.5">Kategori</label>
-                  {/* Pilihan Kategori Dikunci Hanya Makanan dan Minuman */}
                   <select
                     value={category}
                     onChange={(e) => setCategory(e.target.value)}
-                    className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-800 focus:outline-none focus:border-[#5c0f1c] transition cursor-pointer font-bold"
+                    className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-xs text-gray-800 focus:outline-none focus:border-[#5c0f1c] transition cursor-pointer font-bold"
                   >
                     <option value="Makanan">Makanan</option>
                     <option value="Minuman">Minuman</option>
@@ -612,12 +632,66 @@ export default function AdminProdukPage() {
                 </div>
               </div>
 
-              {/* Varian Produk */}
+              {/* ========================================== */}
+              {/* PENGATURAN PRODUK UTAMA                    */}
+              {/* ========================================== */}
+              <div className="space-y-4 bg-gray-50/70 p-4 rounded-2xl border border-gray-200">
+                <h4 className="text-xs font-bold uppercase tracking-widest text-[#3b0912]">Informasi & Deskripsi Produk Utama</h4>
+
+                <div>
+                  <label className="block text-[11px] font-bold uppercase tracking-widest text-gray-500 mb-1.5">Deskripsi Produk (Pendek / Panjang)</label>
+                  <textarea
+                    rows={4}
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                    placeholder="Tuliskan keterangan lengkap atau singkat mengenai produk ini..."
+                    className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-xs text-gray-800 focus:outline-none focus:border-[#5c0f1c] transition resize-y"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-bold uppercase tracking-widest text-gray-500 mb-1.5">Keunggulan Utama (Pisahkan dengan baris baru / Enter)</label>
+                  <textarea
+                    rows={3}
+                    value={keyFeatures}
+                    onChange={(e) => setKeyFeatures(e.target.value)}
+                    placeholder="Contoh:&#10;Tanpa Bahan Pengawet.&#10;Resep Asli Banyuwangi.&#10;Renyah & Gurih."
+                    className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-xs text-gray-800 focus:outline-none focus:border-[#5c0f1c] transition resize-none font-mono"
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-[11px] font-bold uppercase tracking-widest text-gray-500 mb-1.5">Komposisi / Bahan Utama</label>
+                    <textarea
+                      rows={2}
+                      value={ingredients}
+                      onChange={(e) => setIngredients(e.target.value)}
+                      placeholder="Contoh: Tepung tapioka, santan kelapa, gula..."
+                      className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-xs text-gray-800 focus:outline-none focus:border-[#5c0f1c] transition resize-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-bold uppercase tracking-widest text-gray-500 mb-1.5">Standar Kemasan</label>
+                    <input
+                      type="text"
+                      value={packagingStandard}
+                      onChange={(e) => setPackagingStandard(e.target.value)}
+                      placeholder="Plastik Standing Pouch Foil Kedap Udara"
+                      className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-xs text-gray-800 focus:outline-none focus:border-[#5c0f1c] transition"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* ========================================== */}
+              {/* VARIAN PRODUK                              */}
+              {/* ========================================== */}
               <div className="border border-amber-900/10 bg-amber-50/30 p-4 rounded-2xl space-y-4">
                 <div className="flex items-center justify-between">
                   <label className="text-xs font-bold uppercase tracking-widest text-[#3b0912] flex items-center gap-2">
                     <FontAwesomeIcon icon={faLayerGroup} className="text-amber-600" />
-                    <span>Varian Produk & Gambar Varian</span>
+                    <span>Varian Produk & Keterangan Khusus</span>
                   </label>
                   <button
                     type="button"
@@ -631,9 +705,9 @@ export default function AdminProdukPage() {
                 {variants.length === 0 ? (
                   <p className="text-xs text-gray-400 italic">Belum ada varian ditambahkan.</p>
                 ) : (
-                  <div className="space-y-3">
+                  <div className="space-y-4">
                     {variants.map((variant, index) => (
-                      <div key={index} className="bg-white border border-gray-200 p-3.5 rounded-xl space-y-3 shadow-xs">
+                      <div key={index} className="bg-white border border-gray-200 p-4 rounded-xl space-y-3 shadow-xs">
                         <div className="flex items-center justify-between">
                           <span className="text-[10px] font-bold uppercase tracking-widest text-gray-500">Varian #{index + 1}</span>
                           <button
@@ -641,7 +715,7 @@ export default function AdminProdukPage() {
                             onClick={() => handleRemoveVariant(index)}
                             className="text-rose-600 hover:text-rose-800 text-xs font-bold cursor-pointer"
                           >
-                            <FontAwesomeIcon icon={faTrash} /> Hapus
+                            <FontAwesomeIcon icon={faTrash} /> Hapus Varian
                           </button>
                         </div>
 
@@ -669,6 +743,43 @@ export default function AdminProdukPage() {
                           />
                         </div>
 
+                        {/* Input Deskripsi & Komposisi Varian */}
+                        <div className="space-y-2">
+                          <textarea
+                            rows={2}
+                            placeholder="Deskripsi khusus varian ini (Pendek / Panjang)..."
+                            value={variant.description || ""}
+                            onChange={(e) => handleVariantChange(index, "description", e.target.value)}
+                            className="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-xs text-gray-800 focus:outline-none focus:border-[#5c0f1c] resize-y"
+                          />
+                          <textarea
+                            rows={2}
+                            placeholder="Komposisi khusus varian ini..."
+                            value={variant.ingredients || ""}
+                            onChange={(e) => handleVariantChange(index, "ingredients", e.target.value)}
+                            className="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-xs text-gray-800 focus:outline-none focus:border-[#5c0f1c] resize-y"
+                          />
+                        </div>
+
+                        {/* Input Keunggulan & Standar Kemasan Varian */}
+                        <div className="space-y-2">
+                          <textarea
+                            rows={2}
+                            placeholder="Keunggulan varian ini..."
+                            value={variant.key_features || ""}
+                            onChange={(e) => handleVariantChange(index, "key_features", e.target.value)}
+                            className="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-xs text-gray-800 focus:outline-none focus:border-[#5c0f1c] resize-y"
+                          />
+                          <textarea
+                            rows={2}
+                            placeholder="Standar kemasan khusus varian ini..."
+                            value={variant.packaging_standard || ""}
+                            onChange={(e) => handleVariantChange(index, "packaging_standard", e.target.value)}
+                            className="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-xs text-gray-800 focus:outline-none focus:border-[#5c0f1c] resize-y"
+                          />
+                        </div>
+
+                        {/* Upload Gambar Varian */}
                         <div className="flex items-center gap-3 pt-1">
                           <label className="cursor-pointer bg-gray-50 border border-dashed border-gray-300 hover:border-[#5c0f1c] px-3 py-2 rounded-lg text-xs text-gray-600 font-bold inline-flex items-center gap-2">
                             <FontAwesomeIcon icon={faImage} className="text-[#5c0f1c]" />
@@ -723,17 +834,6 @@ export default function AdminProdukPage() {
                     </div>
                   )}
                 </div>
-              </div>
-
-              <div>
-                <label className="block text-[11px] font-bold uppercase tracking-widest text-gray-500 mb-1.5">Deskripsi Singkat</label>
-                <textarea
-                  rows={2}
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  placeholder="Deskripsi singkat produk..."
-                  className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-800 focus:outline-none focus:border-[#5c0f1c] transition resize-none"
-                />
               </div>
 
               <div className="pt-2 flex gap-3">
