@@ -33,6 +33,14 @@ export default function HomePage() {
   const [storeLabel, setStoreLabel] = useState<string>("Oleh-Oleh Khas Banyuwangi");
   const [currentSlide, setCurrentSlide] = useState(0);
 
+  // State untuk Heritage Story
+  const [heritage, setHeritage] = useState({
+    title: "Menjaga Tradisi, Memahat Cita Rasa",
+    subtitle: "✦ Sejarah & Dedikasi ✦",
+    desc: "Berawal dari dapur rumahan di Banyuwangi, Surya Snack tumbuh dengan memegang teguh prinsip keaslian resep leluhur.",
+    image_url: "https://images.unsplash.com/photo-1556910103-1c02745aae4d?q=80&w=600"
+  });
+
   useEffect(() => {
     async function fetchData() {
       try {
@@ -53,13 +61,19 @@ export default function HomePage() {
 
         const { data: storeData, error: storeError } = await supabase
           .from('store_settings')
-          .select('store_label')
+          .select('*')
           .eq('id', 'main')
           .maybeSingle();
 
         if (storeError) throw storeError;
-        if (storeData && storeData.store_label) {
-          setStoreLabel(storeData.store_label);
+        if (storeData) {
+          if (storeData.store_label) setStoreLabel(storeData.store_label);
+          setHeritage({
+            title: storeData.heritage_title || "Menjaga Tradisi, Memahat Cita Rasa",
+            subtitle: storeData.heritage_subtitle || "✦ Sejarah & Dedikasi ✦",
+            desc: storeData.heritage_desc || "Berawal dari dapur rumahan di Banyuwangi, Surya Snack tumbuh dengan memegang teguh prinsip keaslian resep leluhur.",
+            image_url: storeData.heritage_image_url || "https://images.unsplash.com/photo-1556910103-1c02745aae4d?q=80&w=600"
+          });
         }
       } catch (err) {
         console.error("Gagal memuat beranda:", err);
@@ -184,7 +198,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ================= 3. PRODUK UNGGULAN (SCROLL KESAMPING / HORIZONTAL) ================= */}
+      {/* ================= 3. PRODUK UNGGULAN (SCROLL KESAMPING) ================= */}
       <section className="py-20 sm:py-28 max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 space-y-12 overflow-hidden">
         <div className="text-center max-w-2xl mx-auto space-y-3">
           <span className="text-[#5c0f1c] text-xs font-bold tracking-[0.3em] uppercase font-sans">
@@ -223,24 +237,30 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ================= 4. HERITAGE STORY SECTION ================= */}
+      {/* ================= 4. HERITAGE STORY SECTION (DINAMIS DARI ADMIN) ================= */}
       <section className="bg-[#3b0912] text-amber-100 py-20 sm:py-28 relative overflow-hidden">
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 grid md:grid-cols-2 gap-12 items-center">
           <div className="space-y-6">
             <span className="text-amber-400 text-xs font-sans font-bold uppercase tracking-[0.25em]">
-              ✦ Sejarah & Dedikasi ✦
+              {heritage.subtitle}
             </span>
             <h2 className="text-3xl sm:text-5xl font-serif font-bold text-white leading-tight">
-              Menjaga Tradisi, <br />
-              <span className="text-amber-300 italic font-normal">Memahat Cita Rasa</span>
+              {heritage.title.includes(',') ? (
+                <>
+                  {heritage.title.split(',')[0]}, <br />
+                  <span className="text-amber-300 italic font-normal">{heritage.title.split(',')[1]}</span>
+                </>
+              ) : (
+                heritage.title
+              )}
             </h2>
             <p className="text-gray-300 font-sans text-sm sm:text-base leading-relaxed font-light text-justify">
-              Berawal dari dapur rumahan di Banyuwangi, Surya Snack tumbuh dengan memegang teguh prinsip keaslian resep leluhur.
+              {heritage.desc}
             </p>
           </div>
           <div className="relative h-80 sm:h-105 rounded-lg overflow-hidden border-4 border-amber-400/30 shadow-2xl">
             <Image
-              src="https://images.unsplash.com/photo-1556910103-1c02745aae4d?q=80&w=600"
+              src={heritage.image_url}
               alt="Proses Pembuatan Tradisional"
               fill
               className="object-cover filter sepia-[0.2]"

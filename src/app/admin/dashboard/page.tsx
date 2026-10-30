@@ -20,11 +20,17 @@ import {
   faTrashCan,
   faXmark,
   faStar,
+  faBookOpenReader,
+  faImage,
 } from "@fortawesome/free-solid-svg-icons";
 
 interface StoreInfo {
   store_name: string;
   store_label: string;
+  heritage_title: string;
+  heritage_subtitle: string;
+  heritage_desc: string;
+  heritage_image_url: string;
 }
 
 interface Banner {
@@ -41,12 +47,19 @@ export default function AdminDashboardPage() {
   const [totalCategories, setTotalCategories] = useState<number>(0);
   const [loading, setLoading] = useState<boolean>(true);
   const [savingStore, setSavingStore] = useState<boolean>(false);
+  const [savingHeritage, setSavingHeritage] = useState<boolean>(false);
   const [notification, setNotification] = useState<string>("");
 
   const [storeInfo, setStoreInfo] = useState<StoreInfo>({
     store_name: "Surya Snack",
     store_label: "Khas Banyuwangi",
+    heritage_title: "Menjaga Tradisi, Memahat Cita Rasa",
+    heritage_subtitle: "✦ Sejarah & Dedikasi ✦",
+    heritage_desc: "Berawal dari dapur rumahan di Banyuwangi, Surya Snack tumbuh dengan memegang teguh prinsip keaslian resep leluhur.",
+    heritage_image_url: "https://images.unsplash.com/photo-1556910103-1c02745aae4d?q=80&w=600",
   });
+
+  const [heritageImageFile, setHeritageImageFile] = useState<File | null>(null);
 
   const [featuredProducts, setFeaturedProducts] = useState<any[]>([]);
   const [banners, setBanners] = useState<Banner[]>([]);
@@ -62,7 +75,6 @@ export default function AdminDashboardPage() {
       try {
         setLoading(true);
         
-        // Ambil semua produk untuk statistik total
         const { data: productData } = await supabase.from("products").select("*");
         if (productData) {
           setTotalProducts(productData.length);
@@ -72,7 +84,6 @@ export default function AdminDashboardPage() {
           setTotalCategories(uniqueCategories.size);
         }
 
-        // Ambil produk unggulan menggunakan fungsi yang sama dengan beranda
         const featured = await getFeaturedProducts(20);
         if (featured) {
           setFeaturedProducts(featured);
@@ -88,6 +99,10 @@ export default function AdminDashboardPage() {
           setStoreInfo({
             store_name: storeData.store_name || "Surya Snack",
             store_label: storeData.store_label || "Khas Banyuwangi",
+            heritage_title: storeData.heritage_title || "Menjaga Tradisi, Memahat Cita Rasa",
+            heritage_subtitle: storeData.heritage_subtitle || "✦ Sejarah & Dedikasi ✦",
+            heritage_desc: storeData.heritage_desc || "Berawal dari dapur rumahan di Banyuwangi, Surya Snack tumbuh dengan memegang teguh prinsip keaslian resep leluhur.",
+            heritage_image_url: storeData.heritage_image_url || "https://images.unsplash.com/photo-1556910103-1c02745aae4d?q=80&w=600",
           });
         }
 
@@ -128,6 +143,52 @@ export default function AdminDashboardPage() {
       alert("Gagal menyimpan: " + error.message);
     } finally {
       setSavingStore(false);
+    }
+  };
+
+  const handleSaveHeritage = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSavingHeritage(true);
+    try {
+      let imageUrl = storeInfo.heritage_image_url;
+
+      if (heritageImageFile) {
+        const fileExt = heritageImageFile.name.split(".").pop();
+        const fileName = `heritage-${Date.now()}.${fileExt}`;
+        const { error: uploadError } = await supabase.storage
+          .from("banners")
+          .upload(fileName, heritageImageFile);
+
+        if (uploadError) throw uploadError;
+
+        const { data: publicUrlData } = supabase.storage
+          .from("banners")
+          .getPublicUrl(fileName);
+
+        imageUrl = publicUrlData.publicUrl;
+      }
+
+      const { error } = await supabase
+        .from("store_settings")
+        .upsert({
+          id: "main",
+          heritage_title: storeInfo.heritage_title,
+          heritage_subtitle: storeInfo.heritage_subtitle,
+          heritage_desc: storeInfo.heritage_desc,
+          heritage_image_url: imageUrl,
+          updated_at: new Date().toISOString(),
+        });
+
+      if (error) throw error;
+
+      setStoreInfo({ ...storeInfo, heritage_image_url: imageUrl });
+      setHeritageImageFile(null);
+      setNotification("Berhasil memperbarui bagian Sejarah & Dedikasi!");
+      setTimeout(() => setNotification(""), 4000);
+    } catch (error: any) {
+      alert("Gagal menyimpan bagian sejarah: " + error.message);
+    } finally {
+      setSavingHeritage(false);
     }
   };
 
@@ -212,7 +273,7 @@ export default function AdminDashboardPage() {
             Dashboard Utama
           </h1>
           <p className="text-xs text-gray-500">
-            Kelola informasi toko dan banner promosi website utama Anda.
+            Kelola informasi toko, banner promosi, dan bagian sejarah website utama Anda.
           </p>
         </div>
         <Link
@@ -246,15 +307,15 @@ export default function AdminDashboardPage() {
         </div>
       </div>
 
-      {/* SECTION PREVIEW PRODUK UNGGULAN (DARI HALAMAN PRODUK) */}
+      {/* SECTION PREVIEW PRODUK UNGGULAN */}
       <div className="bg-white border border-amber-900/15 p-6 md:p-8 rounded-3xl shadow-sm space-y-6 font-sans">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-lg font-serif font-bold text-[#3b0912] flex items-center gap-2">
+            <h2 className="text-lg font-serif font-bold text-[#3b0912]">
               Daftar Produk Terlaris
             </h2>
             <p className="text-xs text-gray-500">
-              Produk di bawah ini adalah produk yang sedang aktif tampil sebagai unggulan di beranda. Atur melalui menu Kelola Produk.
+              Produk di bawah ini adalah produk yang sedang aktif tampil sebagai unggulan di beranda.
             </p>
           </div>
           <Link
@@ -267,7 +328,7 @@ export default function AdminDashboardPage() {
 
         {featuredProducts.length === 0 ? (
           <div className="text-center py-12 bg-gray-50 rounded-2xl border border-dashed border-gray-200 text-gray-400 text-xs">
-            Belum ada produk yang ditandai sebagai unggulan. Silakan centang produk di halaman Kelola Produk.
+            Belum ada produk yang ditandai sebagai unggulan.
           </div>
         ) : (
           <div className="flex overflow-x-auto gap-4 pb-4 pt-1 snap-x scrollbar-thin scrollbar-thumb-amber-600">
@@ -335,12 +396,96 @@ export default function AdminDashboardPage() {
         </div>
       </div>
 
+      {/* KELOLA BAGIAN SEJARAH & DEDIKASI (HERITAGE STORY) */}
+      <div className="bg-white border border-amber-900/15 p-6 md:p-8 rounded-3xl shadow-sm space-y-6 font-sans">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-lg font-serif font-bold text-[#3b0912] flex items-center gap-2">
+              <FontAwesomeIcon icon={faBookOpenReader} className="text-[#5c0f1c]" />
+              Kelola Bagian Sejarah & Dedikasi
+            </h2>
+            <p className="text-xs text-gray-500">
+              Ubah teks, judul, dan foto pada bagian cerita sejarah di beranda website.
+            </p>
+          </div>
+        </div>
+
+        <form onSubmit={handleSaveHeritage} className="space-y-4">
+          <div className="grid sm:grid-cols-2 gap-4">
+            <div>
+              <label className="text-[11px] font-bold uppercase text-gray-600 mb-1 block">Sub Judul / Tag (Atas)</label>
+              <input
+                type="text"
+                required
+                value={storeInfo.heritage_subtitle}
+                onChange={(e) => setStoreInfo({ ...storeInfo, heritage_subtitle: e.target.value })}
+                className="w-full bg-[#FDFBF7] border border-amber-900/20 rounded-xl px-4 py-3 text-xs text-gray-800 focus:outline-none focus:border-[#3b0912]"
+              />
+            </div>
+            <div>
+              <label className="text-[11px] font-bold uppercase text-gray-600 mb-1 block">Judul Utama</label>
+              <input
+                type="text"
+                required
+                value={storeInfo.heritage_title}
+                onChange={(e) => setStoreInfo({ ...storeInfo, heritage_title: e.target.value })}
+                className="w-full bg-[#FDFBF7] border border-amber-900/20 rounded-xl px-4 py-3 text-xs text-gray-800 focus:outline-none focus:border-[#3b0912]"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="text-[11px] font-bold uppercase text-gray-600 mb-1 block">Deskripsi / Paragraf Cerita</label>
+            <textarea
+              rows={3}
+              required
+              value={storeInfo.heritage_desc}
+              onChange={(e) => setStoreInfo({ ...storeInfo, heritage_desc: e.target.value })}
+              className="w-full bg-[#FDFBF7] border border-amber-900/20 rounded-xl px-4 py-3 text-xs text-gray-800 focus:outline-none focus:border-[#3b0912] resize-none"
+            />
+          </div>
+
+          <div>
+            <label className="text-[11px] font-bold uppercase text-gray-600 mb-1 block">Foto Samping Sejarah</label>
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 p-4 bg-[#FDFBF7] border border-amber-900/10 rounded-2xl">
+              <div className="relative w-24 h-20 rounded-xl overflow-hidden bg-gray-100 border shrink-0">
+                <img src={storeInfo.heritage_image_url} alt="Heritage Preview" className="w-full h-full object-cover" />
+              </div>
+              <div className="flex-1 space-y-2 w-full">
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => {
+                    if (e.target.files && e.target.files[0]) {
+                      setHeritageImageFile(e.target.files[0]);
+                    }
+                  }}
+                  className="w-full text-xs text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-[#3b0912] file:text-amber-200 hover:file:bg-[#5c0f1c] cursor-pointer"
+                />
+                <p className="text-[10px] text-gray-400">Pilih file foto baru dari perangkat Anda untuk mengganti foto sejarah.</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex justify-end pt-2">
+            <button
+              type="submit"
+              disabled={savingHeritage}
+              className="bg-[#3b0912] hover:bg-[#5c0f1c] text-amber-200 font-bold px-6 py-3 rounded-xl text-xs uppercase tracking-wider transition shadow-md flex items-center gap-2 cursor-pointer disabled:opacity-50"
+            >
+              {savingHeritage ? <FontAwesomeIcon icon={faSpinner} className="animate-spin" /> : <FontAwesomeIcon icon={faFloppyDisk} />}
+              Simpan Perubahan Sejarah
+            </button>
+          </div>
+        </form>
+      </div>
+
       {/* SECTION BANNER PROMOSI */}
       <div className="bg-white border border-amber-900/15 p-6 md:p-8 rounded-3xl shadow-sm space-y-6 font-sans">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
             <h2 className="text-lg font-serif font-bold text-[#3b0912]">Banner Promosi</h2>
-            <p className="text-xs text-gray-500">Kelola banner promosi toko Anda[cite: 3].</p>
+            <p className="text-xs text-gray-500">Kelola banner promosi toko Anda.</p>
           </div>
           <Link
             href="/admin/banner/tambah"
@@ -351,7 +496,6 @@ export default function AdminDashboardPage() {
           </Link>
         </div>
 
-        {/* Grid Kartu Banner */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {banners.map((banner, index) => (
             <div key={banner.id} className="border border-amber-900/15 rounded-2xl overflow-hidden bg-white shadow-sm flex flex-col justify-between">
@@ -393,7 +537,7 @@ export default function AdminDashboardPage() {
         </div>
       </div>
 
-      {/* POP-UP MODAL EDIT BANNER DENGAN UPLOAD FILE */}
+      {/* POP-UP MODAL EDIT BANNER */}
       {isEditModalOpen && selectedBanner && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-8 space-y-6 shadow-2xl animate-in fade-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto">

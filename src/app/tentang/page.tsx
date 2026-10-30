@@ -41,35 +41,49 @@ export default async function TentangKamiPage() {
     .maybeSingle();
 
   const title = aboutData?.title || 'Warisan Cita Rasa, Menjaga Rasa Asli';
-  const subtitle = aboutData?.subtitle || 'Tentang Surya Snack';
+  const subtitle = aboutData?.subtitle || '★ EST. 1998 ★';
   const description = aboutData?.description || 'Berawal dari dapur sederhana di Banyuwangi pada tahun 1998, kami mendedikasikan diri untuk menghadirkan camilan tradisional berkualitas tinggi dengan resep pusaka leluhur.';
   const visionText = aboutData?.vision_text || 'Menjadi pusat oleh-oleh khas Banyuwangi terdepan dan terpercaya dengan menjunjung tinggi kualitas rasa tradisional serta kearifan lokal.';
+  const aboutImage = aboutData?.about_image || '/foto-depan.jpeg';
+  const photoBadge = aboutData?.photo_badge || 'SEJAK 1998';
+  const photoQuote = aboutData?.photo_quote || 'Konsistensi rasa otentik adalah resep utama kami bertahan hingga hari ini.';
 
-  const pilarMisi = [
-    { num: '01', icon: faLeaf, title: 'Kualitas Rasa', desc: 'Mengembangkan resep otentik dengan prinsip produksi tradisional untuk menghadirkan cita rasa terbaik.' },
-    { num: '02', icon: faAward, title: 'Mutu & Kualitas', desc: 'Menggunakan bahan baku alami pilihan tanpa pengawet tambahan agar produk aman dikonsumsi.' },
-    { num: '03', icon: faHandshake, title: 'Pemberdayaan Lokal', desc: 'Bermitra dengan UMKM dan petani lokal Banyuwangi dalam proses produksi untuk tumbuh bersama.' },
-    { num: '04', icon: faHeart, title: 'Kepuasan Pelanggan', desc: 'Menghadirkan pelayanan hangat dan produk segar dengan konsistensi kualitas yang selalu terjaga.' },
+  // Statistik Dinamis dari Admin
+  const stats = aboutData?.stats_items || [
+    { label: 'BERDIRI SEJAK', value: '1998', desc: 'Dari dapur kecil di belakang rumah.', tone: 'dark' },
+    { label: 'RESMI & LEGAL', value: '2000', desc: 'Toko depan rumah & sertifikat lengkap.', tone: 'light' },
+    { label: 'TAHUN PENGALAMAN', value: '25+', desc: 'Resep dijaga lintas generasi.', tone: 'light' },
+    { label: 'PELANGGAN PUAS', value: '10rb+', desc: 'Dikirim ke berbagai kota di Indonesia.', tone: 'amber' },
   ];
 
-  const nilaiItems = [
-    { icon: faScroll, title: 'Integritas & Kejujuran', desc: 'Transparansi penuh dalam setiap bahan baku dan proses pembuatan produk.' },
-    { icon: faSeedling, title: 'Komitmen Mutu', desc: 'Konsistensi rasa otentik yang selalu dijaga dari generasi ke generasi.' },
-    { icon: faUsers, title: 'Keberlanjutan', desc: 'Kepedulian terhadap lingkungan dan kolaborasi erat bersama masyarakat lokal.' },
+  const timeline = aboutData?.timeline || [
+    { year: '1998', title: 'Awal yang Sederhana', desc: 'Surya Snack dirintis sebagai usaha rumahan berskala kecil di bagian belakang rumah.' },
+    { year: '2000', title: 'Toko Resmi & Perizinan Lengkap', desc: 'Langkah besar diambil dengan membuka toko di bagian depan rumah.' },
+    { year: 'SEKARANG', title: 'Tumbuh di Era Digital', desc: 'Kini Surya Snack melayani pemesanan online dan pengiriman ke berbagai kota.' },
   ];
 
-  const stats = [
-    { value: '1998', label: 'Berdiri Sejak', desc: 'Dari dapur kecil di belakang rumah.', tone: 'dark' as const },
-    { value: '2000', label: 'Resmi & Legal', desc: 'Toko depan rumah & sertifikat lengkap.', tone: 'light' as const },
-    { value: '25+', label: 'Tahun Pengalaman', desc: 'Resep dijaga lintas generasi.', tone: 'light' as const },
-    { value: '10rb+', label: 'Pelanggan Puas', desc: 'Dikirim ke berbagai kota di Indonesia.', tone: 'amber' as const },
+  const pilarIcons = [faLeaf, faAward, faHandshake, faHeart];
+  const pilarMisiRaw = aboutData?.pilar_misi || [
+    { num: '01', title: 'Kualitas Rasa', desc: 'Mengembangkan resep otentik dengan prinsip produksi tradisional untuk menghadirkan cita rasa terbaik.' },
+    { num: '02', title: 'Mutu & Kualitas', desc: 'Menggunakan bahan baku alami pilihan tanpa pengawet tambahan agar produk aman dikonsumsi.' },
+    { num: '03', title: 'Pemberdayaan Lokal', desc: 'Bermitra dengan UMKM dan petani lokal Banyuwangi dalam proses produksi untuk tumbuh bersama.' },
+    { num: '04', title: 'Kepuasan Pelanggan', desc: 'Menghadirkan pelayanan hangat dan produk segar dengan konsistensi kualitas yang selalu terjaga.' },
   ];
+  const pilarMisi = pilarMisiRaw.map((item: { num: string; title: string; desc: string }, idx: number) => ({
+    ...item,
+    icon: pilarIcons[idx % pilarIcons.length],
+  }));
 
-  const timeline = [
-    { year: '1998', title: 'Awal yang Sederhana', desc: 'Surya Snack dirintis sebagai usaha rumahan berskala kecil di bagian belakang rumah. Tanpa sertifikat formal, fokus utama saat itu hanyalah menghadirkan cita rasa terbaik bagi para tetangga.' },
-    { year: '2000', title: 'Toko Resmi & Perizinan Lengkap', desc: 'Langkah besar diambil dengan membuka toko di bagian depan rumah serta melengkapi seluruh perizinan dan sertifikasi usaha. Sejak saat itu, Surya Snack menjadi jujugan utama pusat oleh-oleh khas Banyuwangi.' },
-    { year: 'Sekarang', title: 'Tumbuh di Era Digital', desc: 'Kini Surya Snack melayani pemesanan online dan pengiriman ke berbagai kota, tanpa pernah mengubah resep dan cara tradisional yang menjadi jiwa setiap produknya.' },
+  const nilaiIcons = [faScroll, faSeedling, faUsers];
+  const nilaiItemsRaw = aboutData?.nilai_items || [
+    { title: 'Integritas & Kejujuran', desc: 'Transparansi penuh dalam setiap bahan baku dan proses pembuatan produk.' },
+    { title: 'Komitmen Mutu', desc: 'Konsistensi rasa otentik yang selalu dijaga dari generasi ke generasi.' },
+    { title: 'Keberlanjutan', desc: 'Kepedulian terhadap lingkungan dan kolaborasi erat bersama masyarakat lokal.' },
   ];
+  const nilaiItems = nilaiItemsRaw.map((item: { title: string; desc: string }, idx: number) => ({
+    ...item,
+    icon: nilaiIcons[idx % nilaiIcons.length],
+  }));
 
   const heroChips = [
     { icon: faCircleCheck, label: '100% Halal' },
@@ -103,8 +117,6 @@ export default async function TentangKamiPage() {
             
             <div className="space-y-6 lg:col-span-7">
               <div className="inline-flex items-center gap-3 px-5 py-2 rounded-full border border-amber-400/40 bg-[#3b0912]/90 backdrop-blur-md shadow-xl">
-                <span className="text-amber-400 text-xs tracking-widest font-serif">★ EST. 1998 ★</span>
-                <span className="w-1 h-1 rounded-full bg-amber-400"></span>
                 <span className="text-amber-200 text-xs uppercase tracking-wider font-sans font-semibold">
                   {subtitle}
                 </span>
@@ -137,10 +149,11 @@ export default async function TentangKamiPage() {
               </div>
             </div>
 
+            {/* Statistik Dinamis */}
             <div className="grid grid-cols-2 gap-4 lg:col-span-5 font-sans">
-              {stats.map((stat) => (
+              {stats.map((stat: { label: string; value: string; desc: string; tone: string }, idx: number) => (
                 <div
-                  key={stat.label}
+                  key={idx}
                   className={`flex flex-col justify-between space-y-2 rounded-3xl p-5 transition-all duration-300 hover:-translate-y-1 sm:p-6 ${
                     stat.tone === 'dark'
                       ? 'bg-[#5c0f1c] text-white shadow-lg shadow-[#5c0f1c]/25'
@@ -180,13 +193,13 @@ export default async function TentangKamiPage() {
           </div>
         </section>
 
-        {/* SECTION 1 — SEJARAH */}
+        {/* SECTION 1 — TIMELINE & FOTO TOKO */}
         <section className="mx-auto max-w-6xl px-4 py-12 sm:px-6 sm:py-16 font-sans">
           <div className="grid items-stretch overflow-hidden rounded-3xl border border-[#EBE3D5] bg-white shadow-xl lg:grid-cols-12">
             
             <div className="relative min-h-70 sm:min-h-90 lg:col-span-5 lg:min-h-0">
               <Image
-                src="/foto-depan.jpeg"
+                src={aboutImage}
                 alt="Toko Surya Snack Banyuwangi"
                 fill
                 sizes="(max-width: 1024px) 100vw, 40vw"
@@ -194,10 +207,10 @@ export default async function TentangKamiPage() {
               />
               <div className="absolute inset-0 bg-linear-to-t from-black/75 via-black/10 to-transparent" />
               <span className="absolute left-6 top-6 rounded-full bg-[#5c0f1c] px-3.5 py-1.5 text-[11px] font-bold uppercase tracking-widest text-white shadow-md">
-                Sejak 1998
+                {photoBadge}
               </span>
               <p className="absolute inset-x-6 bottom-6 text-sm font-serif italic leading-relaxed text-white sm:text-base">
-                &ldquo;Konsistensi rasa otentik adalah resep utama kami bertahan hingga hari ini.&rdquo;
+                &ldquo;{photoQuote}&rdquo;
               </p>
             </div>
 
@@ -216,8 +229,8 @@ export default async function TentangKamiPage() {
                   aria-hidden="true"
                   className="absolute bottom-2 left-2.25 top-2 w-0.5 bg-[#EBE3D5]"
                 />
-                {timeline.map((item) => (
-                  <div key={item.year} className="relative pl-10">
+                {timeline.map((item: { year: string; title: string; desc: string }, idx: number) => (
+                  <div key={idx} className="relative pl-10">
                     <span className="absolute left-0 top-0.5 flex h-5 w-5 items-center justify-center rounded-full border-2 border-[#5c0f1c] bg-white shadow-sm">
                       <span className="h-1.5 w-1.5 rounded-full bg-[#5c0f1c]" />
                     </span>
@@ -239,7 +252,6 @@ export default async function TentangKamiPage() {
 
         {/* SECTION 2 — VISI & PILAR MISI */}
         <section className="mx-auto max-w-6xl space-y-10 px-4 py-12 sm:px-6 sm:py-16 font-sans">
-          
           <div className="relative overflow-hidden rounded-3xl bg-linear-to-r from-[#5c0f1c] to-[#3a0911] p-8 text-white shadow-xl md:p-14">
             <div
               className="pointer-events-none absolute inset-0 opacity-[0.07]"
@@ -265,7 +277,7 @@ export default async function TentangKamiPage() {
           </div>
 
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-            {pilarMisi.map((item) => (
+            {pilarMisi.map((item: any) => (
               <div
                 key={item.num}
                 className="group relative flex flex-col justify-between space-y-4 overflow-hidden rounded-2xl border border-[#EBE3D5] bg-white p-6 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-[#5c0f1c]/30 hover:shadow-xl"
@@ -292,7 +304,7 @@ export default async function TentangKamiPage() {
           </div>
         </section>
 
-        {/* SECTION 3 — NILAI */}
+        {/* SECTION 3 — NILAI YANG KAMI JAGA */}
         <section className="mx-auto max-w-6xl px-4 py-12 sm:px-6 sm:py-16 font-sans">
           <div className="grid gap-10 lg:grid-cols-12 lg:gap-14">
             
@@ -314,7 +326,7 @@ export default async function TentangKamiPage() {
             </div>
 
             <div className="divide-y divide-[#EBE3D5] border-y border-[#EBE3D5] lg:col-span-8">
-              {nilaiItems.map((item, idx) => (
+              {nilaiItems.map((item: any, idx: number) => (
                 <div
                   key={item.title}
                   className="group -mx-4 flex items-start gap-5 rounded-2xl px-4 py-7 transition-colors duration-300 hover:bg-white/70 md:py-8"
