@@ -3,16 +3,21 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import type { Product } from '@/types';
 
+// Perluas tipe Product agar mendukung properti selectedVariant
+export interface CartItemProduct extends Product {
+  selectedVariant?: string;
+}
+
 export interface CartItem {
-  product: Product;
+  product: CartItemProduct;
   quantity: number;
 }
 
 interface CartContextType {
   cart: CartItem[];
-  addToCart: (product: Product, quantity?: number) => void;
-  removeFromCart: (productId: string | number) => void;
-  updateQuantity: (productId: string | number, quantity: number) => void;
+  addToCart: (product: CartItemProduct, quantity?: number) => void;
+  removeFromCart: (productId: string | number, selectedVariant?: string) => void;
+  updateQuantity: (productId: string | number, quantity: number, selectedVariant?: string) => void;
   clearCart: () => void;
   totalItems: number;
   totalPrice: number;
@@ -42,9 +47,15 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     }
   }, [cart, isInitialized]);
 
-  const addToCart = (product: Product, quantity: number = 1) => {
+  // Memasukkan ke keranjang dengan membedakan ID dan Varian (selectedVariant)
+  const addToCart = (product: CartItemProduct, quantity: number = 1) => {
     setCart((prevCart) => {
-      const existingIndex = prevCart.findIndex((item) => String(item.product.id) === String(product.id));
+      const existingIndex = prevCart.findIndex(
+        (item) =>
+          String(item.product.id) === String(product.id) &&
+          (item.product.selectedVariant || 'Produk Utama') === (product.selectedVariant || 'Produk Utama')
+      );
+
       if (existingIndex > -1) {
         const updatedCart = [...prevCart];
         updatedCart[existingIndex].quantity += quantity;
@@ -54,18 +65,31 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     });
   };
 
-  const removeFromCart = (productId: string | number) => {
-    setCart((prevCart) => prevCart.filter((item) => String(item.product.id) !== String(productId)));
+  // Hapus item berdasarkan ID dan Varian tertentu
+  const removeFromCart = (productId: string | number, selectedVariant?: string) => {
+    setCart((prevCart) =>
+      prevCart.filter(
+        (item) =>
+          !(
+            String(item.product.id) === String(productId) &&
+            (item.product.selectedVariant || 'Produk Utama') === (selectedVariant || 'Produk Utama')
+          )
+      )
+    );
   };
 
-  const updateQuantity = (productId: string | number, quantity: number) => {
+  // Update kuantitas berdasarkan ID dan Varian tertentu
+  const updateQuantity = (productId: string | number, quantity: number, selectedVariant?: string) => {
     if (quantity <= 0) {
-      removeFromCart(productId);
+      removeFromCart(productId, selectedVariant);
       return;
     }
     setCart((prevCart) =>
       prevCart.map((item) =>
-        String(item.product.id) === String(productId) ? { ...item, quantity } : item
+        String(item.product.id) === String(productId) &&
+        (item.product.selectedVariant || 'Produk Utama') === (selectedVariant || 'Produk Utama')
+          ? { ...item, quantity }
+          : item
       )
     );
   };

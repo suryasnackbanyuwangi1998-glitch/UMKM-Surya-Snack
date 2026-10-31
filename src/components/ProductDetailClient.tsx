@@ -101,7 +101,7 @@ export default function ProductDetailClient({ product }: ProductDetailClientProp
   const [zoomOpen, setZoomOpen] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [activeTab, setActiveTab] = useState<'deskripsi' | 'komposisi' | 'pemesanan'>('deskripsi');
-  const [quantity, setQuantity] = useState(1);
+  const [quantity, setQuantity] = useState(0);
 
   const formatRupiah = (price: number | null | undefined): string =>
     price === null || price === undefined
@@ -109,7 +109,7 @@ export default function ProductDetailClient({ product }: ProductDetailClientProp
       : `Rp ${price.toLocaleString('id-ID')}`;
 
   const handleDecrement = () => {
-    if (quantity > 1) {
+    if (quantity > 0) {
       setQuantity((prev) => prev - 1);
     }
   };
@@ -120,27 +120,26 @@ export default function ProductDetailClient({ product }: ProductDetailClientProp
 
   const totalPrice = (currentPrice || 0) * quantity;
 
+  // DIBEBASKAN: Tidak wajib pilih varian untuk bisa masuk keranjang
   const handleAddToCartAndOpenModal = () => {
-    if (!hasVariants || selectedVariantIndex !== -1) {
-      if (quantity > 0) {
-        const activeVariantImage = activeVariant?.image_url;
-        const productWithVariant = {
-          ...product,
-          price: currentPrice,
-          stock: currentStock,
-          image_url: activeVariantImage || product.image_url,
-          selectedVariant: activeVariant ? activeVariant.name : undefined,
-        };
-        addToCart(productWithVariant, quantity);
-        setShowModal(true);
-      } else {
-        alert('Silakan pilih jumlah pesanan terlebih dahulu minimal 1 pcs.');
-      }
-    } else {
-      alert('Silakan pilih varian produk terlebih dahulu.');
+    if (quantity <= 0) {
+      alert('Silakan tentukan jumlah pesanan terlebih dahulu (minimal 1 pcs).');
+      return;
     }
+
+    const activeVariantImage = activeVariant?.image_url;
+    const productWithVariant = {
+      ...product,
+      price: currentPrice,
+      stock: currentStock,
+      image_url: activeVariantImage || product.image_url,
+      selectedVariant: activeVariant ? activeVariant.name : undefined,
+    };
+    addToCart(productWithVariant, quantity);
+    setShowModal(true);
   };
 
+  // DIBEBASKAN: Bisa tanya via WhatsApp kapanpun tanpa harus pilih varian dulu
   const handleAskWhatsApp = () => {
     const phoneNumber = '6289509604700';
     const variantInfo = activeVariant ? ` (Varian: ${activeVariant.name})` : '';
@@ -317,10 +316,10 @@ export default function ProductDetailClient({ product }: ProductDetailClientProp
               <div className="flex items-center justify-between">
                 <label className="text-xs font-extrabold uppercase tracking-widest text-[#3b0912] flex items-center gap-2">
                   <FontAwesomeIcon icon={faLayerGroup} className="text-amber-600" />
-                  <span>Pilih Varian:</span>
+                  <span>Pilih Varian (Opsional):</span>
                 </label>
                 <span className="text-xs font-bold text-[#5c0f1c] bg-amber-50 px-2.5 py-0.5 rounded-lg border border-amber-200">
-                  {activeVariant ? activeVariant.name : 'Belum dipilih (Produk Utama)'}
+                  {activeVariant ? activeVariant.name : 'Produk Utama'}
                 </span>
               </div>
 
@@ -406,7 +405,7 @@ export default function ProductDetailClient({ product }: ProductDetailClientProp
                 <button
                   type="button"
                   onClick={handleDecrement}
-                  disabled={quantity <= 1}
+                  disabled={quantity <= 0}
                   className="w-7 h-7 rounded-lg bg-gray-100 hover:bg-amber-100 text-gray-800 flex items-center justify-center font-bold disabled:opacity-40 disabled:cursor-not-allowed transition cursor-pointer"
                 >
                   <FontAwesomeIcon icon={faMinus} className="w-3 h-3" />

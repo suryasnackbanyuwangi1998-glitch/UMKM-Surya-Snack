@@ -45,7 +45,9 @@ export default function KeranjangPage() {
     cart.forEach((item, index) => {
       const priceVal = item.product.price ?? 0;
       const itemTotal = priceVal * item.quantity;
-      message += `${index + 1}. *${item.product.name}*\n`;
+      const variantText = item.product.selectedVariant ? ` (${item.product.selectedVariant})` : '';
+      
+      message += `${index + 1}. *${item.product.name}${variantText}*\n`;
       message += `   └ Jumlah: ${item.quantity} pcs | Harga: ${formatRupiah(item.product.price)} = *${formatRupiah(itemTotal)}*\n`;
     });
 
@@ -130,15 +132,17 @@ export default function KeranjangPage() {
               </div>
 
               <div className="space-y-3">
-                {cart.map((item: CartItem) => {
+                {cart.map((item: CartItem, index: number) => {
                   const displayImg =
                     item.product.image_url ||
                     (Array.isArray(item.product.images) ? item.product.images[0] : null) ||
                     'https://images.unsplash.com/photo-1599490659213-e2b9527bd087?q=80&w=200';
 
+                  const uniqueKey = `${item.product.id}-${item.product.selectedVariant || 'utama'}-${index}`;
+
                   return (
                     <div
-                      key={item.product.id}
+                      key={uniqueKey}
                       className="bg-white p-4 rounded-2xl border border-amber-900/10 shadow-xs flex items-center gap-4"
                     >
                       <div className="relative w-16 h-16 rounded-xl overflow-hidden bg-gray-50 border border-gray-100 shrink-0">
@@ -155,7 +159,12 @@ export default function KeranjangPage() {
                         <h3 className="text-xs sm:text-sm font-bold text-[#3b0912] truncate">
                           {item.product.name}
                         </h3>
-                        <p className="text-xs font-extrabold text-[#5c0f1c] mt-0.5">
+                        {item.product.selectedVariant && (
+                          <span className="inline-block bg-amber-50 text-amber-800 border border-amber-200 text-[10px] font-bold px-2 py-0.5 rounded-md mt-0.5">
+                            Varian: {item.product.selectedVariant}
+                          </span>
+                        )}
+                        <p className="text-xs font-extrabold text-[#5c0f1c] mt-1">
                           {formatRupiah(item.product.price)}
                         </p>
                       </div>
@@ -164,7 +173,7 @@ export default function KeranjangPage() {
                       <div className="flex items-center gap-2 bg-gray-50 p-1.5 rounded-xl border border-gray-200">
                         <button
                           type="button"
-                          onClick={() => updateQuantity(item.product.id, item.quantity - 1)}
+                          onClick={() => updateQuantity(item.product.id, item.quantity - 1, item.product.selectedVariant)}
                           className="w-6 h-6 rounded-lg bg-white border border-gray-200 flex items-center justify-center text-xs font-bold text-gray-600 hover:bg-gray-100 cursor-pointer"
                         >
                           <FontAwesomeIcon icon={faMinus} className="w-2.5 h-2.5" />
@@ -174,7 +183,7 @@ export default function KeranjangPage() {
                         </span>
                         <button
                           type="button"
-                          onClick={() => updateQuantity(item.product.id, item.quantity + 1)}
+                          onClick={() => updateQuantity(item.product.id, item.quantity + 1, item.product.selectedVariant)}
                           className="w-6 h-6 rounded-lg bg-white border border-gray-200 flex items-center justify-center text-xs font-bold text-gray-600 hover:bg-gray-100 cursor-pointer"
                         >
                           <FontAwesomeIcon icon={faPlus} className="w-2.5 h-2.5" />
@@ -183,7 +192,7 @@ export default function KeranjangPage() {
 
                       <button
                         type="button"
-                        onClick={() => removeFromCart(item.product.id)}
+                        onClick={() => removeFromCart(item.product.id, item.product.selectedVariant)}
                         className="p-2 text-gray-400 hover:text-rose-600 transition cursor-pointer"
                         title="Hapus produk"
                       >
@@ -290,19 +299,30 @@ export default function KeranjangPage() {
                 </div>
 
                 <div>
-                  <h4 className="font-bold text-gray-900 uppercase tracking-wider mb-2 text-[11px]">Daftar Produk ({totalItems} pcs):</h4>
+                  <h4 className="font-bold text-gray-900 uppercase tracking-wider mb-2 text-[11px]">
+                    Daftar Produk ({cart.length} Jenis Produk | Total {totalItems} pcs):
+                  </h4>
                   <div className="divide-y divide-gray-100 border-y border-gray-100">
-                    {cart.map((item) => (
-                      <div key={item.product.id} className="py-2.5 flex justify-between items-center gap-2">
-                        <div>
-                          <p className="font-bold text-gray-900">{item.product.name}</p>
-                          <p className="text-gray-500">{item.quantity} pcs x {formatRupiah(item.product.price)}</p>
+                    {cart.map((item, idx) => {
+                      const itemPrice = item.product.price || 0;
+                      const subtotal = itemPrice * item.quantity;
+
+                      return (
+                        <div key={idx} className="py-2.5 flex justify-between items-center gap-2">
+                          <div>
+                            <p className="font-bold text-gray-900">
+                              {item.product.name} {item.product.selectedVariant ? `(${item.product.selectedVariant})` : ''}
+                            </p>
+                            <p className="text-gray-500 text-[11px]">
+                              {item.quantity} pcs x {formatRupiah(itemPrice)}
+                            </p>
+                          </div>
+                          <span className="font-bold text-[#5c0f1c] text-xs">
+                            {formatRupiah(subtotal)}
+                          </span>
                         </div>
-                        <span className="font-bold text-[#5c0f1c]">
-                          {formatRupiah((item.product.price || 0) * item.quantity)}
-                        </span>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </div>
 
