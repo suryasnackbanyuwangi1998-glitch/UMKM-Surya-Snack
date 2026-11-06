@@ -120,7 +120,7 @@ export default function ProductDetailClient({ product }: ProductDetailClientProp
 
   const totalPrice = (currentPrice || 0) * quantity;
 
-  // DIBEBASKAN: Tidak wajib pilih varian untuk bisa masuk keranjang
+  // Masuk keranjang
   const handleAddToCartAndOpenModal = () => {
     if (quantity <= 0) {
       alert('Silakan tentukan jumlah pesanan terlebih dahulu (minimal 1 pcs).');
@@ -139,7 +139,7 @@ export default function ProductDetailClient({ product }: ProductDetailClientProp
     setShowModal(true);
   };
 
-  // DIBEBASKAN: Bisa tanya via WhatsApp kapanpun tanpa harus pilih varian dulu
+  // Tanya via WhatsApp
   const handleAskWhatsApp = () => {
     const phoneNumber = '6289509604700';
     const variantInfo = activeVariant ? ` (Varian: ${activeVariant.name})` : '';
@@ -197,9 +197,11 @@ export default function ProductDetailClient({ product }: ProductDetailClientProp
     ['4. Kirim ke WhatsApp', 'Buka halaman keranjang untuk melihat rincian nota dan kirim pesanan ke WhatsApp admin.'],
   ];
 
+  // PERBAIKAN UTAMA: Prioritaskan gambar dari varian yang aktif, hover, atau urutan galeri
   const activeDisplayImage = 
     hoveredImageUrl || 
-    (activeVariant?.image_url ? activeVariant.image_url : images[selectedImage]) || 
+    (activeVariant?.image_url ? activeVariant.image_url : null) || 
+    images[selectedImage] || 
     mainProductImage;
 
   return (

@@ -3,7 +3,7 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import { createClient } from "@supabase/supabase-js";
+import { supabase } from "@/lib/supabase";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faPlus,
@@ -22,22 +22,19 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import type { Product } from "@/types";
 
-// Inisialisasi Klien Supabase
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
-const supabase = createClient(supabaseUrl, supabaseAnonKey);
-
-// Interface untuk Varian Produk di Admin
 interface ProductVariant {
   name: string;
   price: string;
   stock: string;
+  weight: string; // Berat khusus varian
+  origin: string; // Asal khusus varian
   image_url: string;
   imageFile?: File | null;
   description?: string;
   ingredients?: string;
   key_features?: string;
   packaging_standard?: string;
+  is_popular?: boolean;
 }
 
 export default function AdminProdukPage() {
@@ -49,19 +46,17 @@ export default function AdminProdukPage() {
   const [submitting, setSubmitting] = useState(false);
   const [successMsg, setSuccessMsg] = useState("");
   
-  // State untuk Search Bar
   const [searchQuery, setSearchQuery] = useState("");
-
-  // State untuk Paginasi per Slide / Halaman
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
-  // Form State Utama Produk (1 Kolom Deskripsi Fleksibel)
+  // Form State Utama Produk
   const [name, setName] = useState("");
   const [price, setPrice] = useState("");
   const [category, setCategory] = useState("Makanan");
   const [weight, setWeight] = useState("250 gram");
-  const [stock, setStock] = useState("50");
+  const [origin, setOrigin] = useState("Banyuwangi");
+  const [stock, setStock] = useState("50"); 
   const [badge, setBadge] = useState("Best Seller");
   const [description, setDescription] = useState("");
   const [ingredients, setIngredients] = useState("");
@@ -71,15 +66,12 @@ export default function AdminProdukPage() {
   );
   const [isPopular, setIsPopular] = useState(false);
   
-  // Gambar Utama Produk
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [existingImageUrl, setExistingImageUrl] = useState<string | null>(null);
 
-  // State untuk Varian Produk
   const [variants, setVariants] = useState<ProductVariant[]>([]);
 
-  // Ambil data produk beserta relasi variannya dari tabel variant_products
   const fetchProducts = async () => {
     setLoading(true);
     const { data, error } = await supabase
@@ -99,12 +91,10 @@ export default function AdminProdukPage() {
     fetchProducts();
   }, []);
 
-  // Reset ke halaman 1 saat pencarian berubah
   useEffect(() => {
     setCurrentPage(1);
   }, [searchQuery]);
 
-  // Handle Pilih File Gambar Utama
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
@@ -113,7 +103,6 @@ export default function AdminProdukPage() {
     }
   };
 
-  // Handler untuk Varian & Gambar Varian
   const handleAddVariant = () => {
     setVariants([
       ...variants, 
@@ -121,12 +110,15 @@ export default function AdminProdukPage() {
         name: "", 
         price: "", 
         stock: "10", 
+        weight: "250 gram",
+        origin: "Banyuwangi",
         image_url: "", 
         imageFile: null,
         description: "",
         ingredients: "",
         key_features: "",
-        packaging_standard: ""
+        packaging_standard: "",
+        is_popular: false
       }
     ]);
   };
@@ -156,15 +148,6 @@ export default function AdminProdukPage() {
     }
   };
 
-  // Helper Slug
-  const generateSlug = (text: string) => {
-    return text
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, "-")
-      .replace(/(^-|-$)+/g, "");
-  };
-
-  // Buka Modal Tambah
   const handleOpenAddModal = () => {
     setIsEditMode(false);
     setCurrentId(null);
@@ -172,6 +155,7 @@ export default function AdminProdukPage() {
     setPrice("");
     setCategory("Makanan");
     setWeight("250 gram");
+    setOrigin("Banyuwangi");
     setStock("50");
     setBadge("Best Seller");
     setDescription("");
@@ -186,17 +170,17 @@ export default function AdminProdukPage() {
     setIsModalOpen(true);
   };
 
-  // Buka Modal Edit
   const handleOpenEditModal = (item: any) => {
     setIsEditMode(true);
     setCurrentId(item.id);
     setName(item.name || "");
-    setPrice(item.price !== null ? String(item.price) : "");
+    setPrice(item.price !== null && item.price !== undefined ? String(item.price) : "");
     const matchCat = item.category?.trim();
     setCategory(matchCat === "Minuman" ? "Minuman" : "Makanan");
     
     setWeight(item.weight || "250 gram");
-    setStock(item.stock !== null ? String(item.stock) : "0");
+    setOrigin(item.origin || item.asal || "Banyuwangi");
+    setStock(item.stock !== null && item.stock !== undefined ? String(item.stock) : "50");
     setBadge(item.badge || "Best Seller");
     setDescription(item.description || item.long_description || "");
     setIngredients(item.ingredients || "");
@@ -225,13 +209,16 @@ export default function AdminProdukPage() {
       setVariants(item.variants.map((v: any) => ({
         name: v.name || "",
         price: v.price ? String(v.price) : "",
-        stock: v.stock ? String(v.stock) : "0",
+        stock: v.stock !== null && v.stock !== undefined ? String(v.stock) : "0",
+        weight: v.weight || "250 gram",
+        origin: v.origin || "Banyuwangi",
         image_url: v.image_url || "",
         imageFile: null,
         description: v.description || "",
         ingredients: v.ingredients || "",
         key_features: v.key_features || "",
-        packaging_standard: v.packaging_standard || ""
+        packaging_standard: v.packaging_standard || "",
+        is_popular: v.is_popular || false
       })));
     } else {
       setVariants([]);
@@ -240,123 +227,65 @@ export default function AdminProdukPage() {
     setIsModalOpen(true);
   };
 
-  // Simpan Produk ke Tabel Products & Varian ke Tabel variant_products
   const handleSaveProduct = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitting(true);
 
     try {
-      let finalImageUrl = existingImageUrl;
+      const formData = new FormData();
+      if (isEditMode && currentId) {
+        formData.append("id", currentId);
+      }
+      formData.append("name", name);
+      formData.append("price", price);
+      formData.append("category", category);
+      formData.append("weight", weight);
+      formData.append("origin", origin);
+      formData.append("stock", stock);
+      formData.append("badge", badge);
+      formData.append("description", description);
+      formData.append("ingredients", ingredients);
+      formData.append("packaging_standard", packagingStandard);
+      formData.append("key_features", keyFeatures);
+      formData.append("is_popular", String(isPopular));
+      formData.append("old_image_url", existingImageUrl || "");
 
       if (imageFile) {
-        const fileExt = imageFile.name.split(".").pop();
-        const fileName = `${Date.now()}-main-${Math.random().toString(36).substring(2, 9)}.${fileExt}`;
-        
-        const { error: uploadError } = await supabase.storage
-          .from("products")
-          .upload(fileName, imageFile);
-
-        if (uploadError) throw new Error("Gagal mengunggah gambar utama: " + uploadError.message);
-
-        const { data: publicURLData } = supabase.storage.from("products").getPublicUrl(fileName);
-        if (publicURLData) finalImageUrl = publicURLData.publicUrl;
+        formData.append("image", imageFile);
       }
 
-      const formattedKeyFeatures = keyFeatures
-        .split(/\r?\n/)
-        .flatMap((line) => line.split("."))
-        .map((item) => item.trim())
-        .filter((item) => item.length > 0)
-        .map((item) => (item.endsWith(".") ? item : item + "."));
+      const validVariants = variants.map((v) => ({
+        name: v.name,
+        price: v.price ? parseFloat(v.price) : 0,
+        stock: parseInt(v.stock) || 0,
+        weight: v.weight || "250 gram",
+        origin: v.origin || "Banyuwangi",
+        image_url: v.image_url || "",
+        description: v.description || "",
+        ingredients: v.ingredients || "",
+        key_features: v.key_features || "",
+        packaging_standard: v.packaging_standard || "",
+        is_popular: v.is_popular || false,
+      }));
+      formData.append("variants", JSON.stringify(validVariants));
 
-      const productPayload = {
-        name,
-        slug: generateSlug(name),
-        price: price ? parseFloat(price) : null,
-        category,
-        weight,
-        stock: parseInt(stock) || 0,
-        badge,
-        description: description,
-        long_description: description,
-        ingredients,
-        packaging_standard: packagingStandard,
-        key_features: formattedKeyFeatures,
-        image_url: finalImageUrl,
-        images: finalImageUrl ? [finalImageUrl] : [],
-        is_active: true,
-        is_popular: isPopular,
-      };
-
-      let savedProductId = currentId;
-
-      if (isEditMode && currentId !== null) {
-        const { error: updateError } = await supabase
-          .from("products")
-          .update(productPayload)
-          .eq("id", currentId);
-
-        if (updateError) throw new Error("Gagal memperbarui produk: " + updateError.message);
-      } else {
-        const { data: insertedData, error: insertError } = await supabase
-          .from("products")
-          .insert([productPayload])
-          .select()
-          .single();
-
-        if (insertError) throw new Error("Gagal menyimpan ke database: " + insertError.message);
-        savedProductId = insertedData.id;
-      }
-
-      if (savedProductId) {
-        if (isEditMode) {
-          await supabase.from("variant_products").delete().eq("product_id", savedProductId);
+      variants.forEach((v, index) => {
+        if (v.imageFile) {
+          formData.append(`variant_image_${index}`, v.imageFile);
         }
+      });
 
-        const validVariants = variants.filter((v) => v.name && v.name.trim() !== "");
+      const res = await fetch("/api/products", {
+        method: isEditMode ? "PUT" : "POST",
+        body: formData,
+      });
 
-        if (validVariants.length > 0) {
-          const variantsPayload = [];
-
-          for (const variant of validVariants) {
-            let variantImgUrl = variant.image_url;
-
-            if (variant.imageFile) {
-              const fileExt = variant.imageFile.name.split(".").pop();
-              const fileName = `${Date.now()}-variant-${Math.random().toString(36).substring(2, 9)}.${fileExt}`;
-
-              const { error: variantUploadErr } = await supabase.storage
-                .from("products")
-                .upload(fileName, variant.imageFile);
-
-              if (variantUploadErr) throw new Error("Gagal mengunggah gambar varian: " + variantUploadErr.message);
-
-              const { data: variantPublicUrl } = supabase.storage.from("products").getPublicUrl(fileName);
-              if (variantPublicUrl) variantImgUrl = variantPublicUrl.publicUrl;
-            }
-
-            variantsPayload.push({
-              product_id: savedProductId,
-              name: variant.name,
-              price: parseFloat(variant.price) || 0,
-              stock: parseInt(variant.stock) || 0,
-              image_url: variantImgUrl,
-              description: variant.description || null,
-              ingredients: variant.ingredients || null,
-              key_features: variant.key_features || null,
-              packaging_standard: variant.packaging_standard || null
-            });
-          }
-
-          const { error: variantInsertErr } = await supabase
-            .from("variant_products")
-            .insert(variantsPayload);
-
-          if (variantInsertErr) throw new Error("Gagal menyimpan data varian: " + variantInsertErr.message);
-        }
+      const result = await res.json();
+      if (!result.success) {
+        throw new Error(result.message || "Gagal menyimpan produk.");
       }
 
-      setSuccessMsg(isEditMode ? "Produk dan varian berhasil diperbarui!" : "Produk baru dan variannya berhasil ditambahkan!");
+      setSuccessMsg(isEditMode ? "Produk berhasil diperbarui & gambar masuk ke Google Drive!" : "Produk berhasil ditambahkan & gambar masuk ke Google Drive!");
       setIsModalOpen(false);
       setImageFile(null);
       setImagePreview(null);
@@ -371,7 +300,6 @@ export default function AdminProdukPage() {
     }
   };
 
-  // Hapus Produk
   const handleDelete = async (id: string) => {
     if (!confirm("Apakah Anda yakin ingin menghapus produk ini?")) return;
 
@@ -383,7 +311,6 @@ export default function AdminProdukPage() {
     }
   };
 
-  // Filter & Paginasi
   const filteredProducts = products.filter((item: any) =>
     item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     (item.category && item.category.toLowerCase().includes(searchQuery.toLowerCase()))
@@ -422,7 +349,6 @@ export default function AdminProdukPage() {
         </button>
       </div>
 
-      {/* Notifikasi Sukses */}
       {successMsg && (
         <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-2xl text-xs text-emerald-800 flex items-center gap-2 shadow-xs">
           <FontAwesomeIcon icon={faCheckCircle} className="text-emerald-600 text-base" />
@@ -444,6 +370,8 @@ export default function AdminProdukPage() {
             </span>
             <input
               type="text"
+              id="searchQuery"
+              name="search_query"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Cari nama / kategori..."
@@ -470,6 +398,7 @@ export default function AdminProdukPage() {
                     <th className="p-4">Nama Produk</th>
                     <th className="p-4">Kategori</th>
                     <th className="p-4">Harga Dasar</th>
+                    <th className="p-4">Stok Utama</th>
                     <th className="p-4">Varian</th>
                     <th className="p-4 text-center">Unggulan</th>
                     <th className="p-4 text-center">Aksi</th>
@@ -498,7 +427,10 @@ export default function AdminProdukPage() {
                           </span>
                         </td>
                         <td className="p-4 font-black text-[#5c0f1c]">
-                          {item.price ? `Rp ${item.price.toLocaleString("id-ID")}` : "Cek Varian"}
+                          {item.price !== null && item.price !== undefined ? `Rp ${item.price.toLocaleString("id-ID")}` : "Cek Varian"}
+                        </td>
+                        <td className="p-4 font-bold text-gray-700">
+                          {item.stock ?? 0} pcs
                         </td>
                         <td className="p-4">
                           <span className="bg-gray-100 text-gray-700 px-2.5 py-1 rounded-md text-[11px] font-bold">
@@ -535,7 +467,6 @@ export default function AdminProdukPage() {
               </table>
             </div>
 
-            {/* Navigasi Slide Halaman */}
             {totalPages > 1 && (
               <div className="p-4 border-t border-gray-100 flex items-center justify-between bg-gray-50/50">
                 <span className="text-xs text-gray-500">
@@ -597,9 +528,11 @@ export default function AdminProdukPage() {
             <form onSubmit={handleSaveProduct} className="space-y-4">
               
               <div>
-                <label className="block text-[11px] font-bold uppercase tracking-widest text-gray-500 mb-1.5">Nama Produk</label>
+                <label htmlFor="productName" className="block text-[11px] font-bold uppercase tracking-widest text-gray-500 mb-1.5">Nama Produk</label>
                 <input
                   type="text"
+                  id="productName"
+                  name="name"
                   required
                   value={name}
                   onChange={(e) => setName(e.target.value)}
@@ -608,11 +541,14 @@ export default function AdminProdukPage() {
                 />
               </div>
 
+              {/* Harga Dasar & Kategori (Grid 2 Kolom) */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-[11px] font-bold uppercase tracking-widest text-gray-500 mb-1.5">Harga Dasar (Rp)</label>
+                  <label htmlFor="productPrice" className="block text-[11px] font-bold uppercase tracking-widest text-gray-500 mb-1.5">Harga Dasar (Rp)</label>
                   <input
                     type="number"
+                    id="productPrice"
+                    name="price"
                     value={price}
                     onChange={(e) => setPrice(e.target.value)}
                     placeholder="Contoh: 25000"
@@ -620,8 +556,10 @@ export default function AdminProdukPage() {
                   />
                 </div>
                 <div>
-                  <label className="block text-[11px] font-bold uppercase tracking-widest text-gray-500 mb-1.5">Kategori</label>
+                  <label htmlFor="productCategory" className="block text-[11px] font-bold uppercase tracking-widest text-gray-500 mb-1.5">Kategori</label>
                   <select
+                    id="productCategory"
+                    name="category"
                     value={category}
                     onChange={(e) => setCategory(e.target.value)}
                     className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-xs text-gray-800 focus:outline-none focus:border-[#5c0f1c] transition cursor-pointer font-bold"
@@ -632,16 +570,61 @@ export default function AdminProdukPage() {
                 </div>
               </div>
 
-              {/* ========================================== */}
-              {/* PENGATURAN PRODUK UTAMA                    */}
-              {/* ========================================== */}
+              {/* BERAT & ASAL PRODUK UTAMA (Grid 2 Kolom) */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label htmlFor="productWeight" className="block text-[11px] font-bold uppercase tracking-widest text-gray-500 mb-1.5">Berat Produk</label>
+                  <input
+                    type="text"
+                    id="productWeight"
+                    name="weight"
+                    value={weight}
+                    onChange={(e) => setWeight(e.target.value)}
+                    placeholder="Contoh: 250 gram / 500 gram"
+                    className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-xs text-gray-800 focus:outline-none focus:border-[#5c0f1c] transition"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="productOrigin" className="block text-[11px] font-bold uppercase tracking-widest text-gray-500 mb-1.5">Asal Produk</label>
+                  <input
+                    type="text"
+                    id="productOrigin"
+                    name="origin"
+                    value={origin}
+                    onChange={(e) => setOrigin(e.target.value)}
+                    placeholder="Contoh: Banyuwangi"
+                    className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-xs text-gray-800 focus:outline-none focus:border-[#5c0f1c] transition"
+                  />
+                </div>
+              </div>
+
+              {/* STOK UTAMA PRODUK */}
+              <div>
+                <label htmlFor="productStock" className="block text-[11px] font-bold uppercase tracking-widest text-[#3b0912] mb-1.5">
+                  📦 Stok Utama Produk
+                </label>
+                <input
+                  type="number"
+                  id="productStock"
+                  name="stock"
+                  min="0"
+                  value={stock}
+                  onChange={(e) => setStock(e.target.value)}
+                  placeholder="Contoh: 50"
+                  className="w-full bg-amber-50/60 border border-amber-300 rounded-xl px-4 py-3 text-xs text-[#3b0912] focus:outline-none focus:border-[#5c0f1c] transition font-extrabold"
+                />
+              </div>
+
+              {/* Informasi & Deskripsi Produk Utama */}
               <div className="space-y-4 bg-gray-50/70 p-4 rounded-2xl border border-gray-200">
                 <h4 className="text-xs font-bold uppercase tracking-widest text-[#3b0912]">Informasi & Deskripsi Produk Utama</h4>
 
                 <div>
-                  <label className="block text-[11px] font-bold uppercase tracking-widest text-gray-500 mb-1.5">Deskripsi Produk (Pendek / Panjang)</label>
+                  <label htmlFor="productDescription" className="block text-[11px] font-bold uppercase tracking-widest text-gray-500 mb-1.5">Deskripsi Produk (Pendek / Panjang)</label>
                   <textarea
                     rows={4}
+                    id="productDescription"
+                    name="description"
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
                     placeholder="Tuliskan keterangan lengkap atau singkat mengenai produk ini..."
@@ -650,9 +633,11 @@ export default function AdminProdukPage() {
                 </div>
 
                 <div>
-                  <label className="block text-[11px] font-bold uppercase tracking-widest text-gray-500 mb-1.5">Keunggulan Utama (Pisahkan dengan baris baru / Enter)</label>
+                  <label htmlFor="productKeyFeatures" className="block text-[11px] font-bold uppercase tracking-widest text-gray-500 mb-1.5">Keunggulan Utama (Pisahkan dengan baris baru / Enter)</label>
                   <textarea
                     rows={3}
+                    id="productKeyFeatures"
+                    name="key_features"
                     value={keyFeatures}
                     onChange={(e) => setKeyFeatures(e.target.value)}
                     placeholder="Contoh:&#10;Tanpa Bahan Pengawet.&#10;Resep Asli Banyuwangi.&#10;Renyah & Gurih."
@@ -662,9 +647,11 @@ export default function AdminProdukPage() {
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-[11px] font-bold uppercase tracking-widest text-gray-500 mb-1.5">Komposisi / Bahan Utama</label>
+                    <label htmlFor="productIngredients" className="block text-[11px] font-bold uppercase tracking-widest text-gray-500 mb-1.5">Komposisi / Bahan Utama</label>
                     <textarea
                       rows={2}
+                      id="productIngredients"
+                      name="ingredients"
                       value={ingredients}
                       onChange={(e) => setIngredients(e.target.value)}
                       placeholder="Contoh: Tepung tapioka, santan kelapa, gula..."
@@ -672,9 +659,11 @@ export default function AdminProdukPage() {
                     />
                   </div>
                   <div>
-                    <label className="block text-[11px] font-bold uppercase tracking-widest text-gray-500 mb-1.5">Standar Kemasan</label>
+                    <label htmlFor="productPackaging" className="block text-[11px] font-bold uppercase tracking-widest text-gray-500 mb-1.5">Standar Kemasan</label>
                     <input
                       type="text"
+                      id="productPackaging"
+                      name="packaging_standard"
                       value={packagingStandard}
                       onChange={(e) => setPackagingStandard(e.target.value)}
                       placeholder="Plastik Standing Pouch Foil Kedap Udara"
@@ -684,9 +673,7 @@ export default function AdminProdukPage() {
                 </div>
               </div>
 
-              {/* ========================================== */}
-              {/* VARIAN PRODUK                              */}
-              {/* ========================================== */}
+              {/* Varian Produk */}
               <div className="border border-amber-900/10 bg-amber-50/30 p-4 rounded-2xl space-y-4">
                 <div className="flex items-center justify-between">
                   <label className="text-xs font-bold uppercase tracking-widest text-[#3b0912] flex items-center gap-2">
@@ -719,9 +706,12 @@ export default function AdminProdukPage() {
                           </button>
                         </div>
 
+                        {/* Baris 1 Varian: Nama, Harga, Stok */}
                         <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                           <input
                             type="text"
+                            id={`variantName-${index}`}
+                            name={`variant_name_${index}`}
                             placeholder="Nama Varian (Cth: Rasa Keju)"
                             value={variant.name}
                             onChange={(e) => handleVariantChange(index, "name", e.target.value)}
@@ -729,6 +719,8 @@ export default function AdminProdukPage() {
                           />
                           <input
                             type="number"
+                            id={`variantPrice-${index}`}
+                            name={`variant_price_${index}`}
                             placeholder="Harga Varian (Rp)"
                             value={variant.price}
                             onChange={(e) => handleVariantChange(index, "price", e.target.value)}
@@ -736,24 +728,67 @@ export default function AdminProdukPage() {
                           />
                           <input
                             type="number"
-                            placeholder="Stok"
+                            id={`variantStock-${index}`}
+                            name={`variant_stock_${index}`}
+                            min="0"
+                            placeholder="Stok Varian"
                             value={variant.stock}
                             onChange={(e) => handleVariantChange(index, "stock", e.target.value)}
+                            className="bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-xs text-[#3b0912] focus:outline-none focus:border-[#5c0f1c] font-bold"
+                          />
+                        </div>
+
+                        {/* Baris 2 Varian: Berat & Asal Varian */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                          <input
+                            type="text"
+                            id={`variantWeight-${index}`}
+                            name={`variant_weight_${index}`}
+                            placeholder="Berat Varian (Cth: 250 gram)"
+                            value={variant.weight}
+                            onChange={(e) => handleVariantChange(index, "weight", e.target.value)}
+                            className="bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-xs text-gray-800 focus:outline-none focus:border-[#5c0f1c]"
+                          />
+                          <input
+                            type="text"
+                            id={`variantOrigin-${index}`}
+                            name={`variant_origin_${index}`}
+                            placeholder="Asal Varian (Cth: Banyuwangi)"
+                            value={variant.origin}
+                            onChange={(e) => handleVariantChange(index, "origin", e.target.value)}
                             className="bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-xs text-gray-800 focus:outline-none focus:border-[#5c0f1c]"
                           />
                         </div>
 
-                        {/* Input Deskripsi & Komposisi Varian */}
+                        {/* Checkbox Produk Unggulan KHUSUS VARIAN INI */}
+                        <div className="flex items-center gap-2.5 pt-1">
+                          <input
+                            type="checkbox"
+                            id={`variantPopular-${index}`}
+                            name={`variant_popular_${index}`}
+                            checked={variant.is_popular || false}
+                            onChange={(e) => handleVariantChange(index, "is_popular", e.target.checked)}
+                            className="w-3.5 h-3.5 text-[#3b0912] rounded border-gray-300 focus:ring-[#5c0f1c] cursor-pointer"
+                          />
+                          <label htmlFor={`variantPopular-${index}`} className="text-[11px] font-bold text-[#3b0912] cursor-pointer select-none">
+                            Jadikan Varian Ini Sebagai Unggulan ✦
+                          </label>
+                        </div>
+
                         <div className="space-y-2">
                           <textarea
                             rows={2}
-                            placeholder="Deskripsi khusus varian ini (Pendek / Panjang)..."
+                            id={`variantDesc-${index}`}
+                            name={`variant_desc_${index}`}
+                            placeholder="Deskripsi khusus varian ini..."
                             value={variant.description || ""}
                             onChange={(e) => handleVariantChange(index, "description", e.target.value)}
                             className="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-xs text-gray-800 focus:outline-none focus:border-[#5c0f1c] resize-y"
                           />
                           <textarea
                             rows={2}
+                            id={`variantIng-${index}`}
+                            name={`variant_ing_${index}`}
                             placeholder="Komposisi khusus varian ini..."
                             value={variant.ingredients || ""}
                             onChange={(e) => handleVariantChange(index, "ingredients", e.target.value)}
@@ -761,10 +796,11 @@ export default function AdminProdukPage() {
                           />
                         </div>
 
-                        {/* Input Keunggulan & Standar Kemasan Varian */}
                         <div className="space-y-2">
                           <textarea
                             rows={2}
+                            id={`variantFeat-${index}`}
+                            name={`variant_feat_${index}`}
                             placeholder="Keunggulan varian ini..."
                             value={variant.key_features || ""}
                             onChange={(e) => handleVariantChange(index, "key_features", e.target.value)}
@@ -772,6 +808,8 @@ export default function AdminProdukPage() {
                           />
                           <textarea
                             rows={2}
+                            id={`variantPack-${index}`}
+                            name={`variant_pack_${index}`}
                             placeholder="Standar kemasan khusus varian ini..."
                             value={variant.packaging_standard || ""}
                             onChange={(e) => handleVariantChange(index, "packaging_standard", e.target.value)}
@@ -779,13 +817,14 @@ export default function AdminProdukPage() {
                           />
                         </div>
 
-                        {/* Upload Gambar Varian */}
                         <div className="flex items-center gap-3 pt-1">
                           <label className="cursor-pointer bg-gray-50 border border-dashed border-gray-300 hover:border-[#5c0f1c] px-3 py-2 rounded-lg text-xs text-gray-600 font-bold inline-flex items-center gap-2">
                             <FontAwesomeIcon icon={faImage} className="text-[#5c0f1c]" />
                             <span>{variant.image_url ? "Ganti Gambar Varian" : "Upload Gambar Varian"}</span>
                             <input
                               type="file"
+                              id={`variantImageFile-${index}`}
+                              name={`variant_image_file_${index}`}
                               accept="image/*"
                               onChange={(e) => handleVariantImageChange(index, e)}
                               className="hidden"
@@ -803,17 +842,18 @@ export default function AdminProdukPage() {
                 )}
               </div>
 
-              {/* Checkbox Produk Unggulan */}
+              {/* Checkbox Produk Unggulan Utama */}
               <div className="flex items-center gap-3 p-3 bg-amber-50/50 border border-amber-900/10 rounded-xl">
                 <input
                   type="checkbox"
                   id="isPopular"
+                  name="is_popular"
                   checked={isPopular}
                   onChange={(e) => setIsPopular(e.target.checked)}
                   className="w-4 h-4 text-[#3b0912] rounded border-gray-300 focus:ring-[#5c0f1c] cursor-pointer"
                 />
                 <label htmlFor="isPopular" className="text-xs font-bold text-[#3b0912] cursor-pointer select-none">
-                  Jadikan Produk Unggulan (Tampil di Halaman Utama)
+                  Jadikan Produk Utama Unggulan (Tampil di Halaman Utama)
                 </label>
               </div>
 
@@ -826,7 +866,14 @@ export default function AdminProdukPage() {
                   <label className="flex-1 cursor-pointer bg-gray-50 border border-dashed border-gray-300 hover:border-[#5c0f1c] rounded-xl p-4 text-center transition">
                     <FontAwesomeIcon icon={faImage} className="text-[#5c0f1c] text-xl mb-1" />
                     <span className="block text-xs text-gray-600 font-bold">Pilih file gambar utama</span>
-                    <input type="file" accept="image/*" onChange={handleImageChange} className="hidden" />
+                    <input 
+                      type="file" 
+                      id="mainImageFile" 
+                      name="image" 
+                      accept="image/*" 
+                      onChange={handleImageChange} 
+                      className="hidden" 
+                    />
                   </label>
                   {imagePreview && (
                     <div className="relative w-16 h-16 rounded-xl overflow-hidden border border-gray-200 shrink-0 shadow-xs">
@@ -852,7 +899,7 @@ export default function AdminProdukPage() {
                   {submitting ? (
                     <>
                       <FontAwesomeIcon icon={faSpinner} className="animate-spin text-amber-300" />
-                      <span>Menyimpan...</span>
+                      <span>Menyimpan ke Google Drive...</span>
                     </>
                   ) : (
                     <span>{isEditMode ? "Perbarui Produk" : "Simpan Produk"}</span>

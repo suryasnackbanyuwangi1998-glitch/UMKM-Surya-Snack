@@ -1,3 +1,4 @@
+// src/components/ProductCard.tsx
 'use client';
 
 import React from 'react';
@@ -22,12 +23,15 @@ export default function ProductCard({ product }: ProductCardProps) {
     displayImage ||
     'https://images.unsplash.com/photo-1599490659213-e2b9527bd087?q=80&w=400';
 
+  // Fallback ke product.id jika slug kosong untuk mencegah /katalog/null
+  const productIdentifier = product.slug || product.id;
+
   return (
     <div className="group bg-white rounded-xl border border-gray-100 overflow-hidden hover:shadow-lg hover:border-gray-200 transition-all duration-300 flex flex-col font-sans">
       
       {/* Gambar Produk */}
       <Link
-        href={`/katalog/${product.slug}`}
+        href={`/katalog/${productIdentifier}`}
         className="relative w-full aspect-square overflow-hidden bg-gray-50 block"
       >
         <Image
@@ -46,8 +50,8 @@ export default function ProductCard({ product }: ProductCardProps) {
       </Link>
 
       {/* Informasi Produk & Tombol Detail */}
-      <div className="p-4 flex flex-col flex-grow gap-3">
-        <h3 className="font-semibold text-gray-900 text-sm line-clamp-2 leading-snug min-h-[2.5rem]">
+      <div className="p-4 flex flex-col grow gap-3">
+        <h3 className="font-semibold text-gray-900 text-sm line-clamp-2 leading-snug min-h-10">
           {product.name}
         </h3>
 
@@ -57,7 +61,7 @@ export default function ProductCard({ product }: ProductCardProps) {
 
         <div className="pt-1 border-t border-gray-100">
           <Link
-            href={`/katalog/${product.slug}`}
+            href={`/katalog/${productIdentifier}`}
             className="w-full text-center border border-[#5c0f1c] text-[#5c0f1c] hover:bg-[#5c0f1c] hover:text-white font-bold py-2 rounded-lg text-xs transition-all duration-300 block"
           >
             Detail

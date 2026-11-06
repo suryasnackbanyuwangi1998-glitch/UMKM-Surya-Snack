@@ -13,8 +13,11 @@
     "@fortawesome/free-brands-svg-icons": "^7.3.1",
     "@fortawesome/free-solid-svg-icons": "^7.3.1",
     "@fortawesome/react-fontawesome": "^3.5.0",
+    "@google-cloud/storage": "^8.4.0",
     "@supabase/supabase-js": "^2.117.2",
+    "dotenv": "^18.0.9",
     "framer-motion": "^14.3.0",
+    "googleapis": "^189.0.0",
     "next": "16.3.5",
     "react": "19.2.8",
     "react-dom": "19.2.8"

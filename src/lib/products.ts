@@ -1,3 +1,4 @@
+// src/lib/products.ts
 import { supabase } from "@/lib/supabase";
 import type { Product } from "@/types";
 
@@ -50,7 +51,7 @@ export async function getProductBySlug(slug: string): Promise<Product | null> {
     .from("products")
     .select("*, variants:variant_products(*)")
     .eq("slug", slug)
-    .single();
+    .maybeSingle(); // Aman dari error "Cannot coerce the result to a single JSON object"[cite: 3]
 
   if (error) {
     console.error("Gagal mengambil detail produk:", error.message);
@@ -66,7 +67,7 @@ export async function getProductById(id: string): Promise<Product | null> {
     .from("products")
     .select("*, variants:variant_products(*)")
     .eq("id", id)
-    .single();
+    .maybeSingle();
 
   if (error) {
     console.error("Gagal mengambil detail produk berdasarkan ID:", error.message);

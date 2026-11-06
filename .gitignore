@@ -2,4 +2,7 @@
 /.next/
 /out/
 /build
-.env*.local
+.env*.localtoken.json
+credentials.json
+.env
+.env.local
