@@ -6,11 +6,12 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faArrowLeft, faBolt, faStore } from "@fortawesome/free-solid-svg-icons";
+import { faArrowLeft, faStore, faEye, faEyeSlash } from "@fortawesome/free-solid-svg-icons";
 
 export default function AdminLoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false); // State untuk toggle lihat password
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [isMounted, setIsMounted] = useState(false);
@@ -61,7 +62,7 @@ export default function AdminLoginPage() {
         <div className="absolute inset-0 bg-linear-to-tr from-[#1a0508]/60 via-[#2d0a10]/40 to-[#120c0a]/50"></div>
       </div>
 
-      {/* ================= KARTU CONTAINER UTAMA (TANPA KUNING) ================= */}
+      {/* ================= KARTU CONTAINER UTAMA ================= */}
       <div className="max-w-md w-full bg-[#1e1513]/25 backdrop-blur-md border border-white/10 rounded-3xl shadow-[0_20px_50px_rgba(0,0,0,0.4)] p-8 sm:p-10 space-y-6 relative z-10 overflow-hidden transform transition-all duration-700 ease-out">
         
         <div>
@@ -113,15 +114,25 @@ export default function AdminLoginPage() {
             <label className="block text-[11px] font-bold uppercase tracking-widest text-gray-300 mb-1.5">
               Password Keamanan
             </label>
-            <input
-              type="password"
-              required
-              autoComplete="new-password"
-              placeholder="••••••••"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full bg-[#120c0a]/40 border border-white/10 rounded-xl px-4 py-3 text-sm text-white placeholder-gray-400 focus:outline-none focus:border-white/30 transition-all shadow-inner backdrop-blur-xs"
-            />
+            <div className="relative">
+              <input
+                type={showPassword ? "text" : "password"}
+                required
+                autoComplete="new-password"
+                placeholder="••••••••"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full bg-[#120c0a]/40 border border-white/10 rounded-xl pl-4 pr-12 py-3 text-sm text-white placeholder-gray-400 focus:outline-none focus:border-white/30 transition-all shadow-inner backdrop-blur-xs"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white transition-colors cursor-pointer p-1"
+                title={showPassword ? "Sembunyikan password" : "Lihat password"}
+              >
+                <FontAwesomeIcon icon={showPassword ? faEyeSlash : faEye} className="w-4 h-4" />
+              </button>
+            </div>
           </div>
 
           <button

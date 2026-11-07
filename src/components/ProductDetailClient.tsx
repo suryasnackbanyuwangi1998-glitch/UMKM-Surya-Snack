@@ -163,23 +163,18 @@ export default function ProductDetailClient({ product }: ProductDetailClientProp
     };
   }, [zoomOpen]);
 
-  const rawKeyFeatures = product.key_features;
+  // Perbaikan parsing key_features agar tidak terpotong sembarangan
+  const rawKeyFeatures = activeVariant?.key_features || product.key_features;
   let highlights: string[] = [];
 
-  if (activeVariant?.key_features && activeVariant.key_features.trim() !== '') {
-    highlights = activeVariant.key_features
+  if (typeof rawKeyFeatures === 'string' && rawKeyFeatures.trim() !== '') {
+    highlights = rawKeyFeatures
       .split(/\r?\n/)
-      .map((item) => item.replace(/^[*•\d.-]\s*/, '').trim())
+      .map((item) => item.trim())
       .filter((item) => item.length > 0);
   } else if (Array.isArray(rawKeyFeatures)) {
     highlights = rawKeyFeatures
       .flatMap((item) => String(item).split(/\r?\n/))
-      .map((item) => item.replace(/^[*•\d.-]\s*/, '').trim())
-      .filter((item) => item.length > 0);
-  } else if (typeof rawKeyFeatures === 'string' && rawKeyFeatures.trim() !== '') {
-    highlights = rawKeyFeatures
-      .split(/[\r\n*]+/)
-      .flatMap((line) => line.split(','))
       .map((item) => item.trim())
       .filter((item) => item.length > 0);
   } else {
@@ -197,7 +192,6 @@ export default function ProductDetailClient({ product }: ProductDetailClientProp
     ['4. Kirim ke WhatsApp', 'Buka halaman keranjang untuk melihat rincian nota dan kirim pesanan ke WhatsApp admin.'],
   ];
 
-  // PERBAIKAN UTAMA: Prioritaskan gambar dari varian yang aktif, hover, atau urutan galeri
   const activeDisplayImage = 
     hoveredImageUrl || 
     (activeVariant?.image_url ? activeVariant.image_url : null) || 
