@@ -616,7 +616,7 @@ export default function ProductDetailClient({ product }: ProductDetailClientProp
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="bg-[#FAF7F0] p-4 rounded-2xl border border-amber-900/10 space-y-2">
                   <span className="text-[10px] font-bold uppercase tracking-widest text-[#5c0f1c] flex items-center gap-1.5">
-                    <FontAwesomeIcon icon={faSeedling} className="text-amber-600" />
+                    <FontAwesomeIcon icon={faHeart} className="text-amber-500" />
                     <span>Komposisi / Bahan Utama</span>
                   </span>
                   <p className="text-sm text-gray-700 font-medium whitespace-pre-line leading-relaxed">
@@ -626,7 +626,7 @@ export default function ProductDetailClient({ product }: ProductDetailClientProp
 
                 <div className="bg-[#FAF7F0] p-4 rounded-2xl border border-amber-900/10 space-y-2">
                   <span className="text-[10px] font-bold uppercase tracking-widest text-[#5c0f1c] flex items-center gap-1.5">
-                    <FontAwesomeIcon icon={faBoxArchive} className="text-amber-600" />
+                    <FontAwesomeIcon icon={faHeart} className="text-amber-500" />
                     <span>Standar Kemasan</span>
                   </span>
                   <p className="text-sm text-gray-700 font-medium whitespace-pre-line leading-relaxed">
