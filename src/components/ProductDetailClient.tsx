@@ -1,3 +1,4 @@
+// src/app/.../ProductDetailClient.tsx
 'use client';
 
 import React, { useEffect, useState } from 'react';
@@ -16,7 +17,6 @@ import {
   faShieldHeart,
   faTruck,
   faBoxArchive,
-  faStar,
   faPlus,
   faMinus,
   faCartPlus,
@@ -585,9 +585,9 @@ export default function ProductDetailClient({ product }: ProductDetailClientProp
               </div>
 
               <div className="pt-4 border-t border-amber-900/10 space-y-4">
-                <h4 className="font-serif font-bold text-base text-[#3b0912] flex items-center gap-2">
-                  <FontAwesomeIcon icon={faStar} className="text-amber-500" />
-                  <span>Keunggulan Utama:</span>
+                {/* Ukuran disamakan menjadi text-xl font-serif font-bold text-[#3b0912] */}
+                <h4 className="text-xl font-serif font-bold text-[#3b0912]">
+                  Keunggulan Utama:
                 </h4>
                 
                 <div className="space-y-3 font-serif">
@@ -614,24 +614,37 @@ export default function ProductDetailClient({ product }: ProductDetailClientProp
               </div>
               
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="bg-[#FAF7F0] p-4 rounded-2xl border border-amber-900/10 space-y-2">
-                  <span className="text-[10px] font-bold uppercase tracking-widest text-[#5c0f1c] flex items-center gap-1.5">
-                    <FontAwesomeIcon icon={faHeart} className="text-amber-500" />
-                    <span>Komposisi / Bahan Utama</span>
-                  </span>
-                  <p className="text-sm text-gray-700 font-medium whitespace-pre-line leading-relaxed">
-                    {activeIngredients}
-                  </p>
+                {/* Komposisi dengan Poin Ber-love */}
+                <div className="bg-[#FAF7F0] p-4 rounded-2xl border border-amber-900/10 space-y-3">
+                  <h4 className="text-xl font-serif font-bold text-[#3b0912] mb-2">
+                    Komposisi / Bahan Utama
+                  </h4>
+                  
+                  <div className="space-y-2.5 font-serif">
+                    {String(activeIngredients || '')
+                      .split(/\r?\n/)
+                      .map((item) => item.replace(/^[-*•]\s*/, '').trim())
+                      .filter((item) => item.length > 0)
+                      .map((item, idx) => (
+                        <div key={idx} className="flex items-start gap-2.5 text-sm text-gray-700">
+                          <FontAwesomeIcon icon={faHeart} className="text-amber-500 mt-1 shrink-0 text-xs" />
+                          <p className="leading-relaxed flex-1">{item}</p>
+                        </div>
+                      ))}
+                  </div>
                 </div>
 
-                <div className="bg-[#FAF7F0] p-4 rounded-2xl border border-amber-900/10 space-y-2">
-                  <span className="text-[10px] font-bold uppercase tracking-widest text-[#5c0f1c] flex items-center gap-1.5">
-                    <FontAwesomeIcon icon={faHeart} className="text-amber-500" />
-                    <span>Standar Kemasan</span>
-                  </span>
-                  <p className="text-sm text-gray-700 font-medium whitespace-pre-line leading-relaxed">
-                    {activePackaging}
-                  </p>
+                {/* Standar Kemasan (Ukuran sama, emote love dihapus) */}
+                <div className="bg-[#FAF7F0] p-4 rounded-2xl border border-amber-900/10 space-y-3">
+                  <h4 className="text-xl font-serif font-bold text-[#3b0912] mb-2">
+                    Standar Kemasan
+                  </h4>
+                  
+                  <div className="space-y-2.5 font-serif">
+                    <p className="text-sm text-gray-700 font-medium whitespace-pre-line leading-relaxed">
+                      {activePackaging}
+                    </p>
+                  </div>
                 </div>
               </div>
             </div>
