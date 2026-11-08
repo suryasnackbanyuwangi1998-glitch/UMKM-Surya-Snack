@@ -3,15 +3,8 @@ import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 import { uploadFileToDrive } from '@/lib/googleDrive';
 
-// Konfigurasi agar Next.js mengizinkan payload besar (15MB) dan waktu proses lebih lama (120 detik)
-export const config = {
-  api: {
-    bodyParser: {
-      sizeLimit: '15mb',
-    },
-  },
-};
-export const maxDuration = 120; // 2 menit untuk mengantisipasi upload banyak gambar varian ke Google Drive
+// Untuk App Router, gunakan maxDuration untuk memperpanjang waktu proses
+export const maxDuration = 120; 
 
 export async function POST(request) {
   try {
@@ -63,7 +56,7 @@ export async function POST(request) {
     if (productError) throw productError;
     const productId = productData.id;
 
-    // 3. Tangani Varian dengan Aman & Upload Gambar Varian Secara Paralel
+    // 3. Tangani Varian dengan Aman
     let variantsList = [];
     const rawVariants = formData.get('variants');
     
@@ -166,7 +159,6 @@ export async function PUT(request) {
 
     if (updateError) throw updateError;
 
-    // Kelola ulang varian (Hapus yang lama, masukkan yang baru secara paralel dengan aman)
     let variantsList = [];
     const rawVariants = formData.get('variants');
     
