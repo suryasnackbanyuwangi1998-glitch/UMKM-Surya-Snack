@@ -3,105 +3,116 @@ import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 import { uploadFileToDrive } from '@/lib/googleDrive';
 
+// Konfigurasi agar Next.js mengizinkan payload besar (15MB) dan waktu proses lebih lama (120 detik)
 export const config = {
   api: {
     bodyParser: {
-      sizeLimit: '10mb',
+      sizeLimit: '15mb',
     },
   },
 };
-export const maxDuration = 60;
+export const maxDuration = 120; // 2 menit untuk mengantisipasi upload banyak gambar varian ke Google Drive
 
 export async function POST(request) {
   try {
-    const contentType = request.headers.get('content-type') || '';
+    const formData = await request.formData();
+    
+    const name = formData.get('name');
+    const price = formData.get('price');
+    const category = formData.get('category');
+    const weight = formData.get('weight');
+    const origin = formData.get('origin');
+    const stock = formData.get('stock');
+    const badge = formData.get('badge');
+    const description = formData.get('description');
+    const ingredients = formData.get('ingredients');
+    const packagingStandard = formData.get('packaging_standard');
+    const keyFeatures = formData.get('key_features');
+    const isPopular = formData.get('is_popular') === 'true';
+    const mainImageFile = formData.get('image');
 
-    let body;
+    // 1. Upload gambar utama ke Google Drive jika ada
     let mainImageUrl = "";
-    let variantsList = [];
-
-    // Mendukung pengiriman via JSON (Sangat direkomendasikan untuk banyak varian)
-    if (contentType.includes('application/json')) {
-      body = await request.json();
-      var { productData, variants } = body;
-      mainImageUrl = productData.image_url || "";
-      variantsList = variants || [];
-    } else {
-      // Fallback jika masih menggunakan FormData untuk produk utama
-      const formData = await request.formData();
-      const name = formData.get('name');
-      const price = formData.get('price');
-      const category = formData.get('category');
-      const weight = formData.get('weight');
-      const origin = formData.get('origin');
-      const stock = formData.get('stock');
-      const badge = formData.get('badge');
-      const description = formData.get('description');
-      const ingredients = formData.get('ingredients');
-      const packagingStandard = formData.get('packaging_standard');
-      const keyFeatures = formData.get('key_features');
-      const isPopular = formData.get('is_popular') === 'true';
-      const mainImageFile = formData.get('image');
-
-      if (mainImageFile && mainImageFile instanceof File && mainImageFile.size > 0) {
-        mainImageUrl = await uploadFileToDrive(mainImageFile);
-      }
-
-      const rawVariants = formData.get('variants');
-      variantsList = rawVariants ? JSON.parse(rawVariants) : [];
-
-      var productData = {
-        name,
-        price: price ? parseFloat(price) : null,
-        category,
-        weight: weight || "250 gram",
-        origin: origin || "Banyuwangi",
-        stock: stock ? parseInt(stock) : 0,
-        badge: badge || "Best Seller",
-        description,
-        ingredients,
-        packaging_standard: packagingStandard,
-        key_features: keyFeatures || "",
-        is_popular: isPopular,
-        image_url: mainImageUrl,
-      };
+    if (mainImageFile && mainImageFile instanceof File && mainImageFile.size > 0) {
+      mainImageUrl = await uploadFileToDrive(mainImageFile);
     }
 
-    // 1. Simpan produk utama ke Supabase
-    const { data: insertedProduct, error: productError } = await supabase
+    // 2. Simpan produk utama ke Supabase
+    const { data: productData, error: productError } = await supabase
       .from('products')
-      .insert([productData])
+      .insert([
+        {
+          name,
+          price: price ? parseFloat(price) : null,
+          category,
+          weight: weight || "250 gram",
+          origin: origin || "Banyuwangi",
+          stock: stock ? parseInt(stock) : 0,
+          badge: badge || "Best Seller",
+          description,
+          ingredients,
+          packaging_standard: packagingStandard,
+          key_features: keyFeatures || "",
+          is_popular: isPopular,
+          image_url: mainImageUrl,
+        },
+      ])
       .select('id')
       .single();
 
     if (productError) throw productError;
-    const productId = insertedProduct.id;
+    const productId = productData.id;
 
-    // 2. Simpan daftar varian secara langsung (karena image_url sudah berupa link teks)
-    if (variantsList.length > 0) {
-      const formattedVariants = variantsList.map((v) => ({
-        product_id: productId,
-        name: v.name,
-        price: v.price ? parseFloat(v.price) : 0,
-        stock: parseInt(v.stock) || 0,
-        weight: v.weight || productData.weight || "250 gram",
-        origin: v.origin || productData.origin || "Banyuwangi",
-        image_url: v.image_url || "",
-        description: v.description || "",
-        ingredients: v.ingredients || "",
-        key_features: v.key_features || "",
-        packaging_standard: v.packaging_standard || "",
-        is_popular: v.is_popular || false,
-      }));
-
-      const { error: variantError } = await supabase
-        .from('variant_products')
-        .insert(formattedVariants);
-
-      if (variantError) throw variantError;
+    // 3. Tangani Varian dengan Aman & Upload Gambar Varian Secara Paralel
+    let variantsList = [];
+    const rawVariants = formData.get('variants');
+    
+    if (rawVariants && typeof rawVariants === 'string' && rawVariants.trim() !== '' && rawVariants !== '-') {
+      try {
+        variantsList = JSON.parse(rawVariants);
+      } catch (parseErr) {
+        console.error("Gagal parsing JSON variants (POST):", parseErr);
+        variantsList = [];
+      }
     }
 
-    return NextResponse.json({ success: true, message: "Produk & seluruh varian berhasil disimpan!" });
+    if (variantsList.length > 0) {
+      const variantPromises = variantsList.map(async (v, index) => {
+        const variantImageFile = formData.get(`variant_image_${index}`);
+        let variantImageUrl = v.image_url || "";
+
+        if (variantImageFile && variantImageFile instanceof File && variantImageFile.size > 0) {
+          variantImageUrl = await uploadFileToDrive(variantImageFile);
+        }
+
+        return {
+          product_id: productId,
+          name: v.name || "Varian",
+          price: v.price ? parseFloat(v.price) : 0,
+          stock: parseInt(v.stock) || 0,
+          weight: v.weight || weight || "250 gram",
+          origin: v.origin || origin || "Banyuwangi",
+          image_url: variantImageUrl,
+          description: v.description || "",
+          ingredients: v.ingredients || "",
+          key_features: v.key_features || "",
+          packaging_standard: v.packaging_standard || "",
+          is_popular: v.is_popular || false,
+        };
+      });
+
+      const processedVariants = await Promise.all(variantPromises);
+
+      if (processedVariants.length > 0) {
+        const { error: variantError } = await supabase
+          .from('variant_products')
+          .insert(processedVariants);
+
+        if (variantError) throw variantError;
+      }
+    }
+
+    return NextResponse.json({ success: true, message: "Produk & varian berhasil disimpan!" });
   } catch (error) {
     console.error("Error POST /api/products:", error);
     return NextResponse.json({ success: false, message: error.message }, { status: 500 });
@@ -110,44 +121,100 @@ export async function POST(request) {
 
 export async function PUT(request) {
   try {
-    const body = await request.json();
-    const { id, productData, variants } = body;
+    const formData = await request.formData();
+    const id = formData.get('id');
+    const name = formData.get('name');
+    const price = formData.get('price');
+    const category = formData.get('category');
+    const weight = formData.get('weight');
+    const origin = formData.get('origin');
+    const stock = formData.get('stock');
+    const badge = formData.get('badge');
+    const description = formData.get('description');
+    const ingredients = formData.get('ingredients');
+    const packagingStandard = formData.get('packaging_standard');
+    const keyFeatures = formData.get('key_features');
+    const isPopular = formData.get('is_popular') === 'true';
+    const oldImageUrl = formData.get('old_image_url');
+    const mainImageFile = formData.get('image');
+
+    let mainImageUrl = oldImageUrl;
+    if (mainImageFile && mainImageFile instanceof File && mainImageFile.size > 0) {
+      mainImageUrl = await uploadFileToDrive(mainImageFile);
+    }
 
     // Update produk utama
     const { error: updateError } = await supabase
       .from('products')
       .update({
-        ...productData,
+        name,
+        price: price ? parseFloat(price) : null,
+        category,
+        weight: weight || "250 gram",
+        origin: origin || "Banyuwangi",
+        stock: stock ? parseInt(stock) : 0,
+        badge,
+        description,
+        ingredients,
+        packaging_standard: packagingStandard,
+        key_features: keyFeatures || "",
+        is_popular: isPopular,
+        image_url: mainImageUrl,
         updated_at: new Date().toISOString(),
       })
       .eq('id', id);
 
     if (updateError) throw updateError;
 
-    // Hapus varian lama dan masukkan kembali varian baru
+    // Kelola ulang varian (Hapus yang lama, masukkan yang baru secara paralel dengan aman)
+    let variantsList = [];
+    const rawVariants = formData.get('variants');
+    
+    if (rawVariants && typeof rawVariants === 'string' && rawVariants.trim() !== '' && rawVariants !== '-') {
+      try {
+        variantsList = JSON.parse(rawVariants);
+      } catch (parseErr) {
+        console.error("Gagal parsing JSON variants (PUT):", parseErr);
+        variantsList = [];
+      }
+    }
+
     await supabase.from('variant_products').delete().eq('product_id', id);
 
-    if (variants && variants.length > 0) {
-      const formattedVariants = variants.map((v) => ({
-        product_id: id,
-        name: v.name,
-        price: v.price ? parseFloat(v.price) : 0,
-        stock: parseInt(v.stock) || 0,
-        weight: v.weight || productData.weight || "250 gram",
-        origin: v.origin || productData.origin || "Banyuwangi",
-        image_url: v.image_url || "",
-        description: v.description || "",
-        ingredients: v.ingredients || "",
-        key_features: v.key_features || "",
-        packaging_standard: v.packaging_standard || "",
-        is_popular: v.is_popular || false,
-      }));
+    if (variantsList.length > 0) {
+      const variantPromises = variantsList.map(async (v, index) => {
+        const variantImageFile = formData.get(`variant_image_${index}`);
+        let variantImageUrl = v.image_url || "";
 
-      const { error: variantInsertError } = await supabase
-        .from('variant_products')
-        .insert(formattedVariants);
+        if (variantImageFile && variantImageFile instanceof File && variantImageFile.size > 0) {
+          variantImageUrl = await uploadFileToDrive(variantImageFile);
+        }
 
-      if (variantInsertError) throw variantInsertError;
+        return {
+          product_id: id,
+          name: v.name || "Varian",
+          price: v.price ? parseFloat(v.price) : 0,
+          stock: parseInt(v.stock) || 0,
+          weight: v.weight || weight || "250 gram",
+          origin: v.origin || origin || "Banyuwangi",
+          image_url: variantImageUrl,
+          description: v.description || "",
+          ingredients: v.ingredients || "",
+          key_features: v.key_features || "",
+          packaging_standard: v.packaging_standard || "",
+          is_popular: v.is_popular || false,
+        };
+      });
+
+      const processedVariants = await Promise.all(variantPromises);
+
+      if (processedVariants.length > 0) {
+        const { error: variantInsertError } = await supabase
+          .from('variant_products')
+          .insert(processedVariants);
+
+        if (variantInsertError) throw variantInsertError;
+      }
     }
 
     return NextResponse.json({ success: true, message: "Produk berhasil diperbarui!" });
