@@ -3,6 +3,16 @@ import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 import { uploadFileToDrive } from '@/lib/googleDrive';
 
+// Konfigurasi agar Next.js mengizinkan payload besar (15MB) dan waktu proses lebih lama (120 detik)
+export const config = {
+  api: {
+    bodyParser: {
+      sizeLimit: '15mb',
+    },
+  },
+};
+export const maxDuration = 120; // 2 menit untuk mengantisipasi upload 11 gambar ke Google Drive
+
 export async function POST(request) {
   try {
     const formData = await request.formData();
