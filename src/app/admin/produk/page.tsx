@@ -26,8 +26,8 @@ interface ProductVariant {
   name: string;
   price: string;
   stock: string;
-  weight: string; // Berat khusus varian
-  origin: string; // Asal khusus varian
+  weight: string;
+  origin: string;
   image_url: string;
   imageFile?: File | null;
   description?: string;
@@ -60,7 +60,7 @@ export default function AdminProdukPage() {
   const [badge, setBadge] = useState("Best Seller");
   const [description, setDescription] = useState("");
   const [ingredients, setIngredients] = useState("");
-  const [packagingStandard, setPackagingStandard] = useState("Plastik Standing Pouch Foil Kedap Udara");
+  const [packagingStandard, setPackagingStandard] = useState("Mika Plastik Transparan Eksklusif");
   const [keyFeatures, setKeyFeatures] = useState(
     "Tanpa Bahan Pengawet.\nResep Warisan Leluhur.\nGurih & Renyah."
   );
@@ -148,6 +148,23 @@ export default function AdminProdukPage() {
     }
   };
 
+  const uploadToStorage = async (file: File, folder: string) => {
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${Date.now()}-${Math.random().toString(36).substring(2, 9)}.${fileExt}`;
+    const filePath = `${folder}/${fileName}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from('products')
+      .upload(filePath, file);
+
+    if (uploadError) {
+      throw new Error("Gagal mengunggah gambar: " + uploadError.message);
+    }
+
+    const { data } = supabase.storage.from('products').getPublicUrl(filePath);
+    return data.publicUrl;
+  };
+
   const handleOpenAddModal = () => {
     setIsEditMode(false);
     setCurrentId(null);
@@ -160,7 +177,7 @@ export default function AdminProdukPage() {
     setBadge("Best Seller");
     setDescription("");
     setIngredients("");
-    setPackagingStandard("Plastik Standing Pouch Foil Kedap Udara");
+    setPackagingStandard("Mika Plastik Transparan Eksklusif");
     setKeyFeatures("Tanpa Pengawet.\nResep Asli Banyuwangi.\nRenyah & Gurih.");
     setIsPopular(false);
     setImageFile(null);
@@ -184,7 +201,7 @@ export default function AdminProdukPage() {
     setBadge(item.badge || "Best Seller");
     setDescription(item.description || item.long_description || "");
     setIngredients(item.ingredients || "");
-    setPackagingStandard(item.packaging_standard || "Plastik Standing Pouch Foil Kedap Udara");
+    setPackagingStandard(item.packaging_standard || "Mika Plastik Transparan Eksklusif");
     
     let formattedFeatures = item.key_features;
     if (Array.isArray(formattedFeatures)) {
@@ -232,6 +249,33 @@ export default function AdminProdukPage() {
     setSubmitting(true);
 
     try {
+      let finalImageUrl = existingImageUrl || "";
+      if (imageFile) {
+        finalImageUrl = await uploadToStorage(imageFile, "main");
+      }
+
+      const processedVariants = await Promise.all(
+        variants.map(async (v) => {
+          let variantImgUrl = v.image_url;
+          if (v.imageFile) {
+            variantImgUrl = await uploadToStorage(v.imageFile, "variants");
+          }
+          return {
+            name: v.name,
+            price: v.price ? parseFloat(v.price) : 0,
+            stock: parseInt(v.stock) || 0,
+            weight: v.weight || "250 gram",
+            origin: v.origin || "Banyuwangi",
+            image_url: variantImgUrl || "",
+            description: v.description || "",
+            ingredients: v.ingredients || "",
+            key_features: v.key_features || "",
+            packaging_standard: v.packaging_standard || "",
+            is_popular: v.is_popular || false,
+          };
+        })
+      );
+
       const formData = new FormData();
       if (isEditMode && currentId) {
         formData.append("id", currentId);
@@ -248,32 +292,8 @@ export default function AdminProdukPage() {
       formData.append("packaging_standard", packagingStandard);
       formData.append("key_features", keyFeatures);
       formData.append("is_popular", String(isPopular));
-      formData.append("old_image_url", existingImageUrl || "");
-
-      if (imageFile) {
-        formData.append("image", imageFile);
-      }
-
-      const validVariants = variants.map((v) => ({
-        name: v.name,
-        price: v.price ? parseFloat(v.price) : 0,
-        stock: parseInt(v.stock) || 0,
-        weight: v.weight || "250 gram",
-        origin: v.origin || "Banyuwangi",
-        image_url: v.image_url || "",
-        description: v.description || "",
-        ingredients: v.ingredients || "",
-        key_features: v.key_features || "",
-        packaging_standard: v.packaging_standard || "",
-        is_popular: v.is_popular || false,
-      }));
-      formData.append("variants", JSON.stringify(validVariants));
-
-      variants.forEach((v, index) => {
-        if (v.imageFile) {
-          formData.append(`variant_image_${index}`, v.imageFile);
-        }
-      });
+      formData.append("image_url", finalImageUrl);
+      formData.append("variants", JSON.stringify(processedVariants));
 
       const res = await fetch("/api/products", {
         method: isEditMode ? "PUT" : "POST",
@@ -285,7 +305,7 @@ export default function AdminProdukPage() {
         throw new Error(result.message || "Gagal menyimpan produk.");
       }
 
-      setSuccessMsg(isEditMode ? "Produk berhasil diperbarui & gambar masuk ke Google Drive!" : "Produk berhasil ditambahkan & gambar masuk ke Google Drive!");
+      setSuccessMsg(isEditMode ? "Produk berhasil diperbarui!" : "Produk berhasil ditambahkan!");
       setIsModalOpen(false);
       setImageFile(null);
       setImagePreview(null);
@@ -337,7 +357,7 @@ export default function AdminProdukPage() {
             Manajemen Produk & Varian
           </h1>
           <p className="text-xs text-gray-500">
-            Kelola informasi lengkap produk utama beserta varian rasanya.
+            Kelola informasi lengkap produk utama UMKM Surya Snack beserta varian rasanya.
           </p>
         </div>
         <button
@@ -406,7 +426,7 @@ export default function AdminProdukPage() {
                 </thead>
                 <tbody className="divide-y divide-gray-100 text-xs">
                   {currentProducts.map((item: any) => {
-                    const displayImg = item.image_url || (Array.isArray(item.images) ? item.images[0] : null) || "https://images.unsplash.com/photo-1599490659213-e2b9527bd087?q=80&w=200";
+                    const displayImg = item.image_url || "https://images.unsplash.com/photo-1599490659213-e2b9527bd087?q=80&w=200";
                     const variantCount = Array.isArray(item.variants) ? item.variants.length : 0;
                     return (
                       <tr key={item.id} className="hover:bg-gray-50 transition">
@@ -666,7 +686,7 @@ export default function AdminProdukPage() {
                       name="packaging_standard"
                       value={packagingStandard}
                       onChange={(e) => setPackagingStandard(e.target.value)}
-                      placeholder="Plastik Standing Pouch Foil Kedap Udara"
+                      placeholder="Mika Plastik Transparan Eksklusif"
                       className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-xs text-gray-800 focus:outline-none focus:border-[#5c0f1c] transition"
                     />
                   </div>
@@ -899,7 +919,7 @@ export default function AdminProdukPage() {
                   {submitting ? (
                     <>
                       <FontAwesomeIcon icon={faSpinner} className="animate-spin text-amber-300" />
-                      <span>Menyimpan ke Google Drive...</span>
+                      <span>Menyimpan ke Storage...</span>
                     </>
                   ) : (
                     <span>{isEditMode ? "Perbarui Produk" : "Simpan Produk"}</span>

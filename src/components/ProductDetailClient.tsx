@@ -16,16 +16,14 @@ import {
   faXmark,
   faShieldHeart,
   faTruck,
-  faBoxArchive,
-  faPlus,
-  faMinus,
   faCartPlus,
   faBagShopping,
   faStore,
   faHeart,
-  faSeedling,
   faLayerGroup,
   faCheck,
+  faPlus,
+  faMinus,
 } from '@fortawesome/free-solid-svg-icons';
 import { faWhatsapp } from '@fortawesome/free-brands-svg-icons';
 import { useCart } from '@/context/CartProvider';
@@ -57,7 +55,7 @@ export default function ProductDetailClient({ product }: ProductDetailClientProp
     : [];
   const hasVariants = validVariants.length > 0;
 
-  // State Varian yang Dipilih (Mulai dengan -1 agar produk utama tampil default)
+  // State Varian yang Dipilih (-1 artinya produk utama)
   const [selectedVariantIndex, setSelectedVariantIndex] = useState<number>(-1);
   const activeVariant = hasVariants && selectedVariantIndex >= 0 ? validVariants[selectedVariantIndex] : null;
 
@@ -66,32 +64,33 @@ export default function ProductDetailClient({ product }: ProductDetailClientProp
   const currentStock = activeVariant ? activeVariant.stock : product.stock;
 
   // ==========================================
-  // KONTEN DINAMIS BERDASARKAN VARIAN YANG DIPILIH
+  // KONTEN DINAMIS BERDASARKAN VARIAN
   // ==========================================
   const activeDescription = activeVariant?.description 
     ? activeVariant.description 
     : (activeVariant 
-        ? `Varian ${activeVariant.name} dari ${product.name}. Menghadirkan cita rasa khas berkualitas tinggi yang diolah secara higienis khusus untuk Anda.` 
+        ? `Varian ${activeVariant.name} dari ${product.name}. Menghadirkan cita rasa khas berkualitas tinggi yang diolah secara higienis.` 
         : (product.long_description || product.description || 'Belum ada deskripsi lengkap.'));
 
   const activeIngredients = activeVariant?.ingredients 
     ? activeVariant.ingredients 
     : (activeVariant 
-        ? `Bahan pilihan berkualitas tinggi untuk varian ${activeVariant.name}, diproses higienis tanpa bahan pengawet buatan.` 
+        ? `Bahan pilihan berkualitas tinggi untuk varian ${activeVariant.name}, diproses higienis tanpa bahan pengawet.` 
         : (product.ingredients || 'Menggunakan bahan-bahan alami pilihan berkualitas tinggi tanpa pengawet buatan.'));
 
   const activePackaging = activeVariant?.packaging_standard 
     ? activeVariant.packaging_standard 
     : (activeVariant 
         ? `Kemasan khusus untuk varian ${activeVariant.name}.` 
-        : (product.packaging_standard || 'Dikemas menggunakan plastik kedap udara (food grade) tebal untuk menjamin kerenyahan dan aroma khas tetap terjaga.'));
+        : (product.packaging_standard || 'Dikemas menggunakan mika plastik transparan eksklusif / standing pouch kedap udara.'));
 
   // Susunan Gambar
-  const mainProductImage = product.image_url || (Array.isArray(product.images) && product.images.length > 0 ? product.images[0] : null) || 'https://images.unsplash.com/photo-1599490659213-e2b9527bd087?q=80&w=800';
+  const fallbackImage = 'https://images.unsplash.com/photo-1599490659213-e2b9527bd087?q=80&w=800';
+  const mainProductImage = product.image_url && product.image_url.trim() !== '' ? product.image_url : fallbackImage;
   
   const variantImages = validVariants
     .map((v) => v.image_url)
-    .filter(Boolean) as string[];
+    .filter((img): img is string => Boolean(img && img.trim() !== ''));
 
   const images: string[] = Array.from(new Set([mainProductImage, ...variantImages]));
 
@@ -101,7 +100,7 @@ export default function ProductDetailClient({ product }: ProductDetailClientProp
   const [zoomOpen, setZoomOpen] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [activeTab, setActiveTab] = useState<'deskripsi' | 'komposisi' | 'pemesanan'>('deskripsi');
-  const [quantity, setQuantity] = useState(0);
+  const [quantity, setQuantity] = useState(1);
 
   const formatRupiah = (price: number | null | undefined): string =>
     price === null || price === undefined
@@ -109,7 +108,7 @@ export default function ProductDetailClient({ product }: ProductDetailClientProp
       : `Rp ${price.toLocaleString('id-ID')}`;
 
   const handleDecrement = () => {
-    if (quantity > 0) {
+    if (quantity > 1) {
       setQuantity((prev) => prev - 1);
     }
   };
@@ -132,7 +131,7 @@ export default function ProductDetailClient({ product }: ProductDetailClientProp
       ...product,
       price: currentPrice,
       stock: currentStock,
-      image_url: activeVariantImage || product.image_url,
+      image_url: activeVariantImage || product.image_url || fallbackImage,
       selectedVariant: activeVariant ? activeVariant.name : undefined,
     };
     addToCart(productWithVariant, quantity);
@@ -163,7 +162,7 @@ export default function ProductDetailClient({ product }: ProductDetailClientProp
     };
   }, [zoomOpen]);
 
-  // Perbaikan parsing key_features agar tidak terpotong sembarangan
+  // Parsing key_features
   const rawKeyFeatures = activeVariant?.key_features || product.key_features;
   let highlights: string[] = [];
 
@@ -179,27 +178,27 @@ export default function ProductDetailClient({ product }: ProductDetailClientProp
       .filter((item) => item.length > 0);
   } else {
     highlights = [
-      'Perpaduan kue yang lembut berlapis dengan isian padat legit berkualitas tinggi!',
-      'Camilan manis istimewa favorit keluarga yang pas dinikmati dalam berbagai suasana',
-      'Oleh-oleh wajib khas Banyuwangi dari Surya Snack yang sayang banget kalau dilewatkan',
+      'Tanpa Bahan Pengawet Buatan.',
+      'Resep Warisan Leluhur Khas Banyuwangi.',
+      'Renyah, Gurih, dan Higienis.',
     ];
   }
 
   const orderSteps: [string, string][] = [
-    ['1. Tentukan Varian & Jumlah', 'Pilih varian rasa/ukuran serta jumlah pesanan sesuai kebutuhan lalu klik Tambah Pesanan.'],
+    ['1. Tentukan Varian & Jumlah', 'Pilih varian rasa serta jumlah pesanan sesuai kebutuhan lalu klik Tambah ke Keranjang.'],
     ['2. Masuk Keranjang', 'Produk beserta varian pilihannya akan otomatis tersimpan aman di keranjang belanja.'],
-    ['3. Tambah Produk Lain', 'Anda bisa kembali ke katalog untuk memilih camilan lezat lainnya.'],
-    ['4. Kirim ke WhatsApp', 'Buka halaman keranjang untuk melihat rincian nota dan kirim pesanan ke WhatsApp admin.'],
+    ['3. Periksa Pesanan', 'Buka menu keranjang untuk melihat rincian nota belanjaan Anda secara transparan.'],
+    ['4. Kirim ke WhatsApp', 'Klik tombol pemesanan untuk mengirimkan rekap pesanan otomatis ke WhatsApp admin.'],
   ];
 
   const activeDisplayImage = 
     hoveredImageUrl || 
-    (activeVariant?.image_url ? activeVariant.image_url : null) || 
+    (activeVariant?.image_url && activeVariant.image_url.trim() !== '' ? activeVariant.image_url : null) || 
     images[selectedImage] || 
     mainProductImage;
 
   return (
-    <div className="relative mx-auto w-full max-w-6xl px-4 pb-28 pt-20 sm:px-6 lg:pb-16 font-sans">
+    <div className="relative mx-auto w-full max-w-6xl px-4 pb-28 pt-20 sm:px-6 lg:pb-16 font-sans text-[#2D241E]">
       
       {/* ===== TOMBOL KEMBALI & BREADCRUMB ===== */}
       <div className="flex items-center justify-between mb-8">
@@ -211,7 +210,7 @@ export default function ProductDetailClient({ product }: ProductDetailClientProp
           <span>Kembali ke Katalog</span>
         </Link>
         <span className="text-xs uppercase tracking-widest text-gray-400 font-bold hidden sm:block">
-          ✦ Surya Snack Artisan Catalog ✦
+          ✦ UMKM Surya Snack Banyuwangi ✦
         </span>
       </div>
 
@@ -280,7 +279,7 @@ export default function ProductDetailClient({ product }: ProductDetailClientProp
           <div className="space-y-2">
             <div className="flex flex-wrap items-center gap-2">
               <span className="bg-[#5c0f1c] text-amber-200 text-xs font-bold uppercase tracking-widest px-3.5 py-1 rounded-full font-serif shadow-xs">
-                {product.badge || 'Khas Banyuwangi'}
+                {product.badge || 'Best Seller'}
               </span>
               {product.category && (
                 <span className="bg-amber-100/70 text-[#3b0912] text-xs font-bold px-3 py-1 rounded-full">
@@ -304,15 +303,13 @@ export default function ProductDetailClient({ product }: ProductDetailClientProp
             </div>
           </div>
 
-          {/* ========================================== */}
-          {/* PILIHAN VARIAN PRODUK                      */}
-          {/* ========================================== */}
+          {/* PILIHAN VARIAN PRODUK */}
           {hasVariants && (
             <div className="space-y-3.5 pt-3 border-t border-amber-900/10 font-sans">
               <div className="flex items-center justify-between">
                 <label className="text-xs font-extrabold uppercase tracking-widest text-[#3b0912] flex items-center gap-2">
                   <FontAwesomeIcon icon={faLayerGroup} className="text-amber-600" />
-                  <span>Pilih Varian (Opsional):</span>
+                  <span>Pilih Varian Rasa:</span>
                 </label>
                 <span className="text-xs font-bold text-[#5c0f1c] bg-amber-50 px-2.5 py-0.5 rounded-lg border border-amber-200">
                   {activeVariant ? activeVariant.name : 'Produk Utama'}
@@ -343,9 +340,10 @@ export default function ProductDetailClient({ product }: ProductDetailClientProp
                           : 'border-gray-200 bg-[#FAF7F0] text-gray-800 hover:border-amber-900/40 hover:bg-white'
                       }`}
                     >
+                      {/* Menggunakan tag <img> biasa agar gambar kecil di tombol varian pasti tampil */}
                       {variant.image_url && (
                         <div className="relative w-6 h-6 rounded-lg overflow-hidden shrink-0 border border-black/10 bg-white">
-                          <Image src={variant.image_url} alt={variant.name} fill unoptimized className="object-cover" />
+                          <img src={variant.image_url} alt={variant.name} className="w-full h-full object-cover" />
                         </div>
                       )}
 
@@ -401,7 +399,7 @@ export default function ProductDetailClient({ product }: ProductDetailClientProp
                 <button
                   type="button"
                   onClick={handleDecrement}
-                  disabled={quantity <= 0}
+                  disabled={quantity <= 1}
                   className="w-7 h-7 rounded-lg bg-gray-100 hover:bg-amber-100 text-gray-800 flex items-center justify-center font-bold disabled:opacity-40 disabled:cursor-not-allowed transition cursor-pointer"
                 >
                   <FontAwesomeIcon icon={faMinus} className="w-3 h-3" />
@@ -530,9 +528,7 @@ export default function ProductDetailClient({ product }: ProductDetailClientProp
         </div>
       )}
 
-      {/* ========================================== */}
-      {/* SECTION TAB DESKRIPSI & KOMPOSISI DINAMIS  */}
-      {/* ========================================== */}
+      {/* SECTION TAB DESKRIPSI & KOMPOSISI */}
       <div className="mt-12 bg-white rounded-3xl border border-amber-900/10 p-6 sm:p-10 shadow-sm space-y-8">
         <div className="flex flex-wrap gap-2 border-b border-amber-900/10 pb-4">
           <button
@@ -575,7 +571,7 @@ export default function ProductDetailClient({ product }: ProductDetailClientProp
                   <h3 className="text-xl font-serif font-bold text-[#3b0912]">Tentang Produk Ini</h3>
                   {activeVariant && (
                     <span className="text-[11px] font-bold text-amber-800 bg-amber-50 px-3 py-1 rounded-full border border-amber-200">
-                      Menampilkan info untuk varian: {activeVariant.name}
+                      Varian: {activeVariant.name}
                     </span>
                   )}
                 </div>
@@ -585,7 +581,6 @@ export default function ProductDetailClient({ product }: ProductDetailClientProp
               </div>
 
               <div className="pt-4 border-t border-amber-900/10 space-y-4">
-                {/* Ukuran disamakan menjadi text-xl font-serif font-bold text-[#3b0912] */}
                 <h4 className="text-xl font-serif font-bold text-[#3b0912]">
                   Keunggulan Utama:
                 </h4>
@@ -614,7 +609,6 @@ export default function ProductDetailClient({ product }: ProductDetailClientProp
               </div>
               
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {/* Komposisi dengan Poin Ber-love */}
                 <div className="bg-[#FAF7F0] p-4 rounded-2xl border border-amber-900/10 space-y-3">
                   <h4 className="text-xl font-serif font-bold text-[#3b0912] mb-2">
                     Komposisi / Bahan Utama
@@ -634,7 +628,6 @@ export default function ProductDetailClient({ product }: ProductDetailClientProp
                   </div>
                 </div>
 
-                {/* Standar Kemasan (Ukuran sama, emote love dihapus) */}
                 <div className="bg-[#FAF7F0] p-4 rounded-2xl border border-amber-900/10 space-y-3">
                   <h4 className="text-xl font-serif font-bold text-[#3b0912] mb-2">
                     Standar Kemasan

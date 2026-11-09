@@ -18,21 +18,29 @@ export async function GET(request, { params }) {
   try {
     const { id } = await params;
     
-    // Ambil file langsung sebagai stream dari Google Drive menggunakan kredensial backend
+    if (!id || id === 'undefined' || id === 'null') {
+      return new NextResponse('ID tidak valid', { status: 400 });
+    }
+
+    // Ambil metadata file dulu untuk memastikan tipe file-nya (opsional, untuk Content-Type akurat)
+    const fileMeta = await drive.files.get({ fileId: id, fields: 'mimeType' });
+    const mimeType = fileMeta.data.mimeType || 'image/jpeg';
+
+    // Ambil file langsung sebagai stream dari Google Drive
     const response = await drive.files.get(
       { fileId: id, alt: 'media' },
       { responseType: 'stream' }
     );
 
-    // Ubah stream Google Drive menjadi response gambar untuk browser
     return new NextResponse(response.data, {
+      status: 200,
       headers: {
-        'Content-Type': 'image/*',
+        'Content-Type': mimeType,
         'Cache-Control': 'public, max-age=31536000, immutable',
       },
     });
   } catch (error) {
-    console.error('Gagal memuat gambar dari Drive:', error);
+    console.error('Gagal memuat gambar dari Drive:', error.message);
     return new NextResponse('Gambar tidak ditemukan', { status: 404 });
   }
 }
