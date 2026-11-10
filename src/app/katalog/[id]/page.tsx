@@ -48,11 +48,23 @@ export default async function Page({ params }: PageProps) {
     );
   }
 
+  // 3. Ambil data produk lainnya (untuk rekomendasi di bagian bawah)
+  const { data: relatedProducts } = await supabase
+    .from('products')
+    .select('*')
+    .neq('id', product.id) // Kecualikan produk yang sedang dibuka
+    .limit(4);
+
   // Mapping variant_products ke variants agar cocok dengan Client Component
   const formattedProduct = {
     ...product,
     variants: product.variant_products || [],
   };
 
-  return <ProductDetailClient product={formattedProduct} />;
+  return (
+    <ProductDetailClient 
+      product={formattedProduct} 
+      relatedProducts={relatedProducts || []} 
+    />
+  );
 }

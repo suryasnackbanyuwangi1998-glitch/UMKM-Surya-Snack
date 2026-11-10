@@ -43,9 +43,10 @@ interface ProductDetailClientProps {
       packaging_standard?: string | null;
     }>;
   };
+  relatedProducts?: Array<Product>;
 }
 
-export default function ProductDetailClient({ product }: ProductDetailClientProps) {
+export default function ProductDetailClient({ product, relatedProducts = [] }: ProductDetailClientProps) {
   const router = useRouter();
   const { addToCart } = useCart();
 
@@ -100,7 +101,9 @@ export default function ProductDetailClient({ product }: ProductDetailClientProp
   const [zoomOpen, setZoomOpen] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [activeTab, setActiveTab] = useState<'deskripsi' | 'komposisi' | 'pemesanan'>('deskripsi');
-  const [quantity, setQuantity] = useState(1);
+  
+  // Kuantitas dimulai dari 0 sesuai permintaan
+  const [quantity, setQuantity] = useState(0);
 
   const formatRupiah = (price: number | null | undefined): string =>
     price === null || price === undefined
@@ -108,7 +111,7 @@ export default function ProductDetailClient({ product }: ProductDetailClientProp
       : `Rp ${price.toLocaleString('id-ID')}`;
 
   const handleDecrement = () => {
-    if (quantity > 1) {
+    if (quantity > 0) {
       setQuantity((prev) => prev - 1);
     }
   };
@@ -340,7 +343,6 @@ export default function ProductDetailClient({ product }: ProductDetailClientProp
                           : 'border-gray-200 bg-[#FAF7F0] text-gray-800 hover:border-amber-900/40 hover:bg-white'
                       }`}
                     >
-                      {/* Menggunakan tag <img> biasa agar gambar kecil di tombol varian pasti tampil */}
                       {variant.image_url && (
                         <div className="relative w-6 h-6 rounded-lg overflow-hidden shrink-0 border border-black/10 bg-white">
                           <img src={variant.image_url} alt={variant.name} className="w-full h-full object-cover" />
@@ -399,7 +401,7 @@ export default function ProductDetailClient({ product }: ProductDetailClientProp
                 <button
                   type="button"
                   onClick={handleDecrement}
-                  disabled={quantity <= 1}
+                  disabled={quantity <= 0}
                   className="w-7 h-7 rounded-lg bg-gray-100 hover:bg-amber-100 text-gray-800 flex items-center justify-center font-bold disabled:opacity-40 disabled:cursor-not-allowed transition cursor-pointer"
                 >
                   <FontAwesomeIcon icon={faMinus} className="w-3 h-3" />
@@ -655,6 +657,53 @@ export default function ProductDetailClient({ product }: ProductDetailClientProp
                 ))}
               </div>
             </div>
+          )}
+        </div>
+      </div>
+
+      {/* ===== PRODUK LAINNYA / REKOMENDASI ===== */}
+      <div className="mt-12 space-y-6">
+        <div className="flex items-center justify-between">
+          <h3 className="text-xl sm:text-2xl font-serif font-bold text-[#3b0912]">
+            Jajanan Khas Lainnya 🍪
+          </h3>
+          <Link
+            href="/katalog"
+            className="text-xs font-bold text-[#5c0f1c] hover:underline uppercase tracking-wider"
+          >
+            Lihat Semua →
+          </Link>
+        </div>
+
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          {relatedProducts && relatedProducts.length > 0 ? (
+            relatedProducts.map((item: any) => (
+              <Link
+                key={item.id}
+                href={`/katalog/${item.slug || item.id}`}
+                className="group bg-white rounded-2xl border border-amber-900/10 p-3 shadow-xs hover:shadow-md transition flex flex-col justify-between"
+              >
+                <div className="relative aspect-square w-full overflow-hidden rounded-xl bg-[#FAF7F0] mb-3">
+                  <Image
+                    src={item.image_url || 'https://images.unsplash.com/photo-1599490659213-e2b9527bd087?q=80&w=800'}
+                    alt={item.name}
+                    fill
+                    unoptimized
+                    className="object-cover transition duration-300 group-hover:scale-105"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <h4 className="font-bold text-xs sm:text-sm text-gray-900 line-clamp-1 group-hover:text-[#5c0f1c] transition">
+                    {item.name}
+                  </h4>
+                  <p className="text-xs font-black text-[#5c0f1c] font-serif">
+                    {formatRupiah(item.price)}
+                  </p>
+                </div>
+              </Link>
+            ))
+          ) : (
+            <p className="text-xs text-gray-400 col-span-full">Belum ada produk lainnya.</p>
           )}
         </div>
       </div>
