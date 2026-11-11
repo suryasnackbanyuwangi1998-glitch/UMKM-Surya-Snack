@@ -20,6 +20,7 @@ import {
   faStore,
 } from '@fortawesome/free-solid-svg-icons';
 import { supabase } from '@/lib/supabase';
+import { getWaLink } from '@/lib/contacts';
 
 export const revalidate = 60;
 
@@ -29,16 +30,23 @@ export const metadata: Metadata = {
     'Perjalanan Surya Snack sejak 1998: visi, misi, dan nilai yang menjaga cita rasa oleh-oleh khas Banyuwangi tetap autentik hingga hari ini.',
 };
 
-const waHref = `https://wa.me/6289509604700?text=${encodeURIComponent(
-  'Halo Surya Snack, saya ingin bertanya tentang produk oleh-oleh khas Banyuwangi.'
-)}`;
-
 export default async function TentangKamiPage() {
   const { data: aboutData } = await supabase
     .from('about_content')
     .select('*')
     .eq('id', 'main')
     .maybeSingle();
+
+  const { data: contactData } = await supabase
+    .from('contacts')
+    .select('whatsapp1')
+    .eq('id', 'informasi_utama')
+    .maybeSingle();
+
+  const waHref = getWaLink(
+    contactData?.whatsapp1,
+    'Halo Surya Snack, saya ingin bertanya tentang produk oleh-oleh khas Banyuwangi.'
+  );
 
   const title = aboutData?.title || 'Warisan Cita Rasa, Menjaga Rasa Asli';
   const subtitle = aboutData?.subtitle || '★ EST. 1998 ★';
@@ -93,7 +101,7 @@ export default async function TentangKamiPage() {
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-[#FAF8F5] font-sans text-gray-800 antialiased selection:bg-[#5c0f1c] selection:text-amber-100">
-      
+
       <div className="absolute inset-0 -z-30 bg-[#FAF8F5]" />
       <div
         className="pointer-events-none absolute inset-0 -z-20 opacity-[0.03]"
@@ -110,11 +118,11 @@ export default async function TentangKamiPage() {
       <div className="pointer-events-none absolute -bottom-40 left-1/4 -z-10 h-162.5 w-162.5 rounded-full bg-linear-to-tr from-[rgba(92,15,28,0.08)] via-amber-100/25 to-transparent blur-[150px]" />
 
       <div className="relative z-10">
-        
+
         {/* HERO */}
         <section className="mx-auto max-w-6xl px-4 pb-12 pt-24 sm:px-6 sm:pb-16 sm:pt-28">
           <div className="grid items-center gap-10 lg:grid-cols-12 lg:gap-14">
-            
+
             <div className="space-y-6 lg:col-span-7">
               <div className="inline-flex items-center gap-3 px-5 py-2 rounded-full border border-amber-400/40 bg-[#3b0912]/90 backdrop-blur-md shadow-xl">
                 <span className="text-amber-200 text-xs uppercase tracking-wider font-sans font-semibold">
@@ -154,36 +162,32 @@ export default async function TentangKamiPage() {
               {stats.map((stat: { label: string; value: string; desc: string; tone: string }, idx: number) => (
                 <div
                   key={idx}
-                  className={`flex flex-col justify-between space-y-2 rounded-3xl p-5 transition-all duration-300 hover:-translate-y-1 sm:p-6 ${
-                    stat.tone === 'dark'
+                  className={`flex flex-col justify-between space-y-2 rounded-3xl p-5 transition-all duration-300 hover:-translate-y-1 sm:p-6 ${stat.tone === 'dark'
                       ? 'bg-[#5c0f1c] text-white shadow-lg shadow-[#5c0f1c]/25'
                       : stat.tone === 'amber'
-                      ? 'border border-amber-200/60 bg-amber-50 shadow-sm hover:shadow-md'
-                      : 'border border-[#EBE3D5] bg-white shadow-sm hover:shadow-md'
-                  }`}
+                        ? 'border border-amber-200/60 bg-amber-50 shadow-sm hover:shadow-md'
+                        : 'border border-[#EBE3D5] bg-white shadow-sm hover:shadow-md'
+                    }`}
                 >
                   <span
-                    className={`text-[10px] font-bold uppercase tracking-widest sm:text-xs ${
-                      stat.tone === 'dark'
+                    className={`text-[10px] font-bold uppercase tracking-widest sm:text-xs ${stat.tone === 'dark'
                         ? 'text-amber-300'
                         : stat.tone === 'amber'
-                        ? 'text-amber-700'
-                        : 'text-[#5c0f1c]'
-                    }`}
+                          ? 'text-amber-700'
+                          : 'text-[#5c0f1c]'
+                      }`}
                   >
                     {stat.label}
                   </span>
                   <p
-                    className={`text-3xl font-serif font-extrabold tracking-tight sm:text-4xl ${
-                      stat.tone === 'dark' ? 'text-white' : 'text-[#3b0912]'
-                    }`}
+                    className={`text-3xl font-serif font-extrabold tracking-tight sm:text-4xl ${stat.tone === 'dark' ? 'text-white' : 'text-[#3b0912]'
+                      }`}
                   >
                     {stat.value}
                   </p>
                   <p
-                    className={`text-[11px] leading-relaxed sm:text-xs font-light ${
-                      stat.tone === 'dark' ? 'text-white/70' : 'text-gray-500'
-                    }`}
+                    className={`text-[11px] leading-relaxed sm:text-xs font-light ${stat.tone === 'dark' ? 'text-white/70' : 'text-gray-500'
+                      }`}
                   >
                     {stat.desc}
                   </p>
@@ -196,7 +200,7 @@ export default async function TentangKamiPage() {
         {/* SECTION 1 — TIMELINE & FOTO TOKO */}
         <section className="mx-auto max-w-6xl px-4 py-12 sm:px-6 sm:py-16 font-sans">
           <div className="grid items-stretch overflow-hidden rounded-3xl border border-[#EBE3D5] bg-white shadow-xl lg:grid-cols-12">
-            
+
             <div className="relative min-h-70 sm:min-h-90 lg:col-span-5 lg:min-h-0">
               <Image
                 src={aboutImage}
@@ -307,7 +311,7 @@ export default async function TentangKamiPage() {
         {/* SECTION 3 — NILAI YANG KAMI JAGA */}
         <section className="mx-auto max-w-6xl px-4 py-12 sm:px-6 sm:py-16 font-sans">
           <div className="grid gap-10 lg:grid-cols-12 lg:gap-14">
-            
+
             <div className="lg:col-span-4">
               <div className="space-y-4 lg:sticky lg:top-28">
                 <span className="text-xs font-bold uppercase tracking-widest text-[#5c0f1c]">
@@ -369,7 +373,7 @@ export default async function TentangKamiPage() {
               </span>
 
               <h2 className="text-3xl font-serif font-bold leading-tight tracking-tight text-white md:text-4xl">
-                Siap Menikmati Kelezatan Tradisi Kami?
+                Siap Menikmati Kelezatan Produk Kami?
               </h2>
 
               <p className="text-sm leading-relaxed text-white/70 md:text-base font-light">

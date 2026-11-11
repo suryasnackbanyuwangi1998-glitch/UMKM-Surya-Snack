@@ -27,6 +27,7 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import { faWhatsapp } from '@fortawesome/free-brands-svg-icons';
 import { useCart } from '@/context/CartProvider';
+import { useStoreContact } from '@/context/ContactProvider';
 import type { Product } from '@/types';
 
 interface ProductDetailClientProps {
@@ -49,6 +50,7 @@ interface ProductDetailClientProps {
 export default function ProductDetailClient({ product, relatedProducts = [] }: ProductDetailClientProps) {
   const router = useRouter();
   const { addToCart } = useCart();
+  const { getWaLink } = useStoreContact();
 
   // Validasi Varian
   const validVariants = Array.isArray(product.variants)
@@ -141,14 +143,11 @@ export default function ProductDetailClient({ product, relatedProducts = [] }: P
     setShowModal(true);
   };
 
-  // Tanya via WhatsApp
+  // Tanya via WhatsApp (Dinamis dari Pengaturan Admin Kontak)
   const handleAskWhatsApp = () => {
-    const phoneNumber = '6289509604700';
     const variantInfo = activeVariant ? ` (Varian: ${activeVariant.name})` : '';
-    const text = encodeURIComponent(
-      `Halo Kak Admin Surya Snack 👋, saya ingin bertanya-tanya mengenai produk *${product.name}${variantInfo}* seharga *${formatRupiah(currentPrice)}*. Mohon informasinya ya, terima kasih!`
-    );
-    window.open(`https://wa.me/${phoneNumber}?text=${text}`, '_blank');
+    const text = `Halo Kak Admin Surya Snack 👋, saya ingin bertanya-tanya mengenai produk *${product.name}${variantInfo}* seharga *${formatRupiah(currentPrice)}*. Mohon informasinya ya, terima kasih!`;
+    window.open(getWaLink(text), '_blank');
   };
 
   useEffect(() => {

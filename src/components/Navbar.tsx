@@ -13,8 +13,10 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import { faWhatsapp, faInstagram } from '@fortawesome/free-brands-svg-icons';
 import { supabase } from '@/lib/supabase';
+import { useStoreContact } from '@/context/ContactProvider';
 
 export default function Navbar(): React.ReactElement {
+  const { getWaLink, instagram } = useStoreContact();
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const pathname = usePathname();
@@ -243,7 +245,7 @@ export default function Navbar(): React.ReactElement {
             </p>
             <div className="flex gap-2 pt-1">
               <a
-                href="https://wa.me/6289509604700"
+                href={getWaLink()}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex-1 bg-[#25D366] hover:bg-[#20bd5a] text-white text-[11px] font-bold py-2 px-3 rounded-xl flex items-center justify-center gap-1.5 shadow-sm transition"

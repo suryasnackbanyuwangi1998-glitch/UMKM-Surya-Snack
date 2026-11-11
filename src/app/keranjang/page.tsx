@@ -17,15 +17,16 @@ import {
   faCartPlus,
 } from '@fortawesome/free-solid-svg-icons';
 import { useCart, type CartItem } from '@/context/CartProvider';
+import { useStoreContact } from '@/context/ContactProvider';
 import { formatRupiah } from '@/lib/products';
 
 export default function KeranjangPage() {
   const { cart, updateQuantity, removeFromCart, clearCart, totalPrice, totalItems } = useCart();
+  const { waNumber, getWaLink } = useStoreContact();
 
   const [customerName, setCustomerName] = useState('');
   const [customerAddress, setCustomerAddress] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const waNumber = '6289509604700'; // Nomor WhatsApp Admin Surya Snack
 
   const handleCheckoutWA = () => {
     if (cart.length === 0) return;

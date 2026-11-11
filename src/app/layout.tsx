@@ -4,6 +4,7 @@ import type { Metadata } from 'next';
 import './globals.css';
 import MainLayout from '@/components/MainLayout';
 import { CartProvider } from '@/context/CartProvider';
+import { ContactProvider } from '@/context/ContactProvider';
 
 export const metadata: Metadata = {
   title: 'Surya Snack - Camilan Khas UMKM',
@@ -18,9 +19,11 @@ export default function RootLayout({
   return (
     <html lang="id" suppressHydrationWarning>
       <body className="bg-[#FDFBF7] min-h-screen font-sans antialiased" suppressHydrationWarning>
-        <CartProvider>
-          <MainLayout>{children}</MainLayout>
-        </CartProvider>
+        <ContactProvider>
+          <CartProvider>
+            <MainLayout>{children}</MainLayout>
+          </CartProvider>
+        </ContactProvider>
       </body>
     </html>
   );

@@ -14,9 +14,11 @@ import {
   faUser,
 } from '@fortawesome/free-solid-svg-icons';
 import { getProductById, formatRupiah } from '@/lib/products';
+import { useStoreContact } from '@/context/ContactProvider';
 import type { Product } from '@/types';
 
 function CheckoutContent() {
+  const { waNumber } = useStoreContact();
   const searchParams = useSearchParams();
   const productId = searchParams.get('product_id');
   const qtyParam = searchParams.get('qty');
@@ -29,8 +31,6 @@ function CheckoutContent() {
   const [customerName, setCustomerName] = useState('');
   const [deliveryLocation, setDeliveryLocation] = useState('');
   const [note, setNote] = useState('');
-
-  const waNumber = '6289509604700'; // Nomor WhatsApp Admin Surya Snack
 
   useEffect(() => {
     async function fetchProduct() {
@@ -99,7 +99,7 @@ function CheckoutContent() {
   return (
     <div className="min-h-screen bg-[#FDFBF7] text-[#2D241E] font-serif pt-28 pb-24">
       <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
-        
+
         {/* Navigation Back */}
         <div className="flex items-center justify-between">
           <Link
@@ -120,7 +120,7 @@ function CheckoutContent() {
         </h1>
 
         <div className="bg-white rounded-3xl border border-amber-900/10 p-6 sm:p-8 shadow-sm space-y-6 font-sans">
-          
+
           {/* Ringkasan Item */}
           <div>
             <h2 className="text-xs font-extrabold text-gray-400 uppercase tracking-widest mb-3">
