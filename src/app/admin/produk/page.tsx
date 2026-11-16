@@ -163,7 +163,7 @@ export default function AdminProdukPage() {
       throw new Error("Gagal mengunggah ke Google Drive: " + (result.error || "Unknown error"));
     }
 
-    return result.imageUrl; // Mengembalikan URL langsung Google Drive (https://lh3.googleusercontent.com/d/...)
+    return result.imageUrl; 
   };
 
   const handleOpenAddModal = () => {
@@ -427,13 +427,20 @@ export default function AdminProdukPage() {
                 </thead>
                 <tbody className="divide-y divide-gray-100 text-xs">
                   {currentProducts.map((item: any) => {
-                    const displayImg = item.image_url || "https://images.unsplash.com/photo-1599490659213-e2b9527bd087?q=80&w=200";
+                    const displayImg = item.image_url || "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=500";
                     const variantCount = Array.isArray(item.variants) ? item.variants.length : 0;
                     return (
                       <tr key={item.id} className="hover:bg-gray-50 transition">
                         <td className="p-4 flex items-center gap-3">
                           <div className="relative w-12 h-12 rounded-xl overflow-hidden bg-gray-100 shrink-0 border border-gray-200">
-                            <img src={displayImg} alt={item.name} className="w-full h-full object-cover" />
+                            <img 
+                              src={displayImg} 
+                              alt={item.name} 
+                              className="w-full h-full object-cover"
+                              onError={(e) => {
+                                (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=500";
+                              }}
+                            />
                           </div>
                           <div>
                             <div className="font-bold text-[#3b0912] text-sm">{item.name}</div>
