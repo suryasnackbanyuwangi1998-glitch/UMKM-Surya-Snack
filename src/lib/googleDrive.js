@@ -1,44 +1,38 @@
-// src/lib/googleDrive.js
 import { google } from 'googleapis';
 import { Readable } from 'stream';
 
-const oAuth2Client = new google.auth.OAuth2(
+const oauth2Client = new google.auth.OAuth2(
   process.env.GOOGLE_CLIENT_ID,
-  process.env.GOOGLE_CLIENT_SECRET,
-  'http://localhost'
+  process.env.GOOGLE_CLIENT_SECRET
 );
 
-oAuth2Client.setCredentials({
-  refresh_token: process.env.GOOGLE_REFRESH_TOKEN,
+oauth2Client.setCredentials({
+  refresh_token: process.env.GOOGLE_REFRESH_TOKEN?.trim(),
 });
 
-const drive = google.drive({ version: 'v3', auth: oAuth2Client });
+const drive = google.drive({ version: 'v3', auth: oauth2Client });
 
-export async function uploadFileToDrive(file) {
-  if (!file) return null;
+export async function uploadFileToDrive(fileBuffer, fileName, mimeType) {
+  try {
+    const bufferStream = new Readable();
+    bufferStream.push(fileBuffer);
+    bufferStream.push(null);
 
-  const bytes = await file.arrayBuffer();
-  const buffer = Buffer.from(bytes);
+    const response = await drive.files.create({
+      requestBody: {
+        name: fileName,
+        parents: [process.env.GOOGLE_FOLDER_ID?.trim()],
+      },
+      media: {
+        mimeType: mimeType,
+        body: bufferStream,
+      },
+      fields: 'id',
+    });
 
-  const bufferStream = new Readable();
-  bufferStream.push(buffer);
-  bufferStream.push(null);
-
-  // Upload file ke Google Drive
-  const response = await drive.files.create({
-    requestBody: {
-      name: `${Date.now()}-${file.name}`,
-      parents: [process.env.GOOGLE_FOLDER_ID],
-    },
-    media: {
-      mimeType: file.type,
-      body: bufferStream,
-    },
-    fields: 'id',
-  });
-
-  const fileId = response.data.id;
-
-  // Kembalikan URL proxy lokal yang aman dari CORB
-  return `/api/images/${fileId}`;
+    return response.data.id; // Mengembalikan Google Drive File ID
+  } catch (error) {
+    console.error("Gagal upload ke Google Drive:", error);
+    throw new Error("Gagal mengunggah ke Google Drive: " + error.message);
+  }
 }
