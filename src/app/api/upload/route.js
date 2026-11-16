@@ -45,7 +45,7 @@ export async function POST(request) {
 
     const fileId = response.data.id;
 
-    // 4. Berikan izin publik agar bisa diakses web
+    // 4. Berikan izin publik (Anyone with the link can view)
     try {
       await drive.permissions.create({
         fileId: fileId,
