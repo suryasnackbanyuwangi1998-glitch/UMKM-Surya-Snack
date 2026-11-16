@@ -245,17 +245,16 @@ export default function AdminProdukPage() {
     setIsModalOpen(true);
   };
 
+  // 🚀 OPTIMASI: SIMPAN DENGAN PARALLEL UPLOAD AGAR LOADING CEPAT
   const handleSaveProduct = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitting(true);
 
     try {
-      let finalImageUrl = existingImageUrl || "";
-      if (imageFile) {
-        finalImageUrl = await uploadToGoogleDrive(imageFile);
-      }
+      // 1. Upload gambar utama & semua gambar varian secara bersamaan (Parallel)
+      const imageUploadPromise = imageFile ? uploadToGoogleDrive(imageFile) : Promise.resolve(existingImageUrl || "");
 
-      const processedVariants = await Promise.all(
+      const variantsUploadPromise = Promise.all(
         variants.map(async (v) => {
           let variantImgUrl = v.image_url;
           if (v.imageFile) {
@@ -276,6 +275,12 @@ export default function AdminProdukPage() {
           };
         })
       );
+
+      // Tunggu seluruh proses upload selesai sekaligus dalam waktu singkat
+      const [finalImageUrl, processedVariants] = await Promise.all([
+        imageUploadPromise,
+        variantsUploadPromise,
+      ]);
 
       const formData = new FormData();
       if (isEditMode && currentId) {
@@ -927,7 +932,7 @@ export default function AdminProdukPage() {
                   {submitting ? (
                     <>
                       <FontAwesomeIcon icon={faSpinner} className="animate-spin text-amber-300" />
-                      <span>Mengunggah ke Google Drive...</span>
+                      <span>Menyimpan & Mengunggah...</span>
                     </>
                   ) : (
                     <span>{isEditMode ? "Perbarui Produk" : "Simpan Produk"}</span>
