@@ -1,13 +1,19 @@
 import { NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
-import { uploadFileToDrive } from '@/lib/googleDrive';
+import { createClient } from '@supabase/supabase-js';
 
-export const maxDuration = 120; 
+// Inisialisasi Supabase Server Client (gunakan Service Role Key jika ada di env untuk operasi admin)
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+const supabase = createClient(supabaseUrl, supabaseKey);
 
+// ==========================================
+// 1. METHOD POST: TAMBAH PRODUK BARU & VARIAN
+// ==========================================
 export async function POST(request) {
   try {
     const formData = await request.formData();
-    
+
+    // Ambil data form utama produk
     const name = formData.get('name');
     const price = formData.get('price');
     const category = formData.get('category');
@@ -17,105 +23,108 @@ export async function POST(request) {
     const badge = formData.get('badge');
     const description = formData.get('description');
     const ingredients = formData.get('ingredients');
-    const packagingStandard = formData.get('packaging_standard');
-    const keyFeatures = formData.get('key_features');
-    const isPopular = formData.get('is_popular') === 'true';
+    const packaging_standard = formData.get('packaging_standard');
+    const key_features = formData.get('key_features');
+    const is_popular = formData.get('is_popular') === 'true';
+    const image_url = formData.get('image_url');
+    const variantsRaw = formData.get('variants');
 
-    // 1. Upload Gambar Utama ke Google Drive jika ada
-    let mainImageId = "";
-    const mainImageFile = formData.get('mainImage');
-    if (mainImageFile && typeof mainImageFile === 'object' && mainImageFile.size > 0) {
-      const bytes = await mainImageFile.arrayBuffer();
-      const buffer = Buffer.from(bytes);
-      mainImageId = await uploadFileToDrive(buffer, mainImageFile.name, mainImageFile.type);
+    // Validasi data wajib
+    if (!name) {
+      return NextResponse.json(
+        { success: false, message: 'Nama produk wajib diisi.' },
+        { status: 400 }
+      );
     }
 
-    // 2. Simpan produk utama ke Supabase
-    const { data: insertedProduct, error: productError } = await supabase
+    // 1. Insert ke tabel produk utama ('products')
+    const { data: productData, error: productError } = await supabase
       .from('products')
       .insert([
         {
           name,
           price: price ? parseFloat(price) : null,
-          category,
-          weight: weight || "250 gram",
-          origin: origin || "Banyuwangi",
+          category: category || 'Makanan',
+          weight: weight || '250 gram',
+          origin: origin || 'Banyuwangi',
           stock: stock ? parseInt(stock) : 0,
-          badge: badge || "Best Seller",
-          description,
-          ingredients,
-          packaging_standard: packagingStandard,
-          key_features: keyFeatures || "",
-          is_popular: isPopular,
-          image_url: mainImageId, // Menyimpan Google Drive File ID
+          badge: badge || 'Best Seller',
+          description: description || '',
+          ingredients: ingredients || '',
+          packaging_standard: packaging_standard || '',
+          key_features: key_features || '',
+          is_popular,
+          image_url: image_url || '',
+          created_at: new Date().toISOString(),
         },
       ])
-      .select('id')
+      .select()
       .single();
 
-    if (productError) throw productError;
-    const productId = insertedProduct.id;
+    if (productError) {
+      throw new Error('Gagal menyimpan produk ke Supabase: ' + productError.message);
+    }
 
-    // 3. Tangani Varian & Upload Gambar Varian ke Google Drive
-    const rawVariants = formData.get('variants');
-    let variantsList = [];
+    const newProductId = productData.id;
 
-    if (rawVariants && typeof rawVariants === 'string' && rawVariants.trim() !== '' && rawVariants !== '-') {
-      try {
-        variantsList = JSON.parse(rawVariants);
-      } catch (e) {
-        console.error("Gagal parse variants JSON:", e);
+    // 2. Jika ada varian, parse dan insert ke tabel 'variant_products'
+    if (variantsRaw) {
+      const variants = JSON.parse(variantsRaw);
+      if (Array.isArray(variants) && variants.length > 0) {
+        const variantsToInsert = variants.map((v) => ({
+          product_id: newProductId,
+          name: v.name || '',
+          price: v.price ? parseFloat(v.price) : 0,
+          stock: v.stock ? parseInt(v.stock) : 0,
+          weight: v.weight || '250 gram',
+          origin: v.origin || 'Banyuwangi',
+          image_url: v.image_url || '',
+          description: v.description || '',
+          ingredients: v.ingredients || '',
+          key_features: v.key_features || '',
+          packaging_standard: v.packaging_standard || '',
+          is_popular: v.is_popular || false,
+        }));
+
+        const { error: variantError } = await supabase
+          .from('variant_products')
+          .insert(variantsToInsert);
+
+        if (variantError) {
+          throw new Error('Gagal menyimpan varian produk: ' + variantError.message);
+        }
       }
     }
 
-    if (variantsList.length > 0) {
-      const formattedVariants = await Promise.all(
-        variantsList.map(async (v, index) => {
-          let variantImgId = v.image_url || "";
-          const variantFile = formData.get(`variantImage_${index}`);
-          
-          if (variantFile && typeof variantFile === 'object' && variantFile.size > 0) {
-            const bytes = await variantFile.arrayBuffer();
-            const buffer = Buffer.from(bytes);
-            variantImgId = await uploadFileToDrive(buffer, variantFile.name, variantFile.type);
-          }
-
-          return {
-            product_id: productId,
-            name: v.name || "Varian",
-            price: v.price ? parseFloat(v.price) : 0,
-            stock: parseInt(v.stock) || 0,
-            weight: v.weight || weight || "250 gram",
-            origin: v.origin || origin || "Banyuwangi",
-            image_url: variantImgId,
-            description: v.description || "",
-            ingredients: v.ingredients || "",
-            key_features: v.key_features || "",
-            packaging_standard: v.packaging_standard || "",
-            is_popular: v.is_popular || false,
-          };
-        })
-      );
-
-      const { error: variantError } = await supabase
-        .from('variant_products')
-        .insert(formattedVariants);
-
-      if (variantError) throw variantError;
-    }
-
-    return NextResponse.json({ success: true, message: "Produk & varian berhasil disimpan ke Google Drive!" });
+    return NextResponse.json({
+      success: true,
+      message: 'Produk dan varian berhasil ditambahkan!',
+      data: productData,
+    });
   } catch (error) {
-    console.error("Error POST /api/products:", error);
-    return NextResponse.json({ success: false, message: error.message }, { status: 500 });
+    console.error('API Error (POST Product):', error);
+    return NextResponse.json(
+      { success: false, message: error.message },
+      { status: 500 }
+    );
   }
 }
 
+// ==========================================
+// 2. METHOD PUT: UPDATE PRODUK & VARIAN
+// ==========================================
 export async function PUT(request) {
   try {
     const formData = await request.formData();
-    
+
     const id = formData.get('id');
+    if (!id) {
+      return NextResponse.json(
+        { success: false, message: 'ID produk tidak ditemukan untuk pembaruan.' },
+        { status: 400 }
+      );
+    }
+
     const name = formData.get('name');
     const price = formData.get('price');
     const category = formData.get('category');
@@ -125,127 +134,80 @@ export async function PUT(request) {
     const badge = formData.get('badge');
     const description = formData.get('description');
     const ingredients = formData.get('ingredients');
-    const packagingStandard = formData.get('packaging_standard');
-    const keyFeatures = formData.get('key_features');
-    const isPopular = formData.get('is_popular') === 'true';
-    const existingImageUrl = formData.get('existing_image_url') || "";
+    const packaging_standard = formData.get('packaging_standard');
+    const key_features = formData.get('key_features');
+    const is_popular = formData.get('is_popular') === 'true';
+    const image_url = formData.get('image_url');
+    const variantsRaw = formData.get('variants');
 
-    if (!id) {
-      return NextResponse.json({ success: false, message: "ID produk tidak ditemukan untuk update." }, { status: 400 });
-    }
-
-    // 1. Upload Gambar Utama Baru atau Pertahankan yang Lama
-    let mainImageId = existingImageUrl;
-    const mainImageFile = formData.get('mainImage');
-    if (mainImageFile && typeof mainImageFile === 'object' && mainImageFile.size > 0) {
-      const bytes = await mainImageFile.arrayBuffer();
-      const buffer = Buffer.from(bytes);
-      mainImageId = await uploadFileToDrive(buffer, mainImageFile.name, mainImageFile.type);
-    } else if (!mainImageId) {
-      const { data: oldProd } = await supabase.from('products').select('image_url').eq('id', id).single();
-      if (oldProd) mainImageId = oldProd.image_url || "";
-    }
-
-    // 2. Update produk utama di Supabase
+    // 1. Update data utama produk
     const { error: updateError } = await supabase
       .from('products')
       .update({
         name,
         price: price ? parseFloat(price) : null,
-        category,
-        weight: weight || "250 gram",
-        origin: origin || "Banyuwangi",
+        category: category || 'Makanan',
+        weight: weight || '250 gram',
+        origin: origin || 'Banyuwangi',
         stock: stock ? parseInt(stock) : 0,
-        badge,
-        description,
-        ingredients,
-        packaging_standard: packagingStandard,
-        key_features: keyFeatures || "",
-        is_popular: isPopular,
-        image_url: mainImageId,
+        badge: badge || 'Best Seller',
+        description: description || '',
+        ingredients: ingredients || '',
+        packaging_standard: packaging_standard || '',
+        key_features: key_features || '',
+        is_popular,
+        ...(image_url ? { image_url } : {}), // Hanya update gambar jika ada URL baru
         updated_at: new Date().toISOString(),
       })
       .eq('id', id);
 
-    if (updateError) throw updateError;
-
-    // Ambil data varian lama untuk mapping gambar jika tidak diganti
-    const { data: oldVariants } = await supabase
-      .from('variant_products')
-      .select('name, image_url')
-      .eq('product_id', id);
-
-    const oldVariantMap = new Map();
-    if (oldVariants) {
-      oldVariants.forEach(ov => {
-        if (ov.name) oldVariantMap.set(ov.name.trim().toLowerCase(), ov.image_url);
-      });
+    if (updateError) {
+      throw new Error('Gagal memperbarui produk: ' + updateError.message);
     }
 
-    // 3. Hapus varian lama
-    const { error: deleteError } = await supabase
-      .from('variant_products')
-      .delete()
-      .eq('product_id', id);
+    // 2. Perbarui Varian (Strategi: Hapus varian lama, lalu insert ulang varian baru yang dikirim)
+    if (variantsRaw) {
+      const variants = JSON.parse(variantsRaw);
 
-    if (deleteError) throw deleteError;
+      // Hapus varian lama berdasarkan product_id
+      await supabase.from('variant_products').delete().eq('product_id', id);
 
-    // 4. Proses varian baru & upload gambarnya ke Drive jika ada file baru
-    const rawVariants = formData.get('variants');
-    let variantsList = [];
+      // Jika ada data varian baru, masukkan kembali
+      if (Array.isArray(variants) && variants.length > 0) {
+        const variantsToInsert = variants.map((v) => ({
+          product_id: id,
+          name: v.name || '',
+          price: v.price ? parseFloat(v.price) : 0,
+          stock: v.stock ? parseInt(v.stock) : 0,
+          weight: v.weight || '250 gram',
+          origin: v.origin || 'Banyuwangi',
+          image_url: v.image_url || '',
+          description: v.description || '',
+          ingredients: v.ingredients || '',
+          key_features: v.key_features || '',
+          packaging_standard: v.packaging_standard || '',
+          is_popular: v.is_popular || false,
+        }));
 
-    if (rawVariants && typeof rawVariants === 'string' && rawVariants.trim() !== '' && rawVariants !== '-') {
-      try {
-        variantsList = JSON.parse(rawVariants);
-      } catch (e) {
-        console.error("Gagal parse variants JSON pada PUT:", e);
+        const { error: variantInsertError } = await supabase
+          .from('variant_products')
+          .insert(variantsToInsert);
+
+        if (variantInsertError) {
+          throw new Error('Gagal memperbarui varian produk: ' + variantInsertError.message);
+        }
       }
     }
 
-    if (variantsList.length > 0) {
-      const formattedVariants = await Promise.all(
-        variantsList.map(async (v, index) => {
-          let variantImgId = v.image_url || "";
-          const variantFile = formData.get(`variantImage_${index}`);
-
-          if (variantFile && typeof variantFile === 'object' && variantFile.size > 0) {
-            const bytes = await variantFile.arrayBuffer();
-            const buffer = Buffer.from(bytes);
-            variantImgId = await uploadFileToDrive(buffer, variantFile.name, variantFile.type);
-          } else if (!variantImgId || variantImgId.startsWith("blob:")) {
-            const matchKey = v.name ? v.name.trim().toLowerCase() : "";
-            if (oldVariantMap.has(matchKey)) {
-              variantImgId = oldVariantMap.get(matchKey);
-            }
-          }
-
-          return {
-            product_id: id,
-            name: v.name || "Varian",
-            price: v.price ? parseFloat(v.price) : 0,
-            stock: parseInt(v.stock) || 0,
-            weight: v.weight || weight || "250 gram",
-            origin: v.origin || origin || "Banyuwangi",
-            image_url: variantImgId,
-            description: v.description || "",
-            ingredients: v.ingredients || "",
-            key_features: v.key_features || "",
-            packaging_standard: v.packaging_standard || "",
-            is_popular: v.is_popular || false,
-          };
-        })
-      );
-
-      const { error: variantInsertError } = await supabase
-        .from('variant_products')
-        .insert(formattedVariants);
-
-      if (variantInsertError) throw variantInsertError;
-    }
-
-    return NextResponse.json({ success: true, message: "Produk berhasil diperbarui dengan Google Drive!" });
+    return NextResponse.json({
+      success: true,
+      message: 'Produk dan varian berhasil diperbarui!',
+    });
   } catch (error) {
-    console.error("Error PUT /api/products:", error);
-    return NextResponse.json({ success: false, message: error.message }, { status: 500 });
+    console.error('API Error (PUT Product):', error);
+    return NextResponse.json(
+      { success: false, message: error.message },
+      { status: 500 }
+    );
   }
 }

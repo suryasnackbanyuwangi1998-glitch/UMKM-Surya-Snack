@@ -148,21 +148,22 @@ export default function AdminProdukPage() {
     }
   };
 
-  const uploadToStorage = async (file: File, folder: string) => {
-    const fileExt = file.name.split('.').pop();
-    const fileName = `${Date.now()}-${Math.random().toString(36).substring(2, 9)}.${fileExt}`;
-    const filePath = `${folder}/${fileName}`;
+  // 🚀 INTEGRASI GOOGLE DRIVE API (/api/upload)
+  const uploadToGoogleDrive = async (file: File) => {
+    const formData = new FormData();
+    formData.append("file", file);
 
-    const { error: uploadError } = await supabase.storage
-      .from('products')
-      .upload(filePath, file);
+    const res = await fetch("/api/upload", {
+      method: "POST",
+      body: formData,
+    });
 
-    if (uploadError) {
-      throw new Error("Gagal mengunggah gambar: " + uploadError.message);
+    const result = await res.json();
+    if (!result.success) {
+      throw new Error("Gagal mengunggah ke Google Drive: " + (result.error || "Unknown error"));
     }
 
-    const { data } = supabase.storage.from('products').getPublicUrl(filePath);
-    return data.publicUrl;
+    return result.imageUrl; // Mengembalikan URL langsung Google Drive (https://lh3.googleusercontent.com/d/...)
   };
 
   const handleOpenAddModal = () => {
@@ -251,14 +252,14 @@ export default function AdminProdukPage() {
     try {
       let finalImageUrl = existingImageUrl || "";
       if (imageFile) {
-        finalImageUrl = await uploadToStorage(imageFile, "main");
+        finalImageUrl = await uploadToGoogleDrive(imageFile);
       }
 
       const processedVariants = await Promise.all(
         variants.map(async (v) => {
           let variantImgUrl = v.image_url;
           if (v.imageFile) {
-            variantImgUrl = await uploadToStorage(v.imageFile, "variants");
+            variantImgUrl = await uploadToGoogleDrive(v.imageFile);
           }
           return {
             name: v.name,
@@ -919,7 +920,7 @@ export default function AdminProdukPage() {
                   {submitting ? (
                     <>
                       <FontAwesomeIcon icon={faSpinner} className="animate-spin text-amber-300" />
-                      <span>Menyimpan ke Storage...</span>
+                      <span>Mengunggah ke Google Drive...</span>
                     </>
                   ) : (
                     <span>{isEditMode ? "Perbarui Produk" : "Simpan Produk"}</span>
