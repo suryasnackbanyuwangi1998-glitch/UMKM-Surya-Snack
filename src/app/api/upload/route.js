@@ -11,7 +11,7 @@ export async function POST(request) {
       return NextResponse.json({ success: false, error: 'File tidak ditemukan' }, { status: 400 });
     }
 
-    // 1. Inisialisasi OAuth2 Client
+    // 1. Inisialisasi OAuth2 Client menggunakan environment variables Vercel
     const oauth2Client = new google.auth.OAuth2(
       process.env.GOOGLE_CLIENT_ID,
       process.env.GOOGLE_CLIENT_SECRET
@@ -23,14 +23,14 @@ export async function POST(request) {
 
     const drive = google.drive({ version: 'v3', auth: oauth2Client });
 
-    // 2. Konversi file ke buffer stream
+    // 2. Konversi file dari form-data ke buffer stream
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
     const stream = new Readable();
     stream.push(buffer);
     stream.push(null);
 
-    // 3. Upload file langsung ke Google Drive
+    // 3. Upload file langsung ke Google Drive di dalam folder tujuan (GOOGLE_FOLDER_ID)
     const response = await drive.files.create({
       requestBody: {
         name: `${Date.now()}-${file.name}`,
@@ -45,7 +45,7 @@ export async function POST(request) {
 
     const fileId = response.data.id;
 
-    // 4. Berikan izin publik (Anyone with the link can view)
+    // 4. Berikan izin publik (Anyone with the link can view) agar bisa diakses browser
     try {
       await drive.permissions.create({
         fileId: fileId,
@@ -58,7 +58,7 @@ export async function POST(request) {
       console.error('Gagal mengatur izin publik:', permError);
     }
 
-    // 5. Gunakan format URL direct view Google Drive
+    // 5. Gunakan format URL direct view Google Drive yang aman untuk tag <img>
     const directImageUrl = `https://drive.google.com/uc?export=view&id=${fileId}`;
 
     return NextResponse.json({
