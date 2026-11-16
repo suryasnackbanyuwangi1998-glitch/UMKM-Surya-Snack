@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
-import { writeFile, mkdir } from 'fs/promises';
-import path from 'path';
+import { google } from 'googleapis';
+import { Readable } from 'stream';
 
 export async function POST(request) {
   try {
@@ -11,36 +11,63 @@ export async function POST(request) {
       return NextResponse.json({ success: false, error: 'File tidak ditemukan' }, { status: 400 });
     }
 
+    // 1. Inisialisasi OAuth2 Client
+    const oauth2Client = new google.auth.OAuth2(
+      process.env.GOOGLE_CLIENT_ID,
+      process.env.GOOGLE_CLIENT_SECRET
+    );
+
+    oauth2Client.setCredentials({
+      refresh_token: process.env.GOOGLE_REFRESH_TOKEN ? process.env.GOOGLE_REFRESH_TOKEN.trim() : '',
+    });
+
+    const drive = google.drive({ version: 'v3', auth: oauth2Client });
+
+    // 2. Konversi file ke buffer stream
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
+    const stream = new Readable();
+    stream.push(buffer);
+    stream.push(null);
 
-    // Tentukan folder public/uploads
-    const uploadDir = path.join(process.cwd(), 'public/uploads');
+    // 3. Upload file langsung ke Google Drive
+    const response = await drive.files.create({
+      requestBody: {
+        name: `${Date.now()}-${file.name}`,
+        parents: [process.env.GOOGLE_FOLDER_ID],
+      },
+      media: {
+        mimeType: file.type,
+        body: stream,
+      },
+      fields: 'id',
+    });
 
-    // Otomatis buat folder jika belum ada
+    const fileId = response.data.id;
+
+    // 4. Berikan izin publik agar bisa diakses web
     try {
-      await mkdir(uploadDir, { recursive: true });
-    } catch (err) {
-      console.error('Gagal membuat folder uploads:', err);
+      await drive.permissions.create({
+        fileId: fileId,
+        requestBody: {
+          role: 'reader',
+          type: 'anyone',
+        },
+      });
+    } catch (permError) {
+      console.error('Gagal mengatur izin publik:', permError);
     }
 
-    // Buat nama file unik
-    const filename = `${Date.now()}-${file.name.replace(/\s+/g, '-')}`;
-    const filePath = path.join(uploadDir, filename);
-
-    // Simpan file secara lokal
-    await writeFile(filePath, buffer);
-
-    // URL path lokal
-    const imageUrl = `/uploads/${filename}`;
+    // 5. Gunakan format URL direct view Google Drive
+    const directImageUrl = `https://drive.google.com/uc?export=view&id=${fileId}`;
 
     return NextResponse.json({
       success: true,
-      imageUrl: imageUrl,
+      imageUrl: directImageUrl,
     });
 
   } catch (error) {
-    console.error('Error Local Upload:', error);
+    console.error('Error Google Drive Upload:', error);
     return NextResponse.json(
       { success: false, error: error.message },
       { status: 500 }
