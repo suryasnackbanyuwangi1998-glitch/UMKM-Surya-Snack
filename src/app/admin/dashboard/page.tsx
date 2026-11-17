@@ -4,24 +4,15 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import Image from "next/image";
 import { supabase } from "@/lib/supabase";
 import { getFeaturedProducts } from "@/lib/products";
+import BannerManagementSection from "@/components/BannerManagementSection";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
-  faBoxesStacked,
-  faTags,
   faArrowRight,
-  faStore,
   faFloppyDisk,
   faSpinner,
-  faPen,
-  faPlus,
-  faTrashCan,
-  faXmark,
-  faStar,
   faBookOpenReader,
-  faImage,
 } from "@fortawesome/free-solid-svg-icons";
 
 interface StoreInfo {
@@ -31,14 +22,6 @@ interface StoreInfo {
   heritage_subtitle: string;
   heritage_desc: string;
   heritage_image_url: string;
-}
-
-interface Banner {
-  id: number;
-  banner_number: number;
-  title: string;
-  description: string;
-  image_url: string;
 }
 
 export default function AdminDashboardPage() {
@@ -52,7 +35,7 @@ export default function AdminDashboardPage() {
 
   const [storeInfo, setStoreInfo] = useState<StoreInfo>({
     store_name: "Surya Snack",
-    store_label: "Khas Banyuwangi",
+    store_label: "Oleh - Oleh Khas Banyuwangi",
     heritage_title: "Menjaga Tradisi, Memahat Cita Rasa",
     heritage_subtitle: "✦ Sejarah & Dedikasi ✦",
     heritage_desc: "Berawal dari dapur rumahan di Banyuwangi, Surya Snack tumbuh dengan memegang teguh prinsip keaslian resep leluhur.",
@@ -60,15 +43,7 @@ export default function AdminDashboardPage() {
   });
 
   const [heritageImageFile, setHeritageImageFile] = useState<File | null>(null);
-
   const [featuredProducts, setFeaturedProducts] = useState<any[]>([]);
-  const [banners, setBanners] = useState<Banner[]>([]);
-
-  // State untuk Pop-up Edit Banner
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [selectedBanner, setSelectedBanner] = useState<Banner | null>(null);
-  const [newImageFile, setNewImageFile] = useState<File | null>(null);
-  const [updatingBanner, setUpdatingBanner] = useState(false);
 
   useEffect(() => {
     async function fetchDashboardData() {
@@ -98,21 +73,12 @@ export default function AdminDashboardPage() {
         if (storeData) {
           setStoreInfo({
             store_name: storeData.store_name || "Surya Snack",
-            store_label: storeData.store_label || "Khas Banyuwangi",
+            store_label: storeData.store_label || "Oleh - Oleh Khas Banyuwangi",
             heritage_title: storeData.heritage_title || "Menjaga Tradisi, Memahat Cita Rasa",
             heritage_subtitle: storeData.heritage_subtitle || "✦ Sejarah & Dedikasi ✦",
             heritage_desc: storeData.heritage_desc || "Berawal dari dapur rumahan di Banyuwangi, Surya Snack tumbuh dengan memegang teguh prinsip keaslian resep leluhur.",
             heritage_image_url: storeData.heritage_image_url || "https://images.unsplash.com/photo-1556910103-1c02745aae4d?q=80&w=600",
           });
-        }
-
-        const { data: bannerData } = await supabase
-          .from("store_banners")
-          .select("*")
-          .order("banner_number", { ascending: true });
-        
-        if (bannerData) {
-          setBanners(bannerData);
         }
       } catch (err) {
         console.error("Gagal memuat data dashboard:", err);
@@ -131,7 +97,7 @@ export default function AdminDashboardPage() {
         .from("store_settings")
         .upsert({
           id: "main",
-          store_name: storeInfo.store_name,
+          store_name: "Surya Snack",
           store_label: storeInfo.store_label,
           updated_at: new Date().toISOString(),
         });
@@ -152,26 +118,30 @@ export default function AdminDashboardPage() {
     try {
       let imageUrl = storeInfo.heritage_image_url;
 
+      // Jika ada file foto baru, unggah ke Google Drive melalui API backend khusus
       if (heritageImageFile) {
-        const fileExt = heritageImageFile.name.split(".").pop();
-        const fileName = `heritage-${Date.now()}.${fileExt}`;
-        const { error: uploadError } = await supabase.storage
-          .from("banners")
-          .upload(fileName, heritageImageFile);
+        const formData = new FormData();
+        formData.append("imageFile", heritageImageFile);
 
-        if (uploadError) throw uploadError;
+        const resUpload = await fetch("/api/settings/heritage-upload", {
+          method: "POST",
+          body: formData,
+        });
+        const uploadResult = await resUpload.json();
 
-        const { data: publicUrlData } = supabase.storage
-          .from("banners")
-          .getPublicUrl(fileName);
-
-        imageUrl = publicUrlData.publicUrl;
+        if (!uploadResult.success) {
+          throw new Error(uploadResult.message || "Gagal mengunggah gambar ke Google Drive");
+        }
+        imageUrl = uploadResult.imageUrl;
       }
 
+      // Simpan ke Supabase dengan menyertakan store_name untuk menghindari error NOT NULL
       const { error } = await supabase
         .from("store_settings")
         .upsert({
           id: "main",
+          store_name: "Surya Snack",
+          store_label: storeInfo.store_label || "Oleh - Oleh Khas Banyuwangi",
           heritage_title: storeInfo.heritage_title,
           heritage_subtitle: storeInfo.heritage_subtitle,
           heritage_desc: storeInfo.heritage_desc,
@@ -181,82 +151,14 @@ export default function AdminDashboardPage() {
 
       if (error) throw error;
 
-      setStoreInfo({ ...storeInfo, heritage_image_url: imageUrl });
+      setStoreInfo({ ...storeInfo, store_name: "Surya Snack", heritage_image_url: imageUrl });
       setHeritageImageFile(null);
-      setNotification("Berhasil memperbarui bagian Sejarah & Dedikasi!");
+      setNotification("Berhasil memperbarui bagian Sejarah & Dedikasi ke Google Drive!");
       setTimeout(() => setNotification(""), 4000);
     } catch (error: any) {
       alert("Gagal menyimpan bagian sejarah: " + error.message);
     } finally {
       setSavingHeritage(false);
-    }
-  };
-
-  const handleDeleteBanner = async (id: number) => {
-    if (!confirm("Apakah Anda yakin ingin menghapus banner ini?")) return;
-
-    try {
-      const { error } = await supabase.from("store_banners").delete().eq("id", id);
-      if (error) throw error;
-
-      setBanners(banners.filter((b) => b.id !== id));
-      setNotification("Banner berhasil dihapus.");
-      setTimeout(() => setNotification(""), 4000);
-    } catch (error: any) {
-      alert("Gagal menghapus banner: " + error.message);
-    }
-  };
-
-  const handleOpenEditModal = (banner: Banner) => {
-    setSelectedBanner({ ...banner });
-    setNewImageFile(null);
-    setIsEditModalOpen(true);
-  };
-
-  const handleUpdateBannerSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!selectedBanner) return;
-
-    setUpdatingBanner(true);
-    try {
-      let imageUrl = selectedBanner.image_url;
-
-      if (newImageFile) {
-        const fileExt = newImageFile.name.split(".").pop();
-        const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
-        const { error: uploadError } = await supabase.storage
-          .from("banners")
-          .upload(fileName, newImageFile);
-
-        if (uploadError) throw uploadError;
-
-        const { data: publicUrlData } = supabase.storage
-          .from("banners")
-          .getPublicUrl(fileName);
-
-        imageUrl = publicUrlData.publicUrl;
-      }
-
-      const { error } = await supabase
-        .from("store_banners")
-        .update({
-          title: selectedBanner.title,
-          description: selectedBanner.description,
-          image_url: imageUrl,
-          updated_at: new Date().toISOString(),
-        })
-        .eq("id", selectedBanner.id);
-
-      if (error) throw error;
-
-      setBanners(banners.map((b) => (b.id === selectedBanner.id ? { ...selectedBanner, image_url: imageUrl } : b)));
-      setIsEditModalOpen(false);
-      setNotification("Banner berhasil diperbarui!");
-      setTimeout(() => setNotification(""), 4000);
-    } catch (error: any) {
-      alert("Gagal mengupdate banner: " + error.message);
-    } finally {
-      setUpdatingBanner(false);
     }
   };
 
@@ -273,7 +175,7 @@ export default function AdminDashboardPage() {
             Dashboard Utama
           </h1>
           <p className="text-xs text-gray-500">
-            Kelola informasi toko, banner promosi, dan bagian sejarah website utama Anda.
+            Kelola informasi toko, bagian sejarah, dan banner promosi website utama Anda.
           </p>
         </div>
         <Link
@@ -405,7 +307,7 @@ export default function AdminDashboardPage() {
               Kelola Bagian Sejarah & Dedikasi
             </h2>
             <p className="text-xs text-gray-500">
-              Ubah teks, judul, dan foto pada bagian cerita sejarah di beranda website.
+              Ubah teks, judul, dan foto pada bagian cerita sejarah di beranda website (tersimpan ke Google Drive).
             </p>
           </div>
         </div>
@@ -446,7 +348,7 @@ export default function AdminDashboardPage() {
           </div>
 
           <div>
-            <label className="text-[11px] font-bold uppercase text-gray-600 mb-1 block">Foto Samping Sejarah</label>
+            <label className="text-[11px] font-bold uppercase text-gray-600 mb-1 block">Foto Samping Sejarah (Google Drive)</label>
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 p-4 bg-[#FDFBF7] border border-amber-900/10 rounded-2xl">
               <div className="relative w-24 h-20 rounded-xl overflow-hidden bg-gray-100 border shrink-0">
                 <img src={storeInfo.heritage_image_url} alt="Heritage Preview" className="w-full h-full object-cover" />
@@ -462,7 +364,7 @@ export default function AdminDashboardPage() {
                   }}
                   className="w-full text-xs text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-[#3b0912] file:text-amber-200 hover:file:bg-[#5c0f1c] cursor-pointer"
                 />
-                <p className="text-[10px] text-gray-400">Pilih file foto baru dari perangkat Anda untuk mengganti foto sejarah.</p>
+                <p className="text-[10px] text-gray-400">Pilih file foto baru dari perangkat Anda untuk disimpan ke Google Drive.</p>
               </div>
             </div>
           </div>
@@ -480,142 +382,8 @@ export default function AdminDashboardPage() {
         </form>
       </div>
 
-      {/* SECTION BANNER PROMOSI */}
-      <div className="bg-white border border-amber-900/15 p-6 md:p-8 rounded-3xl shadow-sm space-y-6 font-sans">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <h2 className="text-lg font-serif font-bold text-[#3b0912]">Banner Promosi</h2>
-            <p className="text-xs text-gray-500">Kelola banner promosi toko Anda.</p>
-          </div>
-          <Link
-            href="/admin/banner/tambah"
-            className="bg-amber-600 hover:bg-amber-700 text-white font-bold px-5 py-3 rounded-xl text-xs uppercase tracking-wider transition shadow-md flex items-center justify-center gap-2 w-fit cursor-pointer"
-          >
-            <FontAwesomeIcon icon={faPlus} />
-            <span>Tambah Banner</span>
-          </Link>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {banners.map((banner, index) => (
-            <div key={banner.id} className="border border-amber-900/15 rounded-2xl overflow-hidden bg-white shadow-sm flex flex-col justify-between">
-              
-              <div className="relative h-40 bg-amber-200/50">
-                <Image
-                  src={banner.image_url || "/hero-background.jpg"}
-                  alt={banner.title}
-                  fill
-                  className="object-cover"
-                />
-                <div className="absolute top-3 left-3 bg-[#3b0912] text-amber-200 text-[10px] font-bold px-2.5 py-1 rounded-md uppercase tracking-wider shadow">
-                  Banner {index + 1}
-                </div>
-              </div>
-
-              <div className="p-5 space-y-2">
-                <h3 className="text-sm font-serif font-bold text-[#3b0912]">{banner.title}</h3>
-                <p className="text-xs text-gray-500 line-clamp-2">{banner.description}</p>
-              </div>
-
-              <div className="p-4 bg-gray-50 border-t border-gray-100 flex items-center gap-3">
-                <button
-                  onClick={() => handleOpenEditModal(banner)}
-                  className="flex-1 bg-amber-600 hover:bg-amber-700 text-white py-2 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer shadow-xs"
-                >
-                  <FontAwesomeIcon icon={faPen} className="w-3 h-3" /> Edit
-                </button>
-                <button
-                  onClick={() => handleDeleteBanner(banner.id)}
-                  className="flex-1 bg-rose-500 hover:bg-rose-600 text-white py-2 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer shadow-xs"
-                >
-                  <FontAwesomeIcon icon={faTrashCan} className="w-3 h-3" /> Hapus
-                </button>
-              </div>
-
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* POP-UP MODAL EDIT BANNER */}
-      {isEditModalOpen && selectedBanner && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-8 space-y-6 shadow-2xl animate-in fade-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto">
-            
-            <div className="flex items-center justify-between border-b border-gray-100 pb-4">
-              <h3 className="text-lg font-serif font-bold text-[#3b0912]">Edit Banner Promosi</h3>
-              <button
-                onClick={() => setIsEditModalOpen(false)}
-                className="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-600 flex items-center justify-center transition cursor-pointer"
-              >
-                <FontAwesomeIcon icon={faXmark} />
-              </button>
-            </div>
-
-            <form onSubmit={handleUpdateBannerSubmit} className="space-y-4 font-sans">
-              <div>
-                <label className="text-[11px] font-bold uppercase text-gray-600 mb-1 block">Judul Banner</label>
-                <input
-                  type="text"
-                  required
-                  value={selectedBanner.title}
-                  onChange={(e) => setSelectedBanner({ ...selectedBanner, title: e.target.value })}
-                  className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-xs text-gray-800 focus:outline-none focus:border-[#3b0912]"
-                />
-              </div>
-
-              <div>
-                <label className="text-[11px] font-bold uppercase text-gray-600 mb-1 block">Deskripsi Singkat</label>
-                <textarea
-                  rows={3}
-                  required
-                  value={selectedBanner.description}
-                  onChange={(e) => setSelectedBanner({ ...selectedBanner, description: e.target.value })}
-                  className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-xs text-gray-800 focus:outline-none focus:border-[#3b0912] resize-none"
-                />
-              </div>
-
-              <div>
-                <label className="text-[11px] font-bold uppercase text-gray-600 mb-1 block">Ganti Gambar Banner (Opsional)</label>
-                <div className="flex items-center gap-3">
-                  <div className="relative w-16 h-12 rounded-lg overflow-hidden shrink-0 bg-gray-100 border">
-                    <img src={selectedBanner.image_url} alt="Current" className="w-full h-full object-cover" />
-                  </div>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={(e) => {
-                      if (e.target.files && e.target.files[0]) {
-                        setNewImageFile(e.target.files[0]);
-                      }
-                    }}
-                    className="w-full text-xs text-gray-500 file:mr-2 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-[#3b0912] file:text-amber-200 hover:file:bg-[#5c0f1c] cursor-pointer"
-                  />
-                </div>
-              </div>
-
-              <div className="pt-4 flex items-center justify-end gap-3">
-                <button
-                  type="button"
-                  onClick={() => setIsEditModalOpen(false)}
-                  className="px-5 py-3 rounded-xl text-xs font-bold text-gray-600 bg-gray-100 hover:bg-gray-200 transition cursor-pointer"
-                >
-                  Batal
-                </button>
-                <button
-                  type="submit"
-                  disabled={updatingBanner}
-                  className="bg-[#3b0912] hover:bg-[#5c0f1c] text-amber-200 px-6 py-3 rounded-xl text-xs font-bold uppercase tracking-wider transition shadow-md flex items-center gap-2 cursor-pointer disabled:opacity-50"
-                >
-                  {updatingBanner && <FontAwesomeIcon icon={faSpinner} className="animate-spin" />}
-                  Simpan Perubahan
-                </button>
-              </div>
-            </form>
-
-          </div>
-        </div>
-      )}
+      {/* SECTION BANNER PROMOSI (POSISI DI BAWAH SENDIRI) */}
+      <BannerManagementSection />
 
     </div>
   );

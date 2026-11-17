@@ -134,6 +134,7 @@ export default function ProductDetailClient({ product, relatedProducts = [] }: P
     const activeVariantImage = activeVariant?.image_url;
     const productWithVariant = {
       ...product,
+      name: activeVariant ? `${product.name} (${activeVariant.name})` : product.name,
       price: currentPrice,
       stock: currentStock,
       image_url: activeVariantImage || product.image_url || fallbackImage,
@@ -143,7 +144,7 @@ export default function ProductDetailClient({ product, relatedProducts = [] }: P
     setShowModal(true);
   };
 
-  // Tanya via WhatsApp (Dinamis dari Pengaturan Admin Kontak)
+  // Tanya via WhatsApp (Dinamis dari Pengaturan Admin Kontak) - Diperbaiki
   const handleAskWhatsApp = () => {
     const variantInfo = activeVariant ? ` (Varian: ${activeVariant.name})` : '';
     const text = `Halo Kak Admin Surya Snack 👋, saya ingin bertanya-tanya mengenai produk *${product.name}${variantInfo}* seharga *${formatRupiah(currentPrice)}*. Mohon informasinya ya, terima kasih!`;
@@ -290,8 +291,9 @@ export default function ProductDetailClient({ product, relatedProducts = [] }: P
               )}
             </div>
 
+            {/* 🚀 JUDUL DINAMIS: Berubah otomatis mengikuti nama varian yang dipilih */}
             <h1 className="text-3xl sm:text-4xl font-serif font-bold text-[#3b0912] leading-tight">
-              {product.name}
+              {activeVariant ? `${product.name} (${activeVariant.name})` : product.name}
             </h1>
 
             {/* HARGA DINAMIS */}

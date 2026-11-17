@@ -15,6 +15,7 @@ import {
   faRightFromBracket,
   faBars,
   faXmark,
+  faImage, // Ditambahkan untuk ikon Banner Iklan
 } from "@fortawesome/free-solid-svg-icons";
 
 export default function AdminLayout({
@@ -101,8 +102,7 @@ export default function AdminLayout({
             <FontAwesomeIcon icon={faBoxesStacked} className="w-4 h-4 shrink-0" />
             <span>Kelola Produk</span>
           </Link>
-
-          {/* MENU BARU: KELOLA TENTANG KAMI */}
+          
           <Link
             href="/admin/tentang"
             className={`flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-bold transition ${
