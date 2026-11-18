@@ -2,6 +2,8 @@
 import { NextResponse } from "next/server";
 import { uploadFileToDrive } from "@/lib/googleDrive";
 
+export const dynamic = 'force-dynamic';
+
 export async function POST(request) {
   try {
     const formData = await request.formData();
@@ -17,8 +19,12 @@ export async function POST(request) {
     const buffer = Buffer.from(await imageFile.arrayBuffer());
     const fileName = `heritage-${Date.now()}-${imageFile.name}`;
     
-    // Mengunggah ke Google Drive menggunakan fungsi server-side yang sudah ada
-    const imageUrl = await uploadFileToDrive(buffer, fileName, imageFile.type);
+    // Memanggil uploadFileToDrive dengan argumen ke-4 'heritage' agar otomatis dibuatkan/masuk folder heritage
+    const imageUrl = await uploadFileToDrive(buffer, fileName, imageFile.type, 'heritage');
+
+    if (!imageUrl) {
+      throw new Error("Gagal mendapatkan URL dari Google Drive");
+    }
 
     return NextResponse.json({ success: true, imageUrl });
   } catch (error) {

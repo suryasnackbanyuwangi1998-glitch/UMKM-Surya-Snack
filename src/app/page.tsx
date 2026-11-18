@@ -87,6 +87,18 @@ export default function HomePage() {
     },
   ];
 
+  // Fungsi pengaman URL gambar agar tidak error "Invalid URL"
+  const getValidImageUrl = (url: string) => {
+    if (!url || typeof url !== 'string') {
+      return "https://images.unsplash.com/photo-1556910103-1c02745aae4d?q=80&w=600";
+    }
+    const trimmed = url.trim();
+    if (trimmed.startsWith('http://') || trimmed.startsWith('https://') || trimmed.startsWith('/')) {
+      return trimmed;
+    }
+    return "https://images.unsplash.com/photo-1556910103-1c02745aae4d?q=80&w=600";
+  };
+
   return (
     <div className="min-h-screen bg-[#FDFBF7] text-[#2D241E] font-serif selection:bg-[#5c0f1c] selection:text-amber-100 antialiased overflow-x-hidden">
       
@@ -218,7 +230,7 @@ export default function HomePage() {
           </div>
           <div className="relative h-80 sm:h-105 rounded-lg overflow-hidden border-4 border-amber-400/30 shadow-2xl">
             <Image
-              src={heritage.image_url}
+              src={getValidImageUrl(heritage.image_url)}
               alt="Proses Pembuatan Tradisional"
               fill
               className="object-cover filter sepia-[0.2]"
