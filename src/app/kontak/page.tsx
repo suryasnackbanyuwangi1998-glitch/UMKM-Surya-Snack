@@ -152,7 +152,6 @@ export default function KontakPage(): React.ReactElement {
   const fullAddress = contactData.alamat;
 
   const mapSearchAddress = encodeURIComponent(fullAddress);
-  const mapEmbedUrl = `https://maps.google.com/maps?q=${mapSearchAddress}&t=&z=17&ie=UTF8&iwloc=&output=embed`;
   const googleMapsDirectionsUrl = `https://www.google.com/maps/dir/?api=1&destination=${mapSearchAddress}`;
   const googleMapsViewUrl = `https://www.google.com/maps/search/?api=1&query=${mapSearchAddress}`;
 
@@ -321,13 +320,13 @@ export default function KontakPage(): React.ReactElement {
                 <div className="group relative h-95 w-full overflow-hidden rounded-2xl border border-[#EBE3D5] bg-[#FAF6F0] shadow-inner">
                   <iframe
                     title="Pusat Oleh-Oleh Khas Banyuwangi Surya Snack"
-                    src={mapEmbedUrl}
+                    src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d1091.2852698800903!2d114.34987686087382!3d-8.221268473743173!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x2dd1454c95cde09f%3A0x39d4a19b8f537844!2sOleh-oleh%20khas%20Banyuwangi%20Surya%20Snack!5e0!3m2!1sen!2sid!4v1794980861455!5m2!1sen!2sid"
                     width="100%"
                     height="100%"
                     style={{ border: 0 }}
                     allowFullScreen
                     loading="lazy"
-                    referrerPolicy="no-referrer-when-downgrade"
+                    referrerPolicy="strict-origin-when-cross-origin"
                     className="absolute inset-0 h-full w-full"
                   />
                   
