@@ -45,11 +45,25 @@ export default async function KatalogPage({ searchParams }: PageProps) {
     });
   }
 
-  // 2. Filter berdasarkan pencarian HANYA pada NAMA PRODUK saja secara spesifik
+  // 2. Filter berdasarkan pencarian (Nama Produk ATAU Harga yang Fleksibel)
   if (query) {
+    const cleanQueryNumber = query.replace(/[.,]/g, '');
+    const isNumericQuery = !isNaN(Number(cleanQueryNumber)) && cleanQueryNumber !== '';
+
     filteredProducts = filteredProducts.filter((p) => {
       const name = p.name ? p.name.toLowerCase() : '';
-      return name.includes(query);
+      
+      // Ambil harga dari database dan ubah ke string serta angka
+      const rawPrice = p.price !== undefined && p.price !== null ? String(p.price) : '';
+      const cleanPriceNumber = rawPrice.replace(/[.,]/g, '');
+
+      const matchName = name.includes(query);
+      const matchPrice = isNumericQuery && (
+        cleanPriceNumber === cleanQueryNumber || 
+        cleanPriceNumber.includes(cleanQueryNumber)
+      );
+
+      return matchName || matchPrice;
     });
   }
 
@@ -71,7 +85,7 @@ export default async function KatalogPage({ searchParams }: PageProps) {
           {/* ================= SIDEBAR KIRI ================= */}
           <aside className="lg:col-span-1 space-y-6 animate-in fade-in slide-in-from-left duration-700">
             
-            {/* Kotak Pencarian di Sidebar (Dilengkapi Tombol Reset Filter di Sini) */}
+            {/* Kotak Pencarian di Sidebar */}
             <div className="bg-[#FAF7F0] p-5 rounded-2xl border border-amber-900/10 shadow-sm font-sans space-y-4 transition-all duration-300 hover:shadow-md">
               <div className="flex items-center justify-between">
                 <h3 className="font-serif font-bold text-sm text-[#3b0912] uppercase tracking-wider">
@@ -87,7 +101,7 @@ export default async function KatalogPage({ searchParams }: PageProps) {
                 )}
               </div>
 
-              {/* Memanggil Client Component untuk pencarian instan tanpa Enter */}
+              {/* Memanggil Client Component untuk pencarian instan */}
               <KatalogSearchInput />
             </div>
 
