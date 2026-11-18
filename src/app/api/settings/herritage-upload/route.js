@@ -17,7 +17,7 @@ export async function POST(request) {
     const buffer = Buffer.from(await imageFile.arrayBuffer());
     const fileName = `heritage-${Date.now()}-${imageFile.name}`;
     
-    // Mengunggah ke Google Drive menggunakan fungsi server-side
+    // Mengunggah ke Google Drive menggunakan fungsi server-side yang sudah ada
     const imageUrl = await uploadFileToDrive(buffer, fileName, imageFile.type);
 
     return NextResponse.json({ success: true, imageUrl });
