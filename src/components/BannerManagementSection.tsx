@@ -20,6 +20,39 @@ interface Banner {
   image_url: string;
 }
 
+const FALLBACK_BANNER_IMAGE = "/hero-background.jpg";
+
+function resolveBannerImageUrl(rawUrl?: string | null): string {
+  if (!rawUrl || typeof rawUrl !== "string") {
+    return FALLBACK_BANNER_IMAGE;
+  }
+
+  const trimmed = rawUrl.trim();
+  if (!trimmed) {
+    return FALLBACK_BANNER_IMAGE;
+  }
+
+  const driveFileMatch = trimmed.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
+  if (driveFileMatch && driveFileMatch[1]) {
+    return `https://drive.google.com/uc?export=view&id=${driveFileMatch[1]}`;
+  }
+
+  const driveOpenMatch = trimmed.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+  if (trimmed.includes("drive.google.com") && driveOpenMatch && driveOpenMatch[1]) {
+    return `https://drive.google.com/uc?export=view&id=${driveOpenMatch[1]}`;
+  }
+
+  if (
+    trimmed.startsWith("http://") ||
+    trimmed.startsWith("https://") ||
+    trimmed.startsWith("/")
+  ) {
+    return trimmed;
+  }
+
+  return `/${trimmed}`;
+}
+
 export default function BannerManagementSection() {
   const [banners, setBanners] = useState<Banner[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -28,11 +61,26 @@ export default function BannerManagementSection() {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedBanner, setSelectedBanner] = useState<Banner | null>(null);
   const [newImageFile, setNewImageFile] = useState<File | null>(null);
+  const [editPreviewUrl, setEditPreviewUrl] = useState<string>(FALLBACK_BANNER_IMAGE);
   const [updatingBanner, setUpdatingBanner] = useState(false);
 
   useEffect(() => {
     fetchBanners();
   }, []);
+
+  useEffect(() => {
+    if (!newImageFile) {
+      setEditPreviewUrl(resolveBannerImageUrl(selectedBanner?.image_url));
+      return;
+    }
+
+    const objectUrl = URL.createObjectURL(newImageFile);
+    setEditPreviewUrl(objectUrl);
+
+    return () => {
+      URL.revokeObjectURL(objectUrl);
+    };
+  }, [newImageFile, selectedBanner?.image_url]);
 
   async function fetchBanners() {
     try {
@@ -60,7 +108,7 @@ export default function BannerManagementSection() {
       const { error } = await supabase.from("store_banners").delete().eq("id", id);
       if (error) throw error;
 
-      setBanners(banners.filter((b) => b.id !== id));
+      setBanners((prev) => prev.filter((b) => b.id !== id));
       setNotification("Banner berhasil dihapus.");
       setTimeout(() => setNotification(""), 4000);
     } catch (error: any) {
@@ -71,7 +119,14 @@ export default function BannerManagementSection() {
   const handleOpenEditModal = (banner: Banner) => {
     setSelectedBanner({ ...banner });
     setNewImageFile(null);
+    setEditPreviewUrl(resolveBannerImageUrl(banner.image_url));
     setIsEditModalOpen(true);
+  };
+
+  const handleCloseEditModal = () => {
+    setIsEditModalOpen(false);
+    setNewImageFile(null);
+    setSelectedBanner(null);
   };
 
   const handleUpdateBannerSubmit = async (e: React.FormEvent) => {
@@ -84,7 +139,7 @@ export default function BannerManagementSection() {
       formData.append("id", selectedBanner.id.toString());
       formData.append("banner_number", selectedBanner.banner_number.toString());
       formData.append("title", selectedBanner.title);
-      
+
       if (newImageFile) {
         formData.append("imageFile", newImageFile);
       }
@@ -97,10 +152,10 @@ export default function BannerManagementSection() {
       const result = await res.json();
       if (!result.success) throw new Error(result.message || "Gagal mengupdate banner.");
 
-      setIsEditModalOpen(false);
+      handleCloseEditModal();
       setNotification("Banner berhasil diperbarui!");
       setTimeout(() => setNotification(""), 4000);
-      fetchBanners();
+      await fetchBanners();
     } catch (error: any) {
       alert("Gagal mengupdate banner: " + error.message);
     } finally {
@@ -139,18 +194,24 @@ export default function BannerManagementSection() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {banners.map((banner, index) => {
-            const imageUrl = banner.image_url && banner.image_url.trim() !== "" 
-              ? banner.image_url 
-              : "/hero-background.jpg";
+            const imageUrl = resolveBannerImageUrl(banner.image_url);
 
             return (
-              <div key={banner.id} className="border border-amber-900/15 rounded-2xl overflow-hidden bg-white shadow-sm flex flex-col justify-between">
-                
-                {/* Menggunakan tag <img> standar agar gambar Google Drive langsung tampil utuh tanpa error */}
+              <div
+                key={banner.id}
+                className="border border-amber-900/15 rounded-2xl overflow-hidden bg-white shadow-sm flex flex-col justify-between"
+              >
                 <div className="relative h-44 bg-[#3b0912]/5 flex items-center justify-center p-2">
                   <img
                     src={imageUrl}
                     alt={banner.title || "Banner"}
+                    loading="eager"
+                    onError={(e) => {
+                      const imgEl = e.currentTarget;
+                      if (imgEl.src !== window.location.origin + FALLBACK_BANNER_IMAGE) {
+                        imgEl.src = FALLBACK_BANNER_IMAGE;
+                      }
+                    }}
                     className="w-full h-full object-contain rounded-lg"
                   />
                   <div className="absolute top-3 left-3 bg-[#3b0912] text-amber-200 text-[10px] font-bold px-2.5 py-1 rounded-md uppercase tracking-wider shadow z-10">
@@ -159,24 +220,27 @@ export default function BannerManagementSection() {
                 </div>
 
                 <div className="p-4 space-y-1">
-                  <h3 className="text-sm font-serif font-bold text-[#3b0912] truncate">{banner.title || `Banner ${index + 1}`}</h3>
+                  <h3 className="text-sm font-serif font-bold text-[#3b0912] truncate">
+                    {banner.title || `Banner ${index + 1}`}
+                  </h3>
                 </div>
 
                 <div className="p-4 bg-gray-50 border-t border-gray-100 flex items-center gap-3">
                   <button
+                    type="button"
                     onClick={() => handleOpenEditModal(banner)}
                     className="flex-1 bg-amber-600 hover:bg-amber-700 text-white py-2 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer shadow-xs"
                   >
                     <FontAwesomeIcon icon={faPen} className="w-3 h-3" /> Edit
                   </button>
                   <button
+                    type="button"
                     onClick={() => handleDeleteBanner(banner.id)}
                     className="flex-1 bg-rose-500 hover:bg-rose-600 text-white py-2 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer shadow-xs"
                   >
                     <FontAwesomeIcon icon={faTrashCan} className="w-3 h-3" /> Hapus
                   </button>
                 </div>
-
               </div>
             );
           })}
@@ -187,11 +251,11 @@ export default function BannerManagementSection() {
       {isEditModalOpen && selectedBanner && (
         <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-8 space-y-6 shadow-2xl animate-in fade-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto">
-            
             <div className="flex items-center justify-between border-b border-gray-100 pb-4">
               <h3 className="text-lg font-serif font-bold text-[#3b0912]">Edit Banner Promosi</h3>
               <button
-                onClick={() => setIsEditModalOpen(false)}
+                type="button"
+                onClick={handleCloseEditModal}
                 className="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-600 flex items-center justify-center transition cursor-pointer"
               >
                 <FontAwesomeIcon icon={faXmark} />
@@ -200,7 +264,9 @@ export default function BannerManagementSection() {
 
             <form onSubmit={handleUpdateBannerSubmit} className="space-y-4">
               <div>
-                <label className="text-[11px] font-bold uppercase text-gray-600 mb-1 block">Judul / Nama Banner (Internal)</label>
+                <label className="text-[11px] font-bold uppercase text-gray-600 mb-1 block">
+                  Judul / Nama Banner (Internal)
+                </label>
                 <input
                   type="text"
                   required
@@ -211,13 +277,21 @@ export default function BannerManagementSection() {
               </div>
 
               <div>
-                <label className="text-[11px] font-bold uppercase text-gray-600 mb-1 block">Ganti Gambar Banner (Opsional)</label>
+                <label className="text-[11px] font-bold uppercase text-gray-600 mb-1 block">
+                  Ganti Gambar Banner (Opsional)
+                </label>
                 <div className="flex items-center gap-3">
                   <div className="relative w-20 h-14 rounded-lg overflow-hidden shrink-0 bg-gray-100 border flex items-center justify-center">
-                    <img 
-                      src={newImageFile ? URL.createObjectURL(newImageFile) : (selectedBanner.image_url || "/hero-background.jpg")} 
-                      alt="Current" 
-                      className="w-full h-full object-contain" 
+                    <img
+                      src={editPreviewUrl}
+                      alt="Current"
+                      onError={(e) => {
+                        const imgEl = e.currentTarget;
+                        if (imgEl.src !== window.location.origin + FALLBACK_BANNER_IMAGE) {
+                          imgEl.src = FALLBACK_BANNER_IMAGE;
+                        }
+                      }}
+                      className="w-full h-full object-contain"
                     />
                   </div>
                   <input
@@ -236,7 +310,7 @@ export default function BannerManagementSection() {
               <div className="pt-4 flex items-center justify-end gap-3">
                 <button
                   type="button"
-                  onClick={() => setIsEditModalOpen(false)}
+                  onClick={handleCloseEditModal}
                   className="px-5 py-3 rounded-xl text-xs font-bold text-gray-600 bg-gray-100 hover:bg-gray-200 transition cursor-pointer"
                 >
                   Batal
@@ -251,7 +325,6 @@ export default function BannerManagementSection() {
                 </button>
               </div>
             </form>
-
           </div>
         </div>
       )}
