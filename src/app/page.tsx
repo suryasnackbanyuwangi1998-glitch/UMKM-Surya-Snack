@@ -21,6 +21,35 @@ import { useLanguage } from '@/context/LanguageContext';
 const DEFAULT_HERITAGE_IMAGE =
   "https://images.unsplash.com/photo-1556910103-1c02745aae4d?q=80&w=600";
 
+const DEFAULTS = {
+  id: {
+    storeLabel: "Oleh-Oleh Khas Banyuwangi",
+    heroTitle: "Cita Rasa Legendaris Khas Banyuwangi",
+    heroDesc:
+      "Mengangkat kelezatan resep pusaka leluhur tanah Blambangan, disajikan khusus dalam balutan kualitas artisan yang renyah dan penuh kenangan.",
+    quoteText:
+      "Kualitas sejati tidak pernah berkompromi pada rasa. Setiap gigitan adalah cerita tentang tradisi dan ketulusan.",
+    quoteAuthor: "— SURYA SNACK ARTISAN KITCHEN",
+    heritageTitle: "Menjaga Tradisi, Memahat Cita Rasa",
+    heritageSubtitle: "✦ Sejarah & Dedikasi ✦",
+    heritageDesc:
+      "Berawal dari dapur rumahan di Banyuwangi, Surya Snack tumbuh dengan memegang teguh prinsip keaslian resep leluhur.",
+  },
+  en: {
+    storeLabel: "Authentic Banyuwangi Souvenirs",
+    heroTitle: "Legendary Authentic Taste of Banyuwangi",
+    heroDesc:
+      "Elevating the delicious heritage recipes of Blambangan, specially served in an artisan quality that is crispy and full of memories.",
+    quoteText:
+      "True quality never compromises on taste. Every bite is a story of tradition and sincerity.",
+    quoteAuthor: "— SURYA SNACK ARTISAN KITCHEN",
+    heritageTitle: "Preserving Tradition, Sculpting Flavor",
+    heritageSubtitle: "✦ History & Dedication ✦",
+    heritageDesc:
+      "Starting from a home kitchen in Banyuwangi, Surya Snack grew by strictly holding onto the principle of ancestral recipe authenticity.",
+  },
+};
+
 function normalizeImageUrl(url?: string | null): string {
   if (!url || typeof url !== 'string') {
     return DEFAULT_HERITAGE_IMAGE;
@@ -30,7 +59,6 @@ function normalizeImageUrl(url?: string | null): string {
     return DEFAULT_HERITAGE_IMAGE;
   }
 
-  // Konversi tautan Google Drive (file/d/<ID>/view atau open?id=<ID>) ke direct image view
   const driveFileMatch = trimmed.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
   if (driveFileMatch?.[1]) {
     return `https://drive.google.com/uc?export=view&id=${driveFileMatch[1]}`;
@@ -56,107 +84,86 @@ export default function HomePage() {
   const { getWaLink } = useStoreContact();
   const { lang, t } = useLanguage();
   const [products, setProducts] = useState<any[]>([]);
-  const [storeLabel, setStoreLabel] = useState<string>("Oleh-Oleh Khas Banyuwangi");
+  const [storeSettings, setStoreSettings] = useState<any>(null);
 
+  const [storeLabel, setStoreLabel] = useState<string>(DEFAULTS.id.storeLabel);
   const [heroData, setHeroData] = useState({
-    title: "Cita Rasa Legendaris Khas Banyuwangi",
-    desc: "Mengangkat kelezatan resep pusaka leluhur tanah Blambangan, disajikan khusus dalam balutan kualitas artisan yang renyah dan penuh kenangan.",
+    title: DEFAULTS.id.heroTitle,
+    desc: DEFAULTS.id.heroDesc,
   });
-
   const [quoteData, setQuoteData] = useState({
-    text: "Kualitas sejati tidak pernah berkompromi pada rasa. Setiap gigitan adalah cerita tentang tradisi dan ketulusan.",
-    author: "— SURYA SNACK ARTISAN KITCHEN",
+    text: DEFAULTS.id.quoteText,
+    author: DEFAULTS.id.quoteAuthor,
   });
-
   const [heritage, setHeritage] = useState({
-    title: "Menjaga Tradisi, Memahat Cita Rasa",
-    subtitle: "✦ Sejarah & Dedikasi ✦",
-    desc: "Berawal dari dapur rumahan di Banyuwangi, Surya Snack tumbuh dengan memegang teguh prinsip keaslian resep leluhur.",
+    title: DEFAULTS.id.heritageTitle,
+    subtitle: DEFAULTS.id.heritageSubtitle,
+    desc: DEFAULTS.id.heritageDesc,
     image_url: DEFAULT_HERITAGE_IMAGE,
   });
 
-  const applyStoreSettings = useCallback(
-    (storeData: any, currentLang: string) => {
-      if (!storeData) return;
+  const syncContentByLanguage = useCallback(
+    (currentLang: 'id' | 'en', dbData: any) => {
+      const fallback = DEFAULTS[currentLang] || DEFAULTS.id;
+      const resolvedImageUrl =
+        normalizeImageUrl(dbData?.heritage_image_url) || DEFAULT_HERITAGE_IMAGE;
 
-      if (storeData.store_label) {
-        setStoreLabel(storeData.store_label);
+      if (currentLang === 'en') {
+        setStoreLabel(dbData?.store_label_en || fallback.storeLabel);
+        setHeroData({
+          title: dbData?.hero_title_en || fallback.heroTitle,
+          desc: dbData?.hero_desc_en || fallback.heroDesc,
+        });
+        setQuoteData({
+          text: dbData?.quote_text_en || fallback.quoteText,
+          author: dbData?.quote_author_en || fallback.quoteAuthor,
+        });
+        setHeritage({
+          title: dbData?.heritage_title_en || fallback.heritageTitle,
+          subtitle: dbData?.heritage_subtitle_en || fallback.heritageSubtitle,
+          desc: dbData?.heritage_desc_en || fallback.heritageDesc,
+          image_url: resolvedImageUrl,
+        });
       } else {
-        setStoreLabel(
-          currentLang === 'en'
-            ? "Authentic Banyuwangi Souvenirs"
-            : "Oleh-Oleh Khas Banyuwangi"
-        );
+        setStoreLabel(dbData?.store_label || fallback.storeLabel);
+        setHeroData({
+          title: dbData?.hero_title || fallback.heroTitle,
+          desc: dbData?.hero_desc || fallback.heroDesc,
+        });
+        setQuoteData({
+          text: dbData?.quote_text || fallback.quoteText,
+          author: dbData?.quote_author || fallback.quoteAuthor,
+        });
+        setHeritage({
+          title: dbData?.heritage_title || fallback.heritageTitle,
+          subtitle: dbData?.heritage_subtitle || fallback.heritageSubtitle,
+          desc: dbData?.heritage_desc || fallback.heritageDesc,
+          image_url: resolvedImageUrl,
+        });
       }
-
-      setHeroData((prev) => ({
-        title: storeData.hero_title || prev.title,
-        desc: storeData.hero_desc || prev.desc,
-      }));
-
-      setQuoteData((prev) => ({
-        text: storeData.quote_text || prev.text,
-        author: storeData.quote_author || prev.author,
-      }));
-
-      setHeritage((prev) => ({
-        title: storeData.heritage_title || prev.title,
-        subtitle: storeData.heritage_subtitle || prev.subtitle,
-        desc: storeData.heritage_desc || prev.desc,
-        image_url: normalizeImageUrl(storeData.heritage_image_url) || prev.image_url,
-      }));
     },
     []
   );
 
-  // Sinkronisasi teks default saat bahasa diganti & muat data terbaru dari Supabase
+  // Terapkan konten sesuai bahasa aktif dan data database yang tersimpan
+  useEffect(() => {
+    syncContentByLanguage(lang, storeSettings);
+  }, [lang, storeSettings, syncContentByLanguage]);
+
+  // Ambil data store_settings sekali saat mount dan dengarkan perubahan realtime
   useEffect(() => {
     let isMounted = true;
 
-    if (lang === 'en') {
-      setHeroData({
-        title: "Legendary Authentic Taste of Banyuwangi",
-        desc: "Elevating the delicious heritage recipes of Blambangan, specially served in an artisan quality that is crispy and full of memories.",
-      });
-      setQuoteData({
-        text: "True quality never compromises on taste. Every bite is a story of tradition and sincerity.",
-        author: "— SURYA SNACK ARTISAN KITCHEN",
-      });
-      setHeritage((prev) => ({
-        title: "Preserving Tradition, Sculpting Flavor",
-        subtitle: "✦ History & Dedication ✦",
-        desc: "Starting from a home kitchen in Banyuwangi, Surya Snack grew by strictly holding onto the principle of ancestral recipe authenticity.",
-        image_url: prev.image_url || DEFAULT_HERITAGE_IMAGE,
-      }));
-      setStoreLabel("Authentic Banyuwangi Souvenirs");
-    } else {
-      setHeroData({
-        title: "Cita Rasa Legendaris Khas Banyuwangi",
-        desc: "Mengangkat kelezatan resep pusaka leluhur tanah Blambangan, disajikan khusus dalam balutan kualitas artisan yang renyah dan penuh kenangan.",
-      });
-      setQuoteData({
-        text: "Kualitas sejati tidak pernah berkompromi pada rasa. Setiap gigitan adalah cerita tentang tradisi dan ketulusan.",
-        author: "— SURYA SNACK ARTISAN KITCHEN",
-      });
-      setHeritage((prev) => ({
-        title: "Menjaga Tradisi, Memahat Cita Rasa",
-        subtitle: "✦ Sejarah & Dedikasi ✦",
-        desc: "Berawal dari dapur rumahan di Banyuwangi, Surya Snack tumbuh dengan memegang teguh prinsip keaslian resep leluhur.",
-        image_url: prev.image_url || DEFAULT_HERITAGE_IMAGE,
-      }));
-      setStoreLabel("Oleh-Oleh Khas Banyuwangi");
-    }
-
     async function loadStoreSettings() {
       try {
-        const { data: storeData, error } = await supabase
+        const { data, error } = await supabase
           .from("store_settings")
           .select("*")
           .eq("id", "main")
           .maybeSingle();
 
-        if (!error && storeData && isMounted) {
-          applyStoreSettings(storeData, lang);
+        if (!error && data && isMounted) {
+          setStoreSettings(data);
         }
       } catch (err) {
         console.error("Gagal memuat pengaturan toko di beranda:", err);
@@ -165,13 +172,6 @@ export default function HomePage() {
 
     loadStoreSettings();
 
-    return () => {
-      isMounted = false;
-    };
-  }, [lang, applyStoreSettings]);
-
-  // Dengarkan perubahan realtime pada tabel store_settings agar saat admin menyimpan langsung update
-  useEffect(() => {
     const channel = supabase
       .channel("store-settings-realtime")
       .on(
@@ -183,17 +183,18 @@ export default function HomePage() {
           filter: "id=eq.main",
         },
         (payload) => {
-          if (payload.new) {
-            applyStoreSettings(payload.new, lang);
+          if (payload.new && isMounted) {
+            setStoreSettings(payload.new);
           }
         }
       )
       .subscribe();
 
     return () => {
+      isMounted = false;
       supabase.removeChannel(channel);
     };
-  }, [applyStoreSettings, lang]);
+  }, []);
 
   useEffect(() => {
     async function fetchData() {
@@ -209,11 +210,7 @@ export default function HomePage() {
     fetchData();
   }, []);
 
-  const getValidImageUrl = (url: string) => {
-    return normalizeImageUrl(url);
-  };
-
-  const resolvedHeritageUrl = getValidImageUrl(heritage.image_url);
+  const resolvedHeritageUrl = normalizeImageUrl(heritage.image_url);
 
   return (
     <div className="min-h-screen bg-[#FDFBF7] text-[#2D241E] font-serif selection:bg-[#5c0f1c] selection:text-amber-100 antialiased overflow-x-hidden">
