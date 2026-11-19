@@ -17,6 +17,7 @@ import { getFeaturedProducts } from '@/lib/products';
 import { supabase } from '@/lib/supabase';
 import { useStoreContact } from '@/context/ContactProvider';
 import { useLanguage } from '@/context/LanguageContext';
+import type { Product } from '@/types';
 
 const DEFAULT_HERITAGE_IMAGE =
   "https://images.unsplash.com/photo-1556910103-1c02745aae4d?q=80&w=600";
@@ -60,12 +61,12 @@ function normalizeImageUrl(url?: string | null): string {
   }
 
   const driveFileMatch = trimmed.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
-  if (driveFileMatch?.[1]) {
+  if (driveFileMatch && driveFileMatch[1]) {
     return `https://drive.google.com/uc?export=view&id=${driveFileMatch[1]}`;
   }
 
   const driveOpenMatch = trimmed.match(/[?&]id=([a-zA-Z0-9_-]+)/);
-  if (trimmed.includes('drive.google.com') && driveOpenMatch?.[1]) {
+  if (trimmed.includes('drive.google.com') && driveOpenMatch && driveOpenMatch[1]) {
     return `https://drive.google.com/uc?export=view&id=${driveOpenMatch[1]}`;
   }
 
@@ -83,8 +84,8 @@ function normalizeImageUrl(url?: string | null): string {
 export default function HomePage() {
   const { getWaLink } = useStoreContact();
   const { lang, t } = useLanguage();
-  const [products, setProducts] = useState<any[]>([]);
-  const [storeSettings, setStoreSettings] = useState<any>(null);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [storeSettings, setStoreSettings] = useState<Record<string, any> | null>(null);
 
   const [storeLabel, setStoreLabel] = useState<string>(DEFAULTS.id.storeLabel);
   const [heroData, setHeroData] = useState({
@@ -103,54 +104,54 @@ export default function HomePage() {
   });
 
   const syncContentByLanguage = useCallback(
-    (currentLang: 'id' | 'en', dbData: any) => {
-      const fallback = DEFAULTS[currentLang] || DEFAULTS.id;
+    (currentLang: 'id' | 'en', dbData: Record<string, any> | null) => {
       const resolvedImageUrl =
-        normalizeImageUrl(dbData?.heritage_image_url) || DEFAULT_HERITAGE_IMAGE;
+        normalizeImageUrl(dbData && dbData.heritage_image_url) || DEFAULT_HERITAGE_IMAGE;
 
       if (currentLang === 'en') {
-        setStoreLabel(dbData?.store_label_en || fallback.storeLabel);
+        const en = DEFAULTS.en;
+        setStoreLabel((dbData && dbData.store_label_en) || en.storeLabel);
         setHeroData({
-          title: dbData?.hero_title_en || fallback.heroTitle,
-          desc: dbData?.hero_desc_en || fallback.heroDesc,
+          title: (dbData && dbData.hero_title_en) || en.heroTitle,
+          desc: (dbData && dbData.hero_desc_en) || en.heroDesc,
         });
         setQuoteData({
-          text: dbData?.quote_text_en || fallback.quoteText,
-          author: dbData?.quote_author_en || fallback.quoteAuthor,
+          text: (dbData && dbData.quote_text_en) || en.quoteText,
+          author: (dbData && dbData.quote_author_en) || en.quoteAuthor,
         });
         setHeritage({
-          title: dbData?.heritage_title_en || fallback.heritageTitle,
-          subtitle: dbData?.heritage_subtitle_en || fallback.heritageSubtitle,
-          desc: dbData?.heritage_desc_en || fallback.heritageDesc,
+          title: (dbData && dbData.heritage_title_en) || en.heritageTitle,
+          subtitle: (dbData && dbData.heritage_subtitle_en) || en.heritageSubtitle,
+          desc: (dbData && dbData.heritage_desc_en) || en.heritageDesc,
           image_url: resolvedImageUrl,
         });
-      } else {
-        setStoreLabel(dbData?.store_label || fallback.storeLabel);
-        setHeroData({
-          title: dbData?.hero_title || fallback.heroTitle,
-          desc: dbData?.hero_desc || fallback.heroDesc,
-        });
-        setQuoteData({
-          text: dbData?.quote_text || fallback.quoteText,
-          author: dbData?.quote_author || fallback.quoteAuthor,
-        });
-        setHeritage({
-          title: dbData?.heritage_title || fallback.heritageTitle,
-          subtitle: dbData?.heritage_subtitle || fallback.heritageSubtitle,
-          desc: dbData?.heritage_desc || fallback.heritageDesc,
-          image_url: resolvedImageUrl,
-        });
+        return;
       }
+
+      const id = DEFAULTS.id;
+      setStoreLabel((dbData && dbData.store_label) || id.storeLabel);
+      setHeroData({
+        title: (dbData && dbData.hero_title) || id.heroTitle,
+        desc: (dbData && dbData.hero_desc) || id.heroDesc,
+      });
+      setQuoteData({
+        text: (dbData && dbData.quote_text) || id.quoteText,
+        author: (dbData && dbData.quote_author) || id.quoteAuthor,
+      });
+      setHeritage({
+        title: (dbData && dbData.heritage_title) || id.heritageTitle,
+        subtitle: (dbData && dbData.heritage_subtitle) || id.heritageSubtitle,
+        desc: (dbData && dbData.heritage_desc) || id.heritageDesc,
+        image_url: resolvedImageUrl,
+      });
     },
     []
   );
 
-  // Terapkan konten sesuai bahasa aktif dan data database yang tersimpan
   useEffect(() => {
     syncContentByLanguage(lang, storeSettings);
   }, [lang, storeSettings, syncContentByLanguage]);
 
-  // Ambil data store_settings sekali saat mount dan dengarkan perubahan realtime
   useEffect(() => {
     let isMounted = true;
 
@@ -184,7 +185,7 @@ export default function HomePage() {
         },
         (payload) => {
           if (payload.new && isMounted) {
-            setStoreSettings(payload.new);
+            setStoreSettings(payload.new as Record<string, any>);
           }
         }
       )
