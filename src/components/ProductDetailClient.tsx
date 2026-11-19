@@ -1,4 +1,4 @@
-// src/app/.../ProductDetailClient.tsx
+// src/components/ProductDetailClient.tsx
 'use client';
 
 import React, { useEffect, useState } from 'react';
@@ -28,6 +28,7 @@ import {
 import { faWhatsapp } from '@fortawesome/free-brands-svg-icons';
 import { useCart } from '@/context/CartProvider';
 import { useStoreContact } from '@/context/ContactProvider';
+import { useLanguage } from '@/context/LanguageContext';
 import type { Product } from '@/types';
 
 interface ProductDetailClientProps {
@@ -51,43 +52,174 @@ export default function ProductDetailClient({ product, relatedProducts = [] }: P
   const router = useRouter();
   const { addToCart } = useCart();
   const { getWaLink } = useStoreContact();
+  const { lang } = useLanguage();
 
-  // Validasi Varian
+  const t = {
+    id: {
+      back: "Kembali ke Katalog",
+      brandTag: "✦ UMKM Surya Snack Banyuwangi ✦",
+      selectVariant: "Pilih Varian Rasa:",
+      mainProduct: "Produk Utama",
+      variantLabel: "Varian:",
+      weight: "Berat:",
+      stockAvailable: "Tersedia",
+      stockEmpty: "Stok Habis",
+      sold: "Terjual:",
+      origin: "Asal: Banyuwangi",
+      quantity: "Jumlah Pesanan",
+      estTotal: "Total Estimasi:",
+      addToCartBtn: "TAMBAHKAN KE KERANJANG",
+      waBtn: "Tanya-Tanya Produk via WhatsApp",
+      halalBadge: "100% Halal & Tanpa Pengawet",
+      shippingBadge: "Pengiriman Seluruh Nusantara",
+      modalTag: "Keranjang Belanja",
+      modalSuccess: "Berhasil Ditambahkan! 🎉",
+      subtotal: "Subtotal:",
+      addMore: "+ Tambah Produk Lain",
+      viewCart: "Lihat Keranjang",
+      tabDesc: "Deskripsi & Keunggulan",
+      tabComp: "Komposisi & Kemasan",
+      tabOrder: "Alur Pemesanan",
+      aboutTitle: "Tentang Produk Ini",
+      highlightsTitle: "Keunggulan Utama:",
+      compTitle: "Detail Komposisi & Standar Kemasan",
+      compSub: "Komposisi / Bahan Utama",
+      pkgSub: "Standar Kemasan",
+      orderTitle: "Alur Pemesanan Cepat & Transparan",
+      relatedTitle: "Jajanan Khas Lainnya 🍪",
+      viewAll: "Lihat Semua →",
+      zoomText: "Perbesar Gambar",
+      noRelated: "Belum ada produk lainnya.",
+      alertQty: "Silakan tentukan jumlah pesanan terlebih dahulu (minimal 1 pcs).",
+    },
+    en: {
+      back: "Back to Catalog",
+      brandTag: "✦ Banyuwangi Surya Snack MSME ✦",
+      selectVariant: "Select Flavor Variant:",
+      mainProduct: "Main Product",
+      variantLabel: "Variant:",
+      weight: "Weight:",
+      stockAvailable: "Available",
+      stockEmpty: "Out of Stock",
+      sold: "Sold:",
+      origin: "Origin: Banyuwangi",
+      quantity: "Order Quantity",
+      estTotal: "Estimated Total:",
+      addToCartBtn: "ADD TO CART",
+      waBtn: "Ask About Product via WhatsApp",
+      halalBadge: "100% Halal & Preservative-Free",
+      shippingBadge: "Nationwide Shipping",
+      modalTag: "Shopping Cart",
+      modalSuccess: "Successfully Added! 🎉",
+      subtotal: "Subtotal:",
+      addMore: "+ Add Other Products",
+      viewCart: "View Cart",
+      tabDesc: "Description & Highlights",
+      tabComp: "Ingredients & Packaging",
+      tabOrder: "Ordering Process",
+      aboutTitle: "About This Product",
+      highlightsTitle: "Key Highlights:",
+      compTitle: "Ingredients & Packaging Standards",
+      compSub: "Ingredients / Main Elements",
+      pkgSub: "Packaging Standard",
+      orderTitle: "Fast & Transparent Ordering Process",
+      relatedTitle: "Other Traditional Snacks 🍪",
+      viewAll: "View All →",
+      zoomText: "Zoom Image",
+      noRelated: "No other products available.",
+      alertQty: "Please specify the order quantity first (minimum 1 pcs).",
+    },
+  }[lang];
+
   const validVariants = Array.isArray(product.variants)
     ? product.variants.filter((v: any) => v && v.name && v.name.trim() !== '')
     : [];
   const hasVariants = validVariants.length > 0;
 
-  // State Varian yang Dipilih (-1 artinya produk utama)
   const [selectedVariantIndex, setSelectedVariantIndex] = useState<number>(-1);
   const activeVariant = hasVariants && selectedVariantIndex >= 0 ? validVariants[selectedVariantIndex] : null;
 
-  // Harga & Stok Aktif
   const currentPrice = activeVariant ? activeVariant.price : product.price;
   const currentStock = activeVariant ? activeVariant.stock : product.stock;
 
-  // ==========================================
-  // KONTEN DINAMIS BERDASARKAN VARIAN
-  // ==========================================
+  // Penerjemah Varian Otomatis
+  const getTranslatedVariantName = (name: string) => {
+    if (lang === 'en') {
+      const translations: Record<string, string> = {
+        'Original': 'Original',
+        'Pedas': 'Spicy',
+        'Manis': 'Sweet',
+        'Gurih': 'Savory',
+        'Asin': 'Salty',
+        'Balado': 'Balado (Chili Mix)',
+        'Keju': 'Cheese',
+        'Sapi Panggang': 'Roasted Beef',
+        'Jagung Bakar': 'Roasted Corn',
+      };
+      return translations[name] || name;
+    }
+    return name;
+  };
+
+  const getTranslatedDescription = (desc: string | null | undefined) => {
+    if (!desc) return lang === 'en' ? 'No detailed description available.' : 'Belum ada deskripsi lengkap.';
+    if (lang === 'en') {
+      return desc
+        .replace(/ABON AYAM EFIRA — Gurih, Lezat, dan Nikmatnya Lauk Pendamping Khas Berkualitas!/gi, "ABON AYAM EFIRA — Savory, Delicious, and Enjoyable Quality Side Dish!")
+        .replace(/Nikmati kelezatan Abon Ayam Efira yang terbuat dari daging ayam pilihan berkualitas tinggi langsung dari produsen lokal\./gi, "Enjoy the deliciousness of Efira Chicken Abon made from high-quality chicken meat directly from local producers.")
+        .replace(/Diolah secara higienis dengan bumbu rempah tradisional pilihan, menghasilkan abon ayam bertekstur lembut, berserat pas, serta memiliki cita rasa gurih dan manis yang lezat di lidah\./gi, "Hygienically processed with selected traditional spices, resulting in chicken abon with a soft texture, perfect fibers, and a savory, sweet taste that melts in your mouth.")
+        .replace(/Dikemas dalam kemasan stand up pouch transparan modern yang dilengkapi dengan klip praktis, sangat pas untuk dinikmati bersama nasi hangat, bubur, sebagaiisian roti, maupun sebagai oleh-oleh khas pilihan yang istimewa\./gi, "Packed in a modern transparent standing pouch equipped with a practical clip, perfect to enjoy with warm rice, porridge, as bread filling, or as a special souvenir.")
+        .replace(/Sensasi kelezatan daging ayam pilihan berpadu bumbu rempah gurih yang lezat di setiap taburan/gi, "The sensation of delicious selected chicken meat combined with savory spices in every sprinkle")
+        .replace(/Pilihan lauk praktis dan favorit yang cocok disukai oleh seluruh anggota keluarga dari anak-anak hingga dewasa/gi, "A practical and favorite side dish loved by all family members from children to adults")
+        .replace(/Oleh-oleh wajib berkualitas tinggi yang praktis dan tahan lama untuk menemani setiap hidangan Anda/gi, "A high-quality, practical, and long-lasting souvenir to accompany every meal")
+        .replace(/Diproduksi langsung dengan label Efira dan dikurasi eksklusif untuk menyajikan kenikmatan lauk pendamping terbaik\./gi, "Produced directly under the Efira label and curated exclusively to present the best side dish enjoyment.")
+        .replace(/Sempurnakan waktu makan Anda dengan kelezatan Abon Ayam Efira!/gi, "Perfect your mealtime with the deliciousness of Efira Chicken Abon!");
+    }
+    return desc;
+  };
+
+  const getTranslatedHighlights = (features: string[]) => {
+    if (lang === 'en') {
+      return features.map((item) => {
+        return item
+          .replace(/Praktis & Siap Saji: Bisa langsung dinikmati kapan saja sebagai pendamping nasi hangat atau pelengkap berbagai menu makanan\./gi, "Practical & Ready to Serve: Can be enjoyed anytime as a companion to warm rice or complement to various dishes.")
+          .replace(/Cita Rasa Gurih & Manis Pas: Perpaduan bumbu rempah yang meresap sempurna membuat rasanya sangat lezat di lidah tanpa bikin enek\./gi, "Perfect Savory & Sweet Taste: The blend of spices absorbed perfectly makes it delicious without being overwhelming.")
+          .replace(/Kemasan Stand Up Pouch Transparan \(Zipper\): Dilengkapi fitur klip penutup rapat untuk menjaga kerenyahan dan kualitas abon agar tetap tahan lama setelah dibuka\./gi, "Transparent Stand Up Pouch Packaging (Zipper): Equipped with a tight sealing clip to maintain crunchiness and quality after opening.");
+      });
+    }
+    return features;
+  };
+
+  const getTranslatedIngredients = (ing: string | null | undefined) => {
+    if (!ing) return lang === 'en' ? 'Using selected natural ingredients without artificial preservatives.' : 'Menggunakan bahan-bahan alami pilihan berkualitas tinggi tanpa pengawet buatan.';
+    if (lang === 'en') {
+      return ing
+        .replace(/Daging Ayam Pilihan:/gi, 'Selected Chicken Meat:')
+        .replace(/Bumbu Rempah Tradisional:/gi, 'Traditional Spices:')
+        .replace(/Proses Higienis:/gi, 'Hygienic Process:')
+        .replace(/Menggunakan daging ayam segar berkualitas unggul yang menghasilkan serat abon lembut dan bergizi\./gi, 'Using high-quality fresh chicken meat that produces soft and nutritious fibers.')
+        .replace(/Perpaduan bawang, gula, garam, dan rempah pilihan untuk menciptakan rasa gurih yang khas dan menggugah selera\./gi, 'A blend of garlic, sugar, salt, and selected spices to create a distinctive and appetizing savory taste.')
+        .replace(/Diproses secara teliti dan matang sempurna untuk menghasilkan produk yang bersih, gurih, dan berkualitas tinggi\./gi, 'Processed meticulously and cooked perfectly to produce a clean, savory, and high-quality product.');
+    }
+    return ing;
+  };
+
+  const getTranslatedPackaging = (pkg: string | null | undefined) => {
+    if (!pkg) return lang === 'en' ? 'Packed using exclusive transparent mica plastic / airtight standing pouch.' : 'Dikemas menggunakan mika plastik transparan eksklusif / standing pouch kedap udara.';
+    if (lang === 'en') {
+      return pkg
+        .replace(/Menggunakan kemasan stand up pouch transparan berstandar food grade yang kedap udara dan dilengkapi fitur klip \(zipper\) rapat untuk menjaga kehigienisan produk, lengkap dengan label resmi Efira, nomor P-IRT, logo Halal Indonesia, serta pilihan berat bersih yang fleksibel\./gi, 'Using food-grade transparent stand-up pouch packaging that is airtight and equipped with a tight zipper clip to maintain product hygiene, complete with official Efira label, P-IRT number, Halal Indonesia logo, and flexible net weight options.');
+    }
+    return pkg;
+  };
+
   const activeDescription = activeVariant?.description 
-    ? activeVariant.description 
-    : (activeVariant 
-        ? `Varian ${activeVariant.name} dari ${product.name}. Menghadirkan cita rasa khas berkualitas tinggi yang diolah secara higienis.` 
-        : (product.long_description || product.description || 'Belum ada deskripsi lengkap.'));
+    ? getTranslatedDescription(activeVariant.description)
+    : getTranslatedDescription(product.long_description || product.description);
 
-  const activeIngredients = activeVariant?.ingredients 
-    ? activeVariant.ingredients 
-    : (activeVariant 
-        ? `Bahan pilihan berkualitas tinggi untuk varian ${activeVariant.name}, diproses higienis tanpa bahan pengawet.` 
-        : (product.ingredients || 'Menggunakan bahan-bahan alami pilihan berkualitas tinggi tanpa pengawet buatan.'));
+  const activeIngredients = getTranslatedIngredients(activeVariant?.ingredients || product.ingredients);
+  const activePackaging = getTranslatedPackaging(activeVariant?.packaging_standard || product.packaging_standard);
 
-  const activePackaging = activeVariant?.packaging_standard 
-    ? activeVariant.packaging_standard 
-    : (activeVariant 
-        ? `Kemasan khusus untuk varian ${activeVariant.name}.` 
-        : (product.packaging_standard || 'Dikemas menggunakan mika plastik transparan eksklusif / standing pouch kedap udara.'));
-
-  // Susunan Gambar
   const fallbackImage = 'https://images.unsplash.com/photo-1599490659213-e2b9527bd087?q=80&w=800';
   const mainProductImage = product.image_url && product.image_url.trim() !== '' ? product.image_url : fallbackImage;
   
@@ -104,50 +236,45 @@ export default function ProductDetailClient({ product, relatedProducts = [] }: P
   const [showModal, setShowModal] = useState(false);
   const [activeTab, setActiveTab] = useState<'deskripsi' | 'komposisi' | 'pemesanan'>('deskripsi');
   
-  // Kuantitas dimulai dari 0 sesuai permintaan
   const [quantity, setQuantity] = useState(0);
 
   const formatRupiah = (price: number | null | undefined): string =>
     price === null || price === undefined
-      ? 'Hubungi untuk harga'
+      ? (lang === 'en' ? 'Contact for price' : 'Hubungi untuk harga')
       : `Rp ${price.toLocaleString('id-ID')}`;
 
   const handleDecrement = () => {
-    if (quantity > 0) {
-      setQuantity((prev) => prev - 1);
-    }
+    if (quantity > 0) setQuantity((prev) => prev - 1);
   };
 
-  const handleIncrement = () => {
-    setQuantity((prev) => prev + 1);
-  };
+  const handleIncrement = () => setQuantity((prev) => prev + 1);
 
   const totalPrice = (currentPrice || 0) * quantity;
 
-  // Masuk keranjang
   const handleAddToCartAndOpenModal = () => {
     if (quantity <= 0) {
-      alert('Silakan tentukan jumlah pesanan terlebih dahulu (minimal 1 pcs).');
+      alert(t.alertQty);
       return;
     }
 
     const activeVariantImage = activeVariant?.image_url;
     const productWithVariant = {
       ...product,
-      name: activeVariant ? `${product.name} (${activeVariant.name})` : product.name,
+      name: activeVariant ? `${product.name} (${getTranslatedVariantName(activeVariant.name)})` : product.name,
       price: currentPrice,
       stock: currentStock,
       image_url: activeVariantImage || product.image_url || fallbackImage,
-      selectedVariant: activeVariant ? activeVariant.name : undefined,
+      selectedVariant: activeVariant ? getTranslatedVariantName(activeVariant.name) : undefined,
     };
     addToCart(productWithVariant, quantity);
     setShowModal(true);
   };
 
-  // Tanya via WhatsApp (Dinamis dari Pengaturan Admin Kontak) - Diperbaiki
   const handleAskWhatsApp = () => {
-    const variantInfo = activeVariant ? ` (Varian: ${activeVariant.name})` : '';
-    const text = `Halo Kak Admin Surya Snack 👋, saya ingin bertanya-tanya mengenai produk *${product.name}${variantInfo}* seharga *${formatRupiah(currentPrice)}*. Mohon informasinya ya, terima kasih!`;
+    const variantInfo = activeVariant ? ` (${t.variantLabel} ${getTranslatedVariantName(activeVariant.name)})` : '';
+    const text = lang === 'en' 
+      ? `Hello Admin Surya Snack 👋, I would like to inquire about the product *${product.name}${variantInfo}* priced at *${formatRupiah(currentPrice)}*. Please provide info, thank you!`
+      : `Halo Kak Admin Surya Snack 👋, saya ingin bertanya-tanya mengenai produk *${product.name}${variantInfo}* seharga *${formatRupiah(currentPrice)}*. Mohon informasinya ya, terima kasih!`;
     window.open(getWaLink(text), '_blank');
   };
 
@@ -165,7 +292,6 @@ export default function ProductDetailClient({ product, relatedProducts = [] }: P
     };
   }, [zoomOpen]);
 
-  // Parsing key_features
   const rawKeyFeatures = activeVariant?.key_features || product.key_features;
   let highlights: string[] = [];
 
@@ -180,14 +306,25 @@ export default function ProductDetailClient({ product, relatedProducts = [] }: P
       .map((item) => item.trim())
       .filter((item) => item.length > 0);
   } else {
-    highlights = [
+    highlights = lang === 'en' ? [
+      'No Artificial Preservatives.',
+      'Authentic Ancestral Heritage Recipe of Banyuwangi.',
+      'Crispy, Savory, and Hygienic.',
+    ] : [
       'Tanpa Bahan Pengawet Buatan.',
       'Resep Warisan Leluhur Khas Banyuwangi.',
       'Renyah, Gurih, dan Higienis.',
     ];
   }
 
-  const orderSteps: [string, string][] = [
+  highlights = getTranslatedHighlights(highlights);
+
+  const orderSteps: [string, string][] = lang === 'en' ? [
+    ['1. Select Variant & Quantity', 'Choose the flavor variant and order quantity as needed, then click Add to Cart.'],
+    ['2. Added to Cart', 'The product and its chosen variant will automatically be stored securely in your shopping cart.'],
+    ['3. Review Order', 'Open the cart menu to view your detailed billing summary transparently.'],
+    ['4. Send to WhatsApp', 'Click the order button to send an automated order recap to the WhatsApp admin.'],
+  ] : [
     ['1. Tentukan Varian & Jumlah', 'Pilih varian rasa serta jumlah pesanan sesuai kebutuhan lalu klik Tambah ke Keranjang.'],
     ['2. Masuk Keranjang', 'Produk beserta varian pilihannya akan otomatis tersimpan aman di keranjang belanja.'],
     ['3. Periksa Pesanan', 'Buka menu keranjang untuk melihat rincian nota belanjaan Anda secara transparan.'],
@@ -210,10 +347,10 @@ export default function ProductDetailClient({ product, relatedProducts = [] }: P
           className="inline-flex items-center gap-2 rounded-xl border border-amber-900/15 bg-white px-4 py-2.5 text-xs font-bold text-gray-700 shadow-xs transition hover:border-[#5c0f1c]/40 hover:text-[#5c0f1c]"
         >
           <FontAwesomeIcon icon={faArrowLeft} className="h-3.5 w-3.5" />
-          <span>Kembali ke Katalog</span>
+          <span>{t.back}</span>
         </Link>
         <span className="text-xs uppercase tracking-widest text-gray-400 font-bold hidden sm:block">
-          ✦ UMKM Surya Snack Banyuwangi ✦
+          {t.brandTag}
         </span>
       </div>
 
@@ -237,7 +374,7 @@ export default function ProductDetailClient({ product, relatedProducts = [] }: P
             />
             <span className="absolute bottom-3 right-3 flex items-center gap-1.5 rounded-full bg-black/50 px-3 py-1.5 text-[11px] font-bold text-white backdrop-blur-md">
               <FontAwesomeIcon icon={faMagnifyingGlassPlus} className="h-3 w-3" />
-              Perbesar Gambar
+              {t.zoomText}
             </span>
           </button>
 
@@ -291,17 +428,15 @@ export default function ProductDetailClient({ product, relatedProducts = [] }: P
               )}
             </div>
 
-            {/* 🚀 JUDUL DINAMIS: Berubah otomatis mengikuti nama varian yang dipilih */}
             <h1 className="text-3xl sm:text-4xl font-serif font-bold text-[#3b0912] leading-tight">
-              {activeVariant ? `${product.name} (${activeVariant.name})` : product.name}
+              {activeVariant ? `${product.name} (${getTranslatedVariantName(activeVariant.name)})` : product.name}
             </h1>
 
-            {/* HARGA DINAMIS */}
             <div className="text-3xl font-black text-[#5c0f1c] pt-2 font-serif bg-amber-50/50 px-4 py-2.5 rounded-2xl border border-amber-200/50 flex items-center justify-between">
               <span>{formatRupiah(currentPrice)}</span>
               {activeVariant && (
                 <span className="text-xs font-bold text-amber-800 bg-amber-200/60 px-2.5 py-1 rounded-lg">
-                  Varian: {activeVariant.name}
+                  {t.variantLabel} {getTranslatedVariantName(activeVariant.name)}
                 </span>
               )}
             </div>
@@ -313,10 +448,10 @@ export default function ProductDetailClient({ product, relatedProducts = [] }: P
               <div className="flex items-center justify-between">
                 <label className="text-xs font-extrabold uppercase tracking-widest text-[#3b0912] flex items-center gap-2">
                   <FontAwesomeIcon icon={faLayerGroup} className="text-amber-600" />
-                  <span>Pilih Varian Rasa:</span>
+                  <span>{t.selectVariant}</span>
                 </label>
                 <span className="text-xs font-bold text-[#5c0f1c] bg-amber-50 px-2.5 py-0.5 rounded-lg border border-amber-200">
-                  {activeVariant ? activeVariant.name : 'Produk Utama'}
+                  {activeVariant ? getTranslatedVariantName(activeVariant.name) : t.mainProduct}
                 </span>
               </div>
 
@@ -351,7 +486,7 @@ export default function ProductDetailClient({ product, relatedProducts = [] }: P
                       )}
 
                       <div className="flex items-center gap-2">
-                        <span>{variant.name}</span>
+                        <span>{getTranslatedVariantName(variant.name)}</span>
                         <span className={`text-[11px] font-semibold ${isSelected ? 'text-amber-200' : 'text-gray-500'}`}>
                           ({formatRupiah(variant.price)})
                         </span>
@@ -373,22 +508,22 @@ export default function ProductDetailClient({ product, relatedProducts = [] }: P
             {product.weight && (
               <div className="flex items-center gap-2">
                 <FontAwesomeIcon icon={faWeightHanging} className="text-[#5c0f1c]" />
-                <span>Berat: {product.weight}</span>
+                <span>{t.weight} {product.weight}</span>
               </div>
             )}
             <div className="flex items-center gap-2">
               <FontAwesomeIcon icon={faBoxOpen} className="text-[#5c0f1c]" />
-              <span>{(currentStock ?? 0) > 0 ? `Stok: ${currentStock} Tersedia` : 'Stok Habis'}</span>
+              <span>{(currentStock ?? 0) > 0 ? `${currentStock} ${t.stockAvailable}` : t.stockEmpty}</span>
             </div>
             {(product.sales ?? 0) > 0 && (
               <div className="flex items-center gap-2">
                 <FontAwesomeIcon icon={faFire} className="text-[#5c0f1c]" />
-                <span>Terjual: {product.sales}+ pcs</span>
+                <span>{t.sold} {product.sales}+ pcs</span>
               </div>
             )}
             <div className="flex items-center gap-2">
               <FontAwesomeIcon icon={faLocationDot} className="text-[#5c0f1c]" />
-              <span>Asal: Banyuwangi</span>
+              <span>{t.origin}</span>
             </div>
           </div>
 
@@ -396,7 +531,7 @@ export default function ProductDetailClient({ product, relatedProducts = [] }: P
           <div className="space-y-4 pt-2">
             
             <div className="flex items-center justify-between bg-amber-50/60 p-3.5 rounded-2xl border border-amber-200/70">
-              <span className="text-xs font-bold text-[#3b0912]">Jumlah Pesanan</span>
+              <span className="text-xs font-bold text-[#3b0912]">{t.quantity}</span>
 
               <div className="flex items-center gap-3 bg-white px-3 py-1.5 rounded-xl border border-amber-300 shadow-2xs">
                 <button
@@ -424,7 +559,7 @@ export default function ProductDetailClient({ product, relatedProducts = [] }: P
 
             <div className="space-y-3">
               <div className="flex justify-between items-center text-xs px-1">
-                <span className="text-gray-500 font-medium">Total Estimasi:</span>
+                <span className="text-gray-500 font-medium">{t.estTotal}</span>
                 <span className="font-black text-lg text-[#5c0f1c] font-serif">
                   {formatRupiah(totalPrice)}
                 </span>
@@ -436,7 +571,7 @@ export default function ProductDetailClient({ product, relatedProducts = [] }: P
                 className="flex w-full items-center justify-center gap-2.5 rounded-2xl py-3.5 text-xs font-extrabold text-white bg-[#5c0f1c] hover:bg-[#3b0912] shadow-md transition-all uppercase tracking-wider cursor-pointer active:scale-95"
               >
                 <FontAwesomeIcon icon={faCartPlus} className="h-4 w-4 text-amber-300" />
-                <span>TAMBAHKAN KE KERANJANG</span>
+                <span>{t.addToCartBtn}</span>
               </button>
 
               <button
@@ -445,7 +580,7 @@ export default function ProductDetailClient({ product, relatedProducts = [] }: P
                 className="flex w-full items-center justify-center gap-2.5 rounded-2xl py-3.5 text-xs font-extrabold text-emerald-900 bg-emerald-100 hover:bg-emerald-200 border border-emerald-300 shadow-xs transition-all uppercase tracking-wider cursor-pointer active:scale-95"
               >
                 <FontAwesomeIcon icon={faWhatsapp} className="h-4 w-4 text-emerald-700 text-base" />
-                <span>Tanya-Tanya Produk via WhatsApp</span>
+                <span>{t.waBtn}</span>
               </button>
             </div>
 
@@ -454,11 +589,11 @@ export default function ProductDetailClient({ product, relatedProducts = [] }: P
           <div className="grid grid-cols-2 gap-3 pt-2 text-[11px] text-gray-500">
             <div className="flex items-center gap-2 bg-[#FAF7F0] p-3 rounded-xl border border-amber-900/5">
               <FontAwesomeIcon icon={faShieldHeart} className="text-[#5c0f1c] text-base" />
-              <span>100% Halal & Tanpa Pengawet</span>
+              <span>{t.halalBadge}</span>
             </div>
             <div className="flex items-center gap-2 bg-[#FAF7F0] p-3 rounded-xl border border-amber-900/5">
               <FontAwesomeIcon icon={faTruck} className="text-[#5c0f1c] text-base" />
-              <span>Pengiriman Seluruh Nusantara</span>
+              <span>{t.shippingBadge}</span>
             </div>
           </div>
 
@@ -478,10 +613,10 @@ export default function ProductDetailClient({ product, relatedProducts = [] }: P
 
             <div>
               <span className="text-[10px] font-bold uppercase tracking-wider text-amber-800 bg-amber-100 px-2.5 py-1 rounded-md">
-                Keranjang Belanja
+                {t.modalTag}
               </span>
               <h3 className="font-serif font-bold text-lg text-[#3b0912] mt-2">
-                Berhasil Ditambahkan! 🎉
+                {t.modalSuccess}
               </h3>
             </div>
 
@@ -497,13 +632,13 @@ export default function ProductDetailClient({ product, relatedProducts = [] }: P
               </div>
               <div className="flex-1 min-w-0">
                 <h4 className="font-bold text-gray-900 text-sm truncate">
-                  {product.name} {activeVariant ? `(${activeVariant.name})` : ''}
+                  {product.name} {activeVariant ? `(${getTranslatedVariantName(activeVariant.name)})` : ''}
                 </h4>
                 <p className="text-xs text-[#5c0f1c] font-bold mt-0.5">
                   {quantity} pcs x {formatRupiah(currentPrice)}
                 </p>
                 <p className="text-xs font-extrabold text-gray-700 mt-1">
-                  Subtotal: <span className="text-[#5c0f1c]">{formatRupiah(totalPrice)}</span>
+                  {t.subtotal} <span className="text-[#5c0f1c]">{formatRupiah(totalPrice)}</span>
                 </p>
               </div>
             </div>
@@ -515,7 +650,7 @@ export default function ProductDetailClient({ product, relatedProducts = [] }: P
                 className="w-full bg-amber-50 hover:bg-amber-100 text-[#5c0f1c] font-bold py-3 px-3 rounded-xl border border-amber-200 text-xs uppercase tracking-wider transition flex items-center justify-center gap-2 cursor-pointer"
               >
                 <FontAwesomeIcon icon={faStore} />
-                <span>+ Tambah Produk Lain</span>
+                <span>{t.addMore}</span>
               </button>
 
               <button
@@ -524,7 +659,7 @@ export default function ProductDetailClient({ product, relatedProducts = [] }: P
                 className="w-full bg-[#3b0912] hover:bg-[#5c0f1c] text-amber-200 font-bold py-3 px-3 rounded-xl shadow-md text-xs uppercase tracking-wider transition flex items-center justify-center gap-2 cursor-pointer"
               >
                 <FontAwesomeIcon icon={faBagShopping} />
-                <span>Lihat Keranjang</span>
+                <span>{t.viewCart}</span>
               </button>
             </div>
           </div>
@@ -542,7 +677,7 @@ export default function ProductDetailClient({ product, relatedProducts = [] }: P
                 : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
             }`}
           >
-            Deskripsi & Keunggulan
+            {t.tabDesc}
           </button>
           <button
             onClick={() => setActiveTab('komposisi')}
@@ -552,7 +687,7 @@ export default function ProductDetailClient({ product, relatedProducts = [] }: P
                 : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
             }`}
           >
-            Komposisi & Kemasan
+            {t.tabComp}
           </button>
           <button
             onClick={() => setActiveTab('pemesanan')}
@@ -562,7 +697,7 @@ export default function ProductDetailClient({ product, relatedProducts = [] }: P
                 : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
             }`}
           >
-            Alur Pemesanan
+            {t.tabOrder}
           </button>
         </div>
 
@@ -571,10 +706,10 @@ export default function ProductDetailClient({ product, relatedProducts = [] }: P
             <div className="space-y-6">
               <div>
                 <div className="flex items-center justify-between mb-3">
-                  <h3 className="text-xl font-serif font-bold text-[#3b0912]">Tentang Produk Ini</h3>
+                  <h3 className="text-xl font-serif font-bold text-[#3b0912]">{t.aboutTitle}</h3>
                   {activeVariant && (
                     <span className="text-[11px] font-bold text-amber-800 bg-amber-50 px-3 py-1 rounded-full border border-amber-200">
-                      Varian: {activeVariant.name}
+                      {t.variantLabel} {getTranslatedVariantName(activeVariant.name)}
                     </span>
                   )}
                 </div>
@@ -585,7 +720,7 @@ export default function ProductDetailClient({ product, relatedProducts = [] }: P
 
               <div className="pt-4 border-t border-amber-900/10 space-y-4">
                 <h4 className="text-xl font-serif font-bold text-[#3b0912]">
-                  Keunggulan Utama:
+                  {t.highlightsTitle}
                 </h4>
                 
                 <div className="space-y-3 font-serif">
@@ -603,10 +738,10 @@ export default function ProductDetailClient({ product, relatedProducts = [] }: P
           {activeTab === 'komposisi' && (
             <div className="space-y-6">
               <div className="flex items-center justify-between mb-3">
-                <h3 className="text-xl font-serif font-bold text-[#3b0912]">Detail Komposisi & Standar Kemasan</h3>
+                <h3 className="text-xl font-serif font-bold text-[#3b0912]">{t.compTitle}</h3>
                 {activeVariant && (
                   <span className="text-[11px] font-bold text-amber-800 bg-amber-50 px-3 py-1 rounded-full border border-amber-200">
-                    Varian: {activeVariant.name}
+                    {t.variantLabel} {getTranslatedVariantName(activeVariant.name)}
                   </span>
                 )}
               </div>
@@ -614,7 +749,7 @@ export default function ProductDetailClient({ product, relatedProducts = [] }: P
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="bg-[#FAF7F0] p-4 rounded-2xl border border-amber-900/10 space-y-3">
                   <h4 className="text-xl font-serif font-bold text-[#3b0912] mb-2">
-                    Komposisi / Bahan Utama
+                    {t.compSub}
                   </h4>
                   
                   <div className="space-y-2.5 font-serif">
@@ -633,7 +768,7 @@ export default function ProductDetailClient({ product, relatedProducts = [] }: P
 
                 <div className="bg-[#FAF7F0] p-4 rounded-2xl border border-amber-900/10 space-y-3">
                   <h4 className="text-xl font-serif font-bold text-[#3b0912] mb-2">
-                    Standar Kemasan
+                    {t.pkgSub}
                   </h4>
                   
                   <div className="space-y-2.5 font-serif">
@@ -648,7 +783,7 @@ export default function ProductDetailClient({ product, relatedProducts = [] }: P
 
           {activeTab === 'pemesanan' && (
             <div className="space-y-6">
-              <h3 className="text-xl font-serif font-bold text-[#3b0912]">Alur Pemesanan Cepat & Transparan</h3>
+              <h3 className="text-xl font-serif font-bold text-[#3b0912]">{t.orderTitle}</h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {orderSteps.map(([title, desc], idx) => (
                   <div key={idx} className="bg-[#FAF7F0] p-4 rounded-2xl border border-amber-900/10 space-y-1.5 hover:border-amber-900/20 transition">
@@ -666,13 +801,13 @@ export default function ProductDetailClient({ product, relatedProducts = [] }: P
       <div className="mt-12 space-y-6">
         <div className="flex items-center justify-between">
           <h3 className="text-xl sm:text-2xl font-serif font-bold text-[#3b0912]">
-            Jajanan Khas Lainnya 🍪
+            {t.relatedTitle}
           </h3>
           <Link
             href="/katalog"
             className="text-xs font-bold text-[#5c0f1c] hover:underline uppercase tracking-wider"
           >
-            Lihat Semua →
+            {t.viewAll}
           </Link>
         </div>
 
@@ -704,7 +839,7 @@ export default function ProductDetailClient({ product, relatedProducts = [] }: P
               </Link>
             ))
           ) : (
-            <p className="text-xs text-gray-400 col-span-full">Belum ada produk lainnya.</p>
+            <p className="text-xs text-gray-400 col-span-full">{t.noRelated}</p>
           )}
         </div>
       </div>

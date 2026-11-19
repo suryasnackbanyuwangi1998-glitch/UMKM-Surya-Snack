@@ -5,6 +5,7 @@ import './globals.css';
 import MainLayout from '@/components/MainLayout';
 import { CartProvider } from '@/context/CartProvider';
 import { ContactProvider } from '@/context/ContactProvider';
+import { LanguageProvider } from '@/context/LanguageContext'; // <-- Pastikan ini diimpor
 
 export const metadata: Metadata = {
   title: 'Surya Snack - Camilan Khas UMKM',
@@ -19,11 +20,13 @@ export default function RootLayout({
   return (
     <html lang="id" suppressHydrationWarning>
       <body className="bg-[#FDFBF7] min-h-screen font-sans antialiased" suppressHydrationWarning>
-        <ContactProvider>
-          <CartProvider>
-            <MainLayout>{children}</MainLayout>
-          </CartProvider>
-        </ContactProvider>
+        <LanguageProvider> {/* <-- Dibungkus paling luar agar mencakup Admin maupun Web utama */}
+          <ContactProvider>
+            <CartProvider>
+              <MainLayout>{children}</MainLayout>
+            </CartProvider>
+          </ContactProvider>
+        </LanguageProvider>
       </body>
     </html>
   );

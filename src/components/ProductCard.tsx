@@ -5,6 +5,7 @@ import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { formatRupiah } from '@/lib/products';
+import { useLanguage } from '@/context/LanguageContext'; // <-- Impor hook bahasa
 import type { Product } from '@/types';
 
 interface ProductCardProps {
@@ -12,6 +13,8 @@ interface ProductCardProps {
 }
 
 export default function ProductCard({ product }: ProductCardProps) {
+  const { lang } = useLanguage(); // <-- Ambil status bahasa aktif ('id' | 'en')
+
   let displayImage = product.image_url;
   if (!displayImage && Array.isArray(product.images) && product.images.length > 0) {
     displayImage = product.images[0];
@@ -64,7 +67,8 @@ export default function ProductCard({ product }: ProductCardProps) {
             href={`/katalog/${productIdentifier}`}
             className="w-full text-center border border-[#5c0f1c] text-[#5c0f1c] hover:bg-[#5c0f1c] hover:text-white font-bold py-2 rounded-lg text-xs transition-all duration-300 block"
           >
-            Detail
+            {/* Teks tombol berubah otomatis sesuai bahasa */}
+            {lang === 'en' ? 'Details' : 'Detail'}
           </Link>
         </div>
       </div>

@@ -1,3 +1,4 @@
+// src/components/Navbar.tsx
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -14,9 +15,12 @@ import {
 import { faWhatsapp, faInstagram } from '@fortawesome/free-brands-svg-icons';
 import { supabase } from '@/lib/supabase';
 import { useStoreContact } from '@/context/ContactProvider';
+import LanguageToggle from '@/components/LanguageToggle'; // <-- Impor tombol pengalih bahasa (ID/EN)
+import { useLanguage } from '@/context/LanguageContext'; // <-- Impor hook bahasa
 
 export default function Navbar(): React.ReactElement {
   const { getWaLink, instagram } = useStoreContact();
+  const { t } = useLanguage(); // <-- Ambil fungsi penerjemah t()
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const pathname = usePathname();
@@ -67,11 +71,12 @@ export default function Navbar(): React.ReactElement {
     setIsMobileMenuOpen(false);
   }, [pathname]);
 
+  // Menggunakan fungsi t() agar label menu berubah dinamis sesuai bahasa (ID / EN)
   const menuItems = [
-    { href: '/', label: 'Beranda' },
-    { href: '/katalog', label: 'Produk' },
-    { href: '/tentang', label: 'Tentang' },
-    { href: '/kontak', label: 'Kontak' },
+    { href: '/', label: t('navHome') || 'Beranda' },
+    { href: '/katalog', label: t('navProducts') || 'Produk' },
+    { href: '/tentang', label: t('navAbout') || 'Tentang' },
+    { href: '/kontak', label: t('navContact') || 'Kontak' },
   ];
 
   return (
@@ -119,35 +124,43 @@ export default function Navbar(): React.ReactElement {
             </div>
           </Link>
 
-          {/* Navigasi Desktop */}
-          <nav className="hidden md:flex items-center gap-6 font-sans">
-            {menuItems.map((item) => {
-              const active = isActive(item.href);
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={`relative py-1 text-xs font-bold transition-all duration-200 ${
-                    active
-                      ? isScrolled || !isHomePage
-                        ? 'text-[#5c0f1c] font-black'
-                        : 'text-amber-300 font-black'
-                      : isScrolled || !isHomePage
-                      ? 'text-gray-900 hover:text-[#5c0f1c]'
-                      : 'text-gray-100 hover:text-amber-300'
-                  }`}
-                >
-                  <span>{item.label}</span>
-                  {active && (
-                    <span className="absolute bottom-0 left-0 right-0 h-0.5 rounded-full bg-amber-400 shadow-xs" />
-                  )}
-                </Link>
-              );
-            })}
-          </nav>
+          {/* Navigasi Desktop & Tombol Bahasa */}
+          <div className="hidden md:flex items-center gap-6 font-sans">
+            <nav className="flex items-center gap-6">
+              {menuItems.map((item) => {
+                const active = isActive(item.href);
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className={`relative py-1 text-xs font-bold transition-all duration-200 ${
+                      active
+                        ? isScrolled || !isHomePage
+                          ? 'text-[#5c0f1c] font-black'
+                          : 'text-amber-300 font-black'
+                        : isScrolled || !isHomePage
+                        ? 'text-gray-900 hover:text-[#5c0f1c]'
+                        : 'text-gray-100 hover:text-amber-300'
+                    }`}
+                  >
+                    <span>{item.label}</span>
+                    {active && (
+                      <span className="absolute bottom-0 left-0 right-0 h-0.5 rounded-full bg-amber-400 shadow-xs" />
+                    )}
+                  </Link>
+                );
+              })}
+            </nav>
 
-          {/* Header Mobile Button */}
-          <div className="md:hidden flex items-center gap-2">
+            {/* Tombol Pengalih Bahasa ID / EN di Navbar Desktop */}
+            <div className="pl-2 border-l border-gray-300/40">
+              <LanguageToggle />
+            </div>
+          </div>
+
+          {/* Header Mobile Button & Tombol Bahasa Mobile */}
+          <div className="md:hidden flex items-center gap-2.5">
+            <LanguageToggle />
             <button
               onClick={() => setIsMobileMenuOpen(true)}
               aria-label="Buka Menu"

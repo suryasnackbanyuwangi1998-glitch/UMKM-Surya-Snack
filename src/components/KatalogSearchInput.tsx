@@ -3,12 +3,19 @@
 
 import React from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { useLanguage } from '@/context/LanguageContext';
 
 export default function KatalogSearchInput() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { lang } = useLanguage();
+  
   const currentSearch = searchParams.get('search') || '';
   const currentCategory = searchParams.get('category') || 'semua';
+
+  const placeholderText = lang === 'en' 
+    ? 'Type food or drink name...' 
+    : 'Ketik nama makanan atau minuman...';
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const query = e.target.value;
@@ -24,10 +31,7 @@ export default function KatalogSearchInput() {
       params.set('category', currentCategory);
     }
 
-    // Reset ke halaman 1 saat mengetik
     params.delete('page');
-
-    // Update URL secara instan tanpa reload halaman penuh
     router.push(`/katalog?${params.toString()}`);
   };
 
@@ -37,7 +41,7 @@ export default function KatalogSearchInput() {
         type="text"
         defaultValue={currentSearch}
         onChange={handleSearchChange}
-        placeholder="Ketik nama makanan atau minuman..."
+        placeholder={placeholderText}
         className="w-full bg-white text-gray-900 text-xs placeholder:text-gray-400 pl-3 pr-9 py-2.5 rounded-xl border border-amber-900/20 focus:outline-none focus:ring-2 focus:ring-[#5c0f1c] transition-all"
       />
       <div className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">
