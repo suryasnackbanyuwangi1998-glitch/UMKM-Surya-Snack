@@ -1,7 +1,7 @@
 // src/app/katalog/page.tsx
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { Suspense, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import ProductCard from '@/components/ProductCard';
@@ -10,7 +10,7 @@ import KatalogSearchInput from '@/components/KatalogSearchInput';
 import { useLanguage } from '@/context/LanguageContext';
 import type { Product } from '@/types';
 
-export default function KatalogPage() {
+function KatalogContent() {
   const searchParams = useSearchParams();
   const search = searchParams.get('search');
   const category = searchParams.get('category');
@@ -22,9 +22,14 @@ export default function KatalogPage() {
 
   useEffect(() => {
     async function fetchProducts() {
-      const data = await getAllProducts();
-      setAllProducts(data || []);
-      setLoading(false);
+      try {
+        const data = await getAllProducts();
+        setAllProducts(data || []);
+      } catch (err) {
+        console.error('Gagal memuat produk katalog:', err);
+      } finally {
+        setLoading(false);
+      }
     }
     fetchProducts();
   }, []);
@@ -32,45 +37,55 @@ export default function KatalogPage() {
   const query = search?.toLowerCase().trim() || '';
   const activeCategory = category?.trim() || 'semua';
   const currentPage = Number(page) || 1;
-  const itemsPerPage = 8; 
+  const itemsPerPage = 8;
 
   // Kamus terjemahan untuk Sidebar Katalog
   const t = {
     id: {
-      searchTitle: "Cari Produk",
-      catTitle: "Kategori Pilihan",
-      allProd: "Semua Produk",
-      food: "Makanan",
-      beverage: "Minuman",
-      reset: "Reset ✕",
-      noResultTitle: "Produk Tidak Ditemukan",
-      noResultDesc: "Maaf, tidak ada produk makanan atau minuman yang cocok dengan pencarian Anda.",
-      resetBtn: "Tampilkan Semua Produk",
+      searchTitle: 'Cari Produk',
+      catTitle: 'Kategori Pilihan',
+      allProd: 'Semua Produk',
+      food: 'Makanan',
+      beverage: 'Minuman',
+      reset: 'Reset ✕',
+      noResultTitle: 'Produk Tidak Ditemukan',
+      noResultDesc: 'Maaf, tidak ada produk makanan atau minuman yang cocok dengan pencarian Anda.',
+      resetBtn: 'Tampilkan Semua Produk',
     },
     en: {
-      searchTitle: "Search Product",
-      catTitle: "Categories",
-      allProd: "All Products",
-      food: "Food",
-      beverage: "Beverages",
-      reset: "Reset ✕",
-      noResultTitle: "Products Not Found",
-      noResultDesc: "Sorry, no food or beverage products match your search criteria.",
-      resetBtn: "Show All Products",
+      searchTitle: 'Search Product',
+      catTitle: 'Categories',
+      allProd: 'All Products',
+      food: 'Food',
+      beverage: 'Beverages',
+      reset: 'Reset ✕',
+      noResultTitle: 'Products Not Found',
+      noResultDesc: 'Sorry, no food or beverage products match your search criteria.',
+      resetBtn: 'Show All Products',
     },
-  }[lang];
+  }[lang] || {
+    searchTitle: 'Cari Produk',
+    catTitle: 'Kategori Pilihan',
+    allProd: 'Semua Produk',
+    food: 'Makanan',
+    beverage: 'Minuman',
+    reset: 'Reset ✕',
+    noResultTitle: 'Produk Tidak Ditemukan',
+    noResultDesc: 'Maaf, tidak ada produk makanan atau minuman yang cocok dengan pencarian Anda.',
+    resetBtn: 'Tampilkan Semua Produk',
+  };
 
   const categories = [
     { id: 'semua', label: t.allProd, count: allProducts.length },
-    { 
-      id: 'Makanan', 
-      label: t.food, 
-      count: allProducts.filter((p) => p.category?.trim().toLowerCase() === 'makanan').length 
+    {
+      id: 'Makanan',
+      label: t.food,
+      count: allProducts.filter((p) => p.category?.trim().toLowerCase() === 'makanan').length,
     },
-    { 
-      id: 'Minuman', 
-      label: t.beverage, 
-      count: allProducts.filter((p) => p.category?.trim().toLowerCase() === 'minuman').length 
+    {
+      id: 'Minuman',
+      label: t.beverage,
+      count: allProducts.filter((p) => p.category?.trim().toLowerCase() === 'minuman').length,
     },
   ];
 
@@ -92,10 +107,9 @@ export default function KatalogPage() {
       const cleanPriceNumber = rawPrice.replace(/[.,]/g, '');
 
       const matchName = name.includes(query);
-      const matchPrice = isNumericQuery && (
-        cleanPriceNumber === cleanQueryNumber || 
-        cleanPriceNumber.includes(cleanQueryNumber)
-      );
+      const matchPrice =
+        isNumericQuery &&
+        (cleanPriceNumber === cleanQueryNumber || cleanPriceNumber.includes(cleanQueryNumber));
 
       return matchName || matchPrice;
     });
@@ -106,7 +120,7 @@ export default function KatalogPage() {
   const startIndex = (currentPage - 1) * itemsPerPage;
   const paginatedProducts = filteredProducts.slice(startIndex, startIndex + itemsPerPage);
 
-  const isFiltered = query || (activeCategory && activeCategory !== 'semua');
+  const isFiltered = Boolean(query || (activeCategory && activeCategory !== 'semua'));
 
   if (loading) {
     return (
@@ -122,7 +136,6 @@ export default function KatalogPage() {
     <div className="min-h-screen bg-[#FDFBF7] text-[#2D241E] font-serif selection:bg-[#5c0f1c] selection:text-amber-100 antialiased pt-24 pb-24">
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 pt-6">
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-          
           {/* SIDEBAR KIRI */}
           <aside className="lg:col-span-1 space-y-6">
             <div className="bg-[#FAF7F0] p-5 rounded-2xl border border-amber-900/10 shadow-sm font-sans space-y-4">
@@ -131,7 +144,10 @@ export default function KatalogPage() {
                   {t.searchTitle}
                 </h3>
                 {isFiltered && (
-                  <Link href="/katalog" className="text-[11px] font-bold text-[#5c0f1c] hover:underline uppercase tracking-wider">
+                  <Link
+                    href="/katalog"
+                    className="text-[11px] font-bold text-[#5c0f1c] hover:underline uppercase tracking-wider"
+                  >
                     {t.reset}
                   </Link>
                 )}
@@ -149,7 +165,7 @@ export default function KatalogPage() {
                   return (
                     <li key={cat.id}>
                       <Link
-                        href={`/katalog?category=${encodeURIComponent(cat.id)}${search ? `&search=${search}` : ''}`}
+                        href={`/katalog?category=${encodeURIComponent(cat.id)}${search ? `&search=${encodeURIComponent(search)}` : ''}`}
                         className={`flex items-center justify-between px-3.5 py-2.5 rounded-xl transition-all duration-300 ${
                           isCatActive
                             ? 'bg-[#3b0912] text-amber-200 font-bold shadow-md scale-[1.02]'
@@ -157,7 +173,11 @@ export default function KatalogPage() {
                         }`}
                       >
                         <span className="truncate mr-2">{cat.label}</span>
-                        <span className={`text-[10px] px-2 py-0.5 rounded-full shrink-0 ${isCatActive ? 'bg-amber-400/20 text-amber-300' : 'bg-gray-200 text-gray-600'}`}>
+                        <span
+                          className={`text-[10px] px-2 py-0.5 rounded-full shrink-0 ${
+                            isCatActive ? 'bg-amber-400/20 text-amber-300' : 'bg-gray-200 text-gray-600'
+                          }`}
+                        >
                           {cat.count}
                         </span>
                       </Link>
@@ -175,7 +195,10 @@ export default function KatalogPage() {
                 <h3 className="text-lg font-serif font-bold text-[#3b0912]">{t.noResultTitle}</h3>
                 <p className="text-xs text-gray-600 max-w-md mx-auto">{t.noResultDesc}</p>
                 <div>
-                  <Link href="/katalog" className="bg-[#3b0912] hover:bg-[#5c0f1c] text-amber-200 font-bold px-6 py-3 rounded-xl text-xs uppercase tracking-widest inline-block shadow-md">
+                  <Link
+                    href="/katalog"
+                    className="bg-[#3b0912] hover:bg-[#5c0f1c] text-amber-200 font-bold px-6 py-3 rounded-xl text-xs uppercase tracking-widest inline-block shadow-md"
+                  >
                     {t.resetBtn}
                   </Link>
                 </div>
@@ -195,7 +218,7 @@ export default function KatalogPage() {
               <div className="flex items-center justify-center gap-2 pt-10 font-sans">
                 {currentPage > 1 && (
                   <Link
-                    href={`/katalog?category=${encodeURIComponent(activeCategory)}${search ? `&search=${search}` : ''}&page=${currentPage - 1}`}
+                    href={`/katalog?category=${encodeURIComponent(activeCategory)}${search ? `&search=${encodeURIComponent(search)}` : ''}&page=${currentPage - 1}`}
                     className="px-4 py-2.5 rounded-xl bg-[#FAF7F0] border border-amber-900/20 text-xs font-bold text-gray-700 hover:bg-[#3b0912] hover:text-white transition-all shadow-sm"
                   >
                     ← Prev
@@ -207,7 +230,7 @@ export default function KatalogPage() {
                   return (
                     <Link
                       key={pageNum}
-                      href={`/katalog?category=${encodeURIComponent(activeCategory)}${search ? `&search=${search}` : ''}&page=${pageNum}`}
+                      href={`/katalog?category=${encodeURIComponent(activeCategory)}${search ? `&search=${encodeURIComponent(search)}` : ''}&page=${pageNum}`}
                       className={`w-10 h-10 flex items-center justify-center rounded-xl text-xs font-bold transition-all shadow-sm ${
                         isPageActive
                           ? 'bg-[#3b0912] text-amber-300 border border-[#3b0912] scale-105 shadow-md'
@@ -221,7 +244,7 @@ export default function KatalogPage() {
 
                 {currentPage < totalPages && (
                   <Link
-                    href={`/katalog?category=${encodeURIComponent(activeCategory)}${search ? `&search=${search}` : ''}&page=${currentPage + 1}`}
+                    href={`/katalog?category=${encodeURIComponent(activeCategory)}${search ? `&search=${encodeURIComponent(search)}` : ''}&page=${currentPage + 1}`}
                     className="px-4 py-2.5 rounded-xl bg-[#FAF7F0] border border-amber-900/20 text-xs font-bold text-gray-700 hover:bg-[#3b0912] hover:text-white transition-all shadow-sm"
                   >
                     Next →
@@ -230,9 +253,22 @@ export default function KatalogPage() {
               </div>
             )}
           </div>
-
         </div>
       </section>
     </div>
+  );
+}
+
+export default function KatalogPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center bg-[#FDFBF7] font-sans">
+          <p className="text-xs font-bold text-gray-500 animate-pulse">Memuat Katalog...</p>
+        </div>
+      }
+    >
+      <KatalogContent />
+    </Suspense>
   );
 }
