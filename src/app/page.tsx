@@ -29,25 +29,25 @@ const DEFAULTS = {
     heroDesc:
       "Mengangkat kelezatan resep pusaka leluhur tanah Blambangan, disajikan khusus dalam balutan kualitas artisan yang renyah dan penuh kenangan.",
     quoteText:
-      "Kualitas sejati tidak pernah berkompromi pada rasa. Setiap gigitan adalah cerita tentang tradisi dan ketulusan.",
-    quoteAuthor: "— SURYA SNACK ARTISAN KITCHEN",
+      "Resep boleh diwariskan, namun ketulusan rasa adalah rahasia yang tidak pernah berubah sejak 1998.",
+    quoteAuthor: "— SURYA SNACK",
     heritageTitle: "Menjaga Tradisi, Memahat Cita Rasa",
     heritageSubtitle: "✦ Sejarah & Dedikasi ✦",
     heritageDesc:
       "Berawal dari dapur rumahan di Banyuwangi, Surya Snack tumbuh dengan memegang teguh prinsip keaslian resep leluhur.",
   },
   en: {
-    storeLabel: "Authentic Banyuwangi Souvenirs",
-    heroTitle: "Legendary Authentic Taste of Banyuwangi",
+    storeLabel: "Authentic Banyuwangi Delicacies",
+    heroTitle: "Timeless Taste of Banyuwangi",
     heroDesc:
-      "Elevating the delicious heritage recipes of Blambangan, specially served in an artisan quality that is crispy and full of memories.",
+      "Bringing heritage recipes from Blambangan to life with artisan quality that is crispy and full of nostalgia.",
     quoteText:
-      "True quality never compromises on taste. Every bite is a story of tradition and sincerity.",
-    quoteAuthor: "— SURYA SNACK ARTISAN KITCHEN",
-    heritageTitle: "Preserving Tradition, Sculpting Flavor",
-    heritageSubtitle: "✦ History & Dedication ✦",
+      "Recipes may be passed down, yet sincerity of taste is the secret that has never changed since 1998.",
+    quoteAuthor: "— SURYA SNACK",
+    heritageTitle: "Honoring Tradition, Crafting Flavor",
+    heritageSubtitle: "✦ Heritage & Dedication ✦",
     heritageDesc:
-      "Starting from a home kitchen in Banyuwangi, Surya Snack grew by strictly holding onto the principle of ancestral recipe authenticity.",
+      "Starting from a home kitchen in Banyuwangi, Surya Snack grew by holding firmly to the authenticity of ancestral recipes.",
   },
 };
 
@@ -212,6 +212,12 @@ export default function HomePage() {
   }, []);
 
   const resolvedHeritageUrl = normalizeImageUrl(heritage.image_url);
+  const hasHeritageSplit =
+    heritage.title.includes(',') ||
+    heritage.title.includes('–') ||
+    heritage.title.includes('Tradisi') ||
+    heritage.title.includes('Tradition');
+  const heritageParts = heritage.title.split(/[,–]/);
 
   return (
     <div className="min-h-screen bg-[#FDFBF7] text-[#2D241E] font-serif selection:bg-[#5c0f1c] selection:text-amber-100 antialiased overflow-x-hidden">
@@ -287,14 +293,14 @@ export default function HomePage() {
       <section className="py-20 sm:py-28 max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 space-y-12 overflow-hidden">
         <div className="text-center max-w-2xl mx-auto space-y-3">
           <span className="text-[#5c0f1c] text-xs font-bold tracking-[0.3em] uppercase font-sans">
-            ✦ {lang === 'en' ? 'Featured Collection' : 'Koleksi Pilihan'} ✦
+            ✦ {lang === 'en' ? 'Curated Selection' : 'Koleksi Pilihan'} ✦
           </span>
           <h2 className="text-3xl sm:text-5xl font-serif font-bold text-[#3b0912] tracking-tight">
-            {lang === 'en' ? 'Our Featured Products' : 'Produk Unggulan Kami'}
+            {lang === 'en' ? 'Featured Delicacies' : 'Produk Unggulan Kami'}
           </h2>
           <p className="text-gray-600 font-sans text-sm">
-            {lang === 'en' 
-              ? 'Best-selling snacks always sought after by traditional culinary lovers. (Swipe sideways to view more)'
+            {lang === 'en'
+              ? 'Best-selling treats loved by traditional culinary fans. (Swipe sideways to see more)'
               : 'Camilan terlaris yang selalu dirindukan para penikmat kuliner tradisional. (Geser ke samping untuk melihat lainnya)'}
           </p>
           <div className="w-24 h-px bg-amber-500/50 mx-auto pt-2" />
@@ -302,7 +308,7 @@ export default function HomePage() {
 
         {products.length === 0 ? (
           <div className="text-center py-16 text-gray-500 font-sans text-sm bg-white rounded-xl border border-amber-900/10 shadow-xs">
-            {lang === 'en' ? 'No featured products found in database.' : 'Belum ada produk unggulan di database.'}
+            {lang === 'en' ? 'No featured products found in the database.' : 'Belum ada produk unggulan di database.'}
           </div>
         ) : (
           <div className="flex overflow-x-auto gap-6 pb-6 pt-2 px-2 snap-x snap-mandatory scrollbar-thin scrollbar-thumb-amber-700 scrollbar-track-amber-100">
@@ -332,10 +338,10 @@ export default function HomePage() {
               {heritage.subtitle}
             </span>
             <h2 className="text-3xl sm:text-5xl font-serif font-bold text-white leading-tight">
-              {heritage.title.includes(',') || heritage.title.includes('Tradisi') ? (
+              {hasHeritageSplit && heritageParts.length > 1 ? (
                 <>
-                  {heritage.title.split(/[,–]/)[0]}, <br />
-                  <span className="text-amber-300 italic font-normal">{heritage.title.split(/[,–]/)[1] || ''}</span>
+                  {heritageParts[0]}, <br />
+                  <span className="text-amber-300 italic font-normal">{heritageParts[1].trim()}</span>
                 </>
               ) : (
                 heritage.title
