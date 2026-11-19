@@ -11,6 +11,8 @@ interface LanguageContextType {
   t: (key: string) => string;
 }
 
+const STORAGE_KEY = "surya_lang";
+
 const translations: Record<Language, Record<string, string>> = {
   id: {
     // Navbar
@@ -18,7 +20,7 @@ const translations: Record<Language, Record<string, string>> = {
     navProducts: "Produk",
     navAbout: "Tentang",
     navContact: "Kontak",
-    
+
     // Beranda (Home)
     estLabel: "Oleh - Oleh Khas Banyuwangi",
     heroTitle: "Cita Rasa Legendaris Khas Banyuwangi",
@@ -91,7 +93,7 @@ const translations: Record<Language, Record<string, string>> = {
     navProducts: "Products",
     navAbout: "About",
     navContact: "Contact",
-    
+
     // Home
     estLabel: "Authentic Banyuwangi Souvenirs",
     heroTitle: "Legendary Authentic Taste of Banyuwangi",
@@ -166,15 +168,23 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
   const [lang, setLangState] = useState<Language>("id");
 
   useEffect(() => {
-    const savedLang = localStorage.getItem("surya_lang") as Language;
-    if (savedLang && (savedLang === "id" || savedLang === "en")) {
-      setLangState(savedLang);
+    try {
+      const savedLang = window.localStorage.getItem(STORAGE_KEY) as Language | null;
+      if (savedLang === "id" || savedLang === "en") {
+        setLangState(savedLang);
+      }
+    } catch {
+      // Abaikan jika akses localStorage dibatasi browser
     }
   }, []);
 
   const setLang = (newLang: Language) => {
     setLangState(newLang);
-    localStorage.setItem("surya_lang", newLang);
+    try {
+      window.localStorage.setItem(STORAGE_KEY, newLang);
+    } catch {
+      // Abaikan jika akses localStorage dibatasi browser
+    }
   };
 
   const t = (key: string): string => {
