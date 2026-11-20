@@ -11,6 +11,7 @@ import {
   faStore,
   faBook,
   faAddressBook,
+  faGear,
   faGlobe,
   faRightFromBracket,
   faBars,
@@ -40,13 +41,13 @@ export default function AdminLayout({
   const menuItems = [
     { href: "/admin/dashboard", label: "Beranda", icon: faHouse },
     { href: "/admin/produk", label: "Kelola Produk", icon: faStore },
-    { href: "/admin/tentang", label: "Kelola Tentang", icon: faBook },
     { href: "/admin/kontak", label: "Kontak", icon: faAddressBook },
+    { href: "/admin/pengaturan", label: "Pengaturan", icon: faGear },
   ];
 
   return (
     <div className="min-h-screen bg-gray-50 text-slate-800 flex font-sans">
-      
+
       {/* ===== SIDEBAR KIRI ===== */}
       <aside
         className={`fixed inset-y-0 left-0 z-50 bg-linear-to-b from-[#3b0912] via-[#5c0f1c] to-[#26050b] border-r border-[#7a1425]/40 flex flex-col text-slate-100 transition-all duration-300 md:sticky md:top-0 md:h-screen shrink-0 shadow-2xl ${
@@ -121,6 +122,7 @@ export default function AdminLayout({
               <Link
                 key={item.href}
                 href={item.href}
+                onClick={() => setIsSidebarOpen(false)}
                 title={isCollapsed ? item.label : ""}
                 className={`flex items-center gap-3.5 px-4 py-3.5 rounded-xl text-sm font-bold transition group relative ${
                   active
@@ -163,7 +165,7 @@ export default function AdminLayout({
 
       {/* ===== KONTEN UTAMA DI KANAN ===== */}
       <div className="flex-1 flex flex-col min-w-0">
-        
+
         {/* Top Navbar Mobile Trigger */}
         <header className="md:hidden bg-[#3b0912] border-b border-[#7a1425]/40 p-4 flex items-center justify-between text-white shadow-md">
           <div className="flex items-center gap-2.5">

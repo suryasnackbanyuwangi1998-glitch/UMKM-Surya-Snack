@@ -3,7 +3,6 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
@@ -15,19 +14,61 @@ import {
 import { faWhatsapp, faInstagram } from '@fortawesome/free-brands-svg-icons';
 import { supabase } from '@/lib/supabase';
 import { useStoreContact } from '@/context/ContactProvider';
-import LanguageToggle from '@/components/LanguageToggle'; // <-- Impor tombol pengalih bahasa (ID/EN)
-import { useLanguage } from '@/context/LanguageContext'; // <-- Impor hook bahasa
+import LanguageToggle from '@/components/LanguageToggle';
+import { useLanguage } from '@/context/LanguageContext';
+
+const DEFAULT_LOGO_URL = '/logo.jpeg';
+
+function extractDriveId(url: string): string | null {
+  const lh3Match = url.match(/lh3\.googleusercontent\.com\/d\/([a-zA-Z0-9_-]+)/);
+  if (lh3Match?.[1]) return lh3Match[1];
+
+  const fileMatch = url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
+  if (fileMatch?.[1]) return fileMatch[1];
+
+  const queryMatch = url.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+  if (
+    (url.includes('drive.google.com') || url.includes('docs.google.com')) &&
+    queryMatch?.[1]
+  ) {
+    return queryMatch[1];
+  }
+
+  return null;
+}
+
+function normalizeLogoUrl(url?: string | null): string {
+  if (!url || typeof url !== 'string') return DEFAULT_LOGO_URL;
+  const trimmed = url.trim();
+  if (!trimmed) return DEFAULT_LOGO_URL;
+
+  const driveId = extractDriveId(trimmed);
+  if (driveId) {
+    return `https://lh3.googleusercontent.com/d/${driveId}`;
+  }
+
+  if (
+    trimmed.startsWith('http://') ||
+    trimmed.startsWith('https://') ||
+    trimmed.startsWith('/')
+  ) {
+    return trimmed;
+  }
+
+  return DEFAULT_LOGO_URL;
+}
 
 export default function Navbar(): React.ReactElement {
-  const { getWaLink, instagram } = useStoreContact();
-  const { t } = useLanguage(); // <-- Ambil fungsi penerjemah t()
+  const { getWaLink } = useStoreContact();
+  const { t } = useLanguage();
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const pathname = usePathname();
 
-  // State untuk menyimpan informasi toko dari database Supabase
   const [storeName, setStoreName] = useState('Surya Snack');
   const [storeLabel, setStoreLabel] = useState('Khas Banyuwangi');
+  const [storeLogo, setStoreLogo] = useState(DEFAULT_LOGO_URL);
+  const [rawLogoSource, setRawLogoSource] = useState('');
 
   const isHomePage = pathname === '/';
 
@@ -38,18 +79,29 @@ export default function Navbar(): React.ReactElement {
     return pathname.startsWith(path);
   };
 
-  // Mengambil data informasi toko dari database Supabase saat komponen dimuat
   useEffect(() => {
+    let isMounted = true;
+
+    const applyStoreData = (data: Record<string, any> | null | undefined) => {
+      if (!data || !isMounted) return;
+      if (data.store_name) setStoreName(data.store_name);
+      if (data.store_label) setStoreLabel(data.store_label);
+      const rawLogo =
+        data.store_logo_url || data.logo_url || data.brand_logo_url || '';
+      setRawLogoSource(rawLogo);
+      setStoreLogo(normalizeLogoUrl(rawLogo));
+    };
+
     async function fetchStoreInfo() {
       try {
         const { data, error } = await supabase
           .from('store_settings')
           .select('*')
-          .single();
+          .eq('id', 'main')
+          .maybeSingle();
 
-        if (data && !error) {
-          if (data.store_name) setStoreName(data.store_name);
-          if (data.store_label) setStoreLabel(data.store_label);
+        if (!error && data) {
+          applyStoreData(data);
         }
       } catch (err) {
         console.error('Gagal memuat informasi toko:', err);
@@ -57,6 +109,27 @@ export default function Navbar(): React.ReactElement {
     }
 
     fetchStoreInfo();
+
+    const channel = supabase
+      .channel('navbar-store-settings')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'store_settings',
+          filter: 'id=eq.main',
+        },
+        (payload) => {
+          applyStoreData(payload.new as Record<string, any>);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      isMounted = false;
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   useEffect(() => {
@@ -71,13 +144,31 @@ export default function Navbar(): React.ReactElement {
     setIsMobileMenuOpen(false);
   }, [pathname]);
 
-  // Menggunakan fungsi t() agar label menu berubah dinamis sesuai bahasa (ID / EN)
   const menuItems = [
     { href: '/', label: t('navHome') || 'Beranda' },
     { href: '/katalog', label: t('navProducts') || 'Produk' },
     { href: '/tentang', label: t('navAbout') || 'Tentang' },
     { href: '/kontak', label: t('navContact') || 'Kontak' },
   ];
+
+  const handleLogoError = (e: React.SyntheticEvent<HTMLImageElement>) => {
+    const img = e.currentTarget;
+    const driveId = extractDriveId(rawLogoSource || img.src);
+    const thumbUrl = driveId
+      ? `https://drive.google.com/thumbnail?id=${driveId}&sz=w512`
+      : '';
+
+    if (thumbUrl && !img.dataset.triedThumb) {
+      img.dataset.triedThumb = 'true';
+      img.src = thumbUrl;
+      return;
+    }
+
+    console.warn('Logo navbar gagal dimuat, kembali ke default:', img.src);
+    if (img.src !== window.location.origin + DEFAULT_LOGO_URL) {
+      img.src = DEFAULT_LOGO_URL;
+    }
+  };
 
   return (
     <>
@@ -89,17 +180,15 @@ export default function Navbar(): React.ReactElement {
         }`}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 flex items-center justify-between">
-          
           {/* Logo Brand & Sinkronisasi Nama Toko */}
           <Link href="/" className="group flex items-center gap-3 hover:opacity-95 transition">
             <div className="relative shrink-0">
-              <Image
-                src="/logo.jpeg"
-                alt="Surya Snack Logo"
-                width={44}
-                height={44}
-                className="w-10 h-10 sm:w-11 sm:h-11 object-cover rounded-xl border border-gray-200/50 ring-2 ring-amber-400/30 shadow-sm transition-transform duration-300 group-hover:scale-105"
-                priority
+              <img
+                src={storeLogo}
+                alt={`${storeName} Logo`}
+                referrerPolicy="no-referrer"
+                onError={handleLogoError}
+                className="w-10 h-10 sm:w-11 sm:h-11 object-cover rounded-xl border border-gray-200/50 ring-2 ring-amber-400/30 shadow-sm transition-transform duration-300 group-hover:scale-105 bg-[#FAF7F0]"
               />
               <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-emerald-500 rounded-full border-2 border-white shadow-sm animate-pulse" />
             </div>
@@ -152,7 +241,6 @@ export default function Navbar(): React.ReactElement {
               })}
             </nav>
 
-            {/* Tombol Pengalih Bahasa ID / EN di Navbar Desktop */}
             <div className="pl-2 border-l border-gray-300/40">
               <LanguageToggle />
             </div>
@@ -173,7 +261,6 @@ export default function Navbar(): React.ReactElement {
               <FontAwesomeIcon icon={faBars} className="w-4 h-4" />
             </button>
           </div>
-
         </div>
       </header>
 
@@ -193,12 +280,12 @@ export default function Navbar(): React.ReactElement {
       >
         <div className="relative bg-[#3b0912] p-6 text-white shrink-0 overflow-hidden shadow-md flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <Image
-              src="/logo.jpeg"
-              alt="Surya Snack Logo"
-              width={40}
-              height={40}
-              className="w-10 h-10 object-cover rounded-xl border-2 border-amber-400 shadow-md"
+            <img
+              src={storeLogo}
+              alt={`${storeName} Logo`}
+              referrerPolicy="no-referrer"
+              onError={handleLogoError}
+              className="w-10 h-10 object-cover rounded-xl border-2 border-amber-400 shadow-md bg-[#FAF7F0]"
             />
             <div className="flex flex-col leading-tight">
               <span className="text-base font-black tracking-wide text-white font-serif">
@@ -254,7 +341,7 @@ export default function Navbar(): React.ReactElement {
               <span>Pusat Oleh-Oleh Banyuwangi</span>
             </div>
             <p className="text-[11px] text-gray-600 leading-relaxed">
-              Siap melayani pemesanan langsung & pengiriman ke seluruh Indonesia.
+              Siap melayani pemesanan langsung &amp; pengiriman ke seluruh Indonesia.
             </p>
             <div className="flex gap-2 pt-1">
               <a

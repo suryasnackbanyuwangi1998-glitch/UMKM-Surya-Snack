@@ -1,76 +1,51 @@
+// src/app/api/upload/route.js
 import { NextResponse } from 'next/server';
-import { google } from 'googleapis';
-import { Readable } from 'stream';
+import { uploadFileToDrive } from '@/lib/googleDrive';
+
+export const dynamic = 'force-dynamic';
 
 export async function POST(request) {
   try {
     const formData = await request.formData();
-    const file = formData.get('file');
+    const file = formData.get('file') || formData.get('imageFile');
+    const folderName =
+      formData.get('folder') ||
+      formData.get('section') ||
+      'pengaturan';
 
-    if (!file) {
-      return NextResponse.json({ success: false, error: 'File tidak ditemukan' }, { status: 400 });
+    if (!file || typeof file !== 'object') {
+      return NextResponse.json(
+        { success: false, error: 'File tidak ditemukan' },
+        { status: 400 }
+      );
     }
 
-    // 1. Inisialisasi OAuth2 Client
-    const oauth2Client = new google.auth.OAuth2(
-      process.env.GOOGLE_CLIENT_ID,
-      process.env.GOOGLE_CLIENT_SECRET
-    );
-
-    oauth2Client.setCredentials({
-      refresh_token: process.env.GOOGLE_REFRESH_TOKEN ? process.env.GOOGLE_REFRESH_TOKEN.trim() : '',
-    });
-
-    const drive = google.drive({ version: 'v3', auth: oauth2Client });
-
-    // 2. Konversi file ke buffer stream
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
-    const stream = new Readable();
-    stream.push(buffer);
-    stream.push(null);
+    const safeFolder = String(folderName).trim() || 'pengaturan';
+    const fileName = `${safeFolder}-${Date.now()}-${file.name}`;
 
-    // 3. Upload file ke Google Drive
-    const response = await drive.files.create({
-      requestBody: {
-        name: `${Date.now()}-${file.name}`,
-        parents: [process.env.GOOGLE_FOLDER_ID],
-      },
-      media: {
-        mimeType: file.type,
-        body: stream,
-      },
-      fields: 'id',
-    });
+    const imageUrl = await uploadFileToDrive(
+      buffer,
+      fileName,
+      file.type || 'image/jpeg',
+      safeFolder
+    );
 
-    const fileId = response.data.id;
-
-    // 4. Berikan izin publik (Anyone with the link can view)
-    try {
-      await drive.permissions.create({
-        fileId: fileId,
-        requestBody: {
-          role: 'reader',
-          type: 'anyone',
-        },
-      });
-    } catch (permError) {
-      console.error('Gagal mengatur izin publik:', permError);
+    if (!imageUrl) {
+      throw new Error('Gagal mendapatkan URL dari Google Drive');
     }
-
-    // 5. Gunakan format CDN Googleusercontent yang dijamin tampil di tag <img> website
-    const directImageUrl = `https://lh3.googleusercontent.com/d/${fileId}`;
 
     return NextResponse.json({
       success: true,
-      imageUrl: directImageUrl,
+      imageUrl,
+      folder: safeFolder,
     });
-
   } catch (error) {
     console.error('Error Google Drive Upload:', error);
     return NextResponse.json(
-      { success: false, error: error.message },
+      { success: false, error: error.message || 'Gagal mengunggah ke Google Drive' },
       { status: 500 }
     );
   }
-} 
+}

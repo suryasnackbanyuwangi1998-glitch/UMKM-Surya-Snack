@@ -8,7 +8,103 @@ import ProductCard from '@/components/ProductCard';
 import { getAllProducts } from '@/lib/products';
 import KatalogSearchInput from '@/components/KatalogSearchInput';
 import { useLanguage } from '@/context/LanguageContext';
+import { supabase } from '@/lib/supabase';
 import type { Product } from '@/types';
+
+const DEFAULT_LABELS = {
+  id: {
+    searchTitle: 'Cari Produk',
+    catTitle: 'Kategori Pilihan',
+    allProd: 'Semua Produk',
+    food: 'Makanan',
+    beverage: 'Minuman',
+    reset: 'Reset ✕',
+    noResultTitle: 'Produk Tidak Ditemukan',
+    noResultDesc:
+      'Maaf, tidak ada produk makanan atau minuman yang cocok dengan pencarian Anda.',
+    resetBtn: 'Tampilkan Semua Produk',
+  },
+  en: {
+    searchTitle: 'Search Product',
+    catTitle: 'Categories',
+    allProd: 'All Products',
+    food: 'Food',
+    beverage: 'Beverages',
+    reset: 'Reset ✕',
+    noResultTitle: 'Products Not Found',
+    noResultDesc:
+      'Sorry, no food or beverage products match your search criteria.',
+    resetBtn: 'Show All Products',
+  },
+};
+
+function mergeCatalogLabels(settings: Record<string, any> | null | undefined) {
+  if (!settings) return DEFAULT_LABELS;
+
+  const pick = (dbVal: any, fallback: string) =>
+    typeof dbVal === 'string' && dbVal.trim() !== '' ? dbVal.trim() : fallback;
+
+  return {
+    id: {
+      searchTitle: pick(
+        settings.catalog_search_title,
+        DEFAULT_LABELS.id.searchTitle
+      ),
+      catTitle: pick(
+        settings.catalog_category_title,
+        DEFAULT_LABELS.id.catTitle
+      ),
+      allProd: pick(settings.catalog_all_label, DEFAULT_LABELS.id.allProd),
+      food: pick(settings.catalog_food_label, DEFAULT_LABELS.id.food),
+      beverage: pick(
+        settings.catalog_beverage_label,
+        DEFAULT_LABELS.id.beverage
+      ),
+      reset: pick(settings.catalog_reset_label, DEFAULT_LABELS.id.reset),
+      noResultTitle: pick(
+        settings.catalog_empty_title,
+        DEFAULT_LABELS.id.noResultTitle
+      ),
+      noResultDesc: pick(
+        settings.catalog_empty_desc,
+        DEFAULT_LABELS.id.noResultDesc
+      ),
+      resetBtn: pick(settings.catalog_empty_btn, DEFAULT_LABELS.id.resetBtn),
+    },
+    en: {
+      searchTitle: pick(
+        settings.catalog_search_title_en,
+        DEFAULT_LABELS.en.searchTitle
+      ),
+      catTitle: pick(
+        settings.catalog_category_title_en,
+        DEFAULT_LABELS.en.catTitle
+      ),
+      allProd: pick(
+        settings.catalog_all_label_en,
+        DEFAULT_LABELS.en.allProd
+      ),
+      food: pick(settings.catalog_food_label_en, DEFAULT_LABELS.en.food),
+      beverage: pick(
+        settings.catalog_beverage_label_en,
+        DEFAULT_LABELS.en.beverage
+      ),
+      reset: pick(settings.catalog_reset_label_en, DEFAULT_LABELS.en.reset),
+      noResultTitle: pick(
+        settings.catalog_empty_title_en,
+        DEFAULT_LABELS.en.noResultTitle
+      ),
+      noResultDesc: pick(
+        settings.catalog_empty_desc_en,
+        DEFAULT_LABELS.en.noResultDesc
+      ),
+      resetBtn: pick(
+        settings.catalog_empty_btn_en,
+        DEFAULT_LABELS.en.resetBtn
+      ),
+    },
+  };
+}
 
 function KatalogContent() {
   const searchParams = useSearchParams();
@@ -18,20 +114,71 @@ function KatalogContent() {
 
   const { lang } = useLanguage();
   const [allProducts, setAllProducts] = useState<Product[]>([]);
+  const [catalogLabels, setCatalogLabels] = useState(DEFAULT_LABELS);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    async function fetchProducts() {
+    let isMounted = true;
+
+    async function fetchCatalogData() {
       try {
-        const data = await getAllProducts();
-        setAllProducts(data || []);
+        const [productsRes, settingsRes] = await Promise.allSettled([
+          getAllProducts(),
+          supabase
+            .from('store_settings')
+            .select('*')
+            .eq('id', 'main')
+            .maybeSingle(),
+        ]);
+
+        if (!isMounted) return;
+
+        if (productsRes.status === 'fulfilled') {
+          setAllProducts(productsRes.value || []);
+        } else {
+          console.error('Gagal memuat produk katalog:', productsRes.reason);
+        }
+
+        if (
+          settingsRes.status === 'fulfilled' &&
+          !settingsRes.value.error &&
+          settingsRes.value.data
+        ) {
+          setCatalogLabels(mergeCatalogLabels(settingsRes.value.data));
+        }
       } catch (err) {
-        console.error('Gagal memuat produk katalog:', err);
+        console.error('Gagal memuat data katalog:', err);
       } finally {
-        setLoading(false);
+        if (isMounted) {
+          setLoading(false);
+        }
       }
     }
-    fetchProducts();
+
+    fetchCatalogData();
+
+    const channel = supabase
+      .channel('katalog-store-settings')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'store_settings',
+          filter: 'id=eq.main',
+        },
+        (payload) => {
+          if (isMounted && payload.new) {
+            setCatalogLabels(mergeCatalogLabels(payload.new as Record<string, any>));
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      isMounted = false;
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   const query = search?.toLowerCase().trim() || '';
@@ -39,53 +186,23 @@ function KatalogContent() {
   const currentPage = Number(page) || 1;
   const itemsPerPage = 8;
 
-  // Kamus terjemahan untuk Sidebar Katalog
-  const t = {
-    id: {
-      searchTitle: 'Cari Produk',
-      catTitle: 'Kategori Pilihan',
-      allProd: 'Semua Produk',
-      food: 'Makanan',
-      beverage: 'Minuman',
-      reset: 'Reset ✕',
-      noResultTitle: 'Produk Tidak Ditemukan',
-      noResultDesc: 'Maaf, tidak ada produk makanan atau minuman yang cocok dengan pencarian Anda.',
-      resetBtn: 'Tampilkan Semua Produk',
-    },
-    en: {
-      searchTitle: 'Search Product',
-      catTitle: 'Categories',
-      allProd: 'All Products',
-      food: 'Food',
-      beverage: 'Beverages',
-      reset: 'Reset ✕',
-      noResultTitle: 'Products Not Found',
-      noResultDesc: 'Sorry, no food or beverage products match your search criteria.',
-      resetBtn: 'Show All Products',
-    },
-  }[lang] || {
-    searchTitle: 'Cari Produk',
-    catTitle: 'Kategori Pilihan',
-    allProd: 'Semua Produk',
-    food: 'Makanan',
-    beverage: 'Minuman',
-    reset: 'Reset ✕',
-    noResultTitle: 'Produk Tidak Ditemukan',
-    noResultDesc: 'Maaf, tidak ada produk makanan atau minuman yang cocok dengan pencarian Anda.',
-    resetBtn: 'Tampilkan Semua Produk',
-  };
+  const t = catalogLabels[lang] || catalogLabels.id;
 
   const categories = [
     { id: 'semua', label: t.allProd, count: allProducts.length },
     {
       id: 'Makanan',
       label: t.food,
-      count: allProducts.filter((p) => p.category?.trim().toLowerCase() === 'makanan').length,
+      count: allProducts.filter(
+        (p) => p.category?.trim().toLowerCase() === 'makanan'
+      ).length,
     },
     {
       id: 'Minuman',
       label: t.beverage,
-      count: allProducts.filter((p) => p.category?.trim().toLowerCase() === 'minuman').length,
+      count: allProducts.filter(
+        (p) => p.category?.trim().toLowerCase() === 'minuman'
+      ).length,
     },
   ];
 
@@ -99,17 +216,20 @@ function KatalogContent() {
 
   if (query) {
     const cleanQueryNumber = query.replace(/[.,]/g, '');
-    const isNumericQuery = !isNaN(Number(cleanQueryNumber)) && cleanQueryNumber !== '';
+    const isNumericQuery =
+      !isNaN(Number(cleanQueryNumber)) && cleanQueryNumber !== '';
 
     filteredProducts = filteredProducts.filter((p) => {
       const name = p.name ? p.name.toLowerCase() : '';
-      const rawPrice = p.price !== undefined && p.price !== null ? String(p.price) : '';
+      const rawPrice =
+        p.price !== undefined && p.price !== null ? String(p.price) : '';
       const cleanPriceNumber = rawPrice.replace(/[.,]/g, '');
 
       const matchName = name.includes(query);
       const matchPrice =
         isNumericQuery &&
-        (cleanPriceNumber === cleanQueryNumber || cleanPriceNumber.includes(cleanQueryNumber));
+        (cleanPriceNumber === cleanQueryNumber ||
+          cleanPriceNumber.includes(cleanQueryNumber));
 
       return matchName || matchPrice;
     });
@@ -118,9 +238,14 @@ function KatalogContent() {
   const totalProducts = filteredProducts.length;
   const totalPages = Math.ceil(totalProducts / itemsPerPage) || 1;
   const startIndex = (currentPage - 1) * itemsPerPage;
-  const paginatedProducts = filteredProducts.slice(startIndex, startIndex + itemsPerPage);
+  const paginatedProducts = filteredProducts.slice(
+    startIndex,
+    startIndex + itemsPerPage
+  );
 
-  const isFiltered = Boolean(query || (activeCategory && activeCategory !== 'semua'));
+  const isFiltered = Boolean(
+    query || (activeCategory && activeCategory !== 'semua')
+  );
 
   if (loading) {
     return (
@@ -161,7 +286,8 @@ function KatalogContent() {
               </h3>
               <ul className="space-y-1.5 text-xs max-h-100 overflow-y-auto pr-1">
                 {categories.map((cat) => {
-                  const isCatActive = activeCategory.toLowerCase() === cat.id.toLowerCase();
+                  const isCatActive =
+                    activeCategory.toLowerCase() === cat.id.toLowerCase();
                   return (
                     <li key={cat.id}>
                       <Link
@@ -175,7 +301,9 @@ function KatalogContent() {
                         <span className="truncate mr-2">{cat.label}</span>
                         <span
                           className={`text-[10px] px-2 py-0.5 rounded-full shrink-0 ${
-                            isCatActive ? 'bg-amber-400/20 text-amber-300' : 'bg-gray-200 text-gray-600'
+                            isCatActive
+                              ? 'bg-amber-400/20 text-amber-300'
+                              : 'bg-gray-200 text-gray-600'
                           }`}
                         >
                           {cat.count}
@@ -192,8 +320,12 @@ function KatalogContent() {
           <div className="lg:col-span-3 space-y-6">
             {paginatedProducts.length === 0 ? (
               <div className="bg-[#FAF7F0] rounded-3xl p-12 text-center border-2 border-dashed border-amber-900/25 space-y-4 font-sans shadow-sm">
-                <h3 className="text-lg font-serif font-bold text-[#3b0912]">{t.noResultTitle}</h3>
-                <p className="text-xs text-gray-600 max-w-md mx-auto">{t.noResultDesc}</p>
+                <h3 className="text-lg font-serif font-bold text-[#3b0912]">
+                  {t.noResultTitle}
+                </h3>
+                <p className="text-xs text-gray-600 max-w-md mx-auto">
+                  {t.noResultDesc}
+                </p>
                 <div>
                   <Link
                     href="/katalog"
@@ -206,7 +338,10 @@ function KatalogContent() {
             ) : (
               <div className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
                 {paginatedProducts.map((product) => (
-                  <div key={product.id} className="transition-all duration-500 hover:-translate-y-1.5">
+                  <div
+                    key={product.id}
+                    className="transition-all duration-500 hover:-translate-y-1.5"
+                  >
                     <ProductCard product={product} />
                   </div>
                 ))}
@@ -225,22 +360,24 @@ function KatalogContent() {
                   </Link>
                 )}
 
-                {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNum) => {
-                  const isPageActive = pageNum === currentPage;
-                  return (
-                    <Link
-                      key={pageNum}
-                      href={`/katalog?category=${encodeURIComponent(activeCategory)}${search ? `&search=${encodeURIComponent(search)}` : ''}&page=${pageNum}`}
-                      className={`w-10 h-10 flex items-center justify-center rounded-xl text-xs font-bold transition-all shadow-sm ${
-                        isPageActive
-                          ? 'bg-[#3b0912] text-amber-300 border border-[#3b0912] scale-105 shadow-md'
-                          : 'bg-[#FAF7F0] text-gray-700 border border-amber-900/20 hover:bg-amber-100/80'
-                      }`}
-                    >
-                      {pageNum}
-                    </Link>
-                  );
-                })}
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map(
+                  (pageNum) => {
+                    const isPageActive = pageNum === currentPage;
+                    return (
+                      <Link
+                        key={pageNum}
+                        href={`/katalog?category=${encodeURIComponent(activeCategory)}${search ? `&search=${encodeURIComponent(search)}` : ''}&page=${pageNum}`}
+                        className={`w-10 h-10 flex items-center justify-center rounded-xl text-xs font-bold transition-all shadow-sm ${
+                          isPageActive
+                            ? 'bg-[#3b0912] text-amber-300 border border-[#3b0912] scale-105 shadow-md'
+                            : 'bg-[#FAF7F0] text-gray-700 border border-amber-900/20 hover:bg-amber-100/80'
+                        }`}
+                      >
+                        {pageNum}
+                      </Link>
+                    );
+                  }
+                )}
 
                 {currentPage < totalPages && (
                   <Link
@@ -264,7 +401,9 @@ export default function KatalogPage() {
     <Suspense
       fallback={
         <div className="min-h-screen flex items-center justify-center bg-[#FDFBF7] font-sans">
-          <p className="text-xs font-bold text-gray-500 animate-pulse">Memuat Katalog...</p>
+          <p className="text-xs font-bold text-gray-500 animate-pulse">
+            Memuat Katalog...
+          </p>
         </div>
       }
     >
