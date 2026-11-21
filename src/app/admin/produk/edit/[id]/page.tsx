@@ -1,7 +1,7 @@
 // src/app/admin/produk/edit/[id]/page.tsx
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { useRouter, useParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
@@ -31,6 +31,98 @@ interface ProductVariant {
   is_popular?: boolean;
 }
 
+const REQUEST_TIMEOUT_MS = 12000;
+
+async function compressImageBeforeUpload(file: File): Promise<File> {
+  if (
+    typeof window === "undefined" ||
+    !file?.type?.startsWith("image/") ||
+    file.type === "image/gif" ||
+    file.size <= 350 * 1024
+  ) {
+    return file;
+  }
+
+  return new Promise((resolve) => {
+    const img = new Image();
+    const objectUrl = URL.createObjectURL(file);
+
+    img.onload = () => {
+      URL.revokeObjectURL(objectUrl);
+      const maxDimension = 1280;
+      let { width, height } = img;
+
+      if (width > maxDimension || height > maxDimension) {
+        if (width >= height) {
+          height = Math.round((height * maxDimension) / width);
+          width = maxDimension;
+        } else {
+          width = Math.round((width * maxDimension) / height);
+          height = maxDimension;
+        }
+      }
+
+      const canvas = document.createElement("canvas");
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) {
+        resolve(file);
+        return;
+      }
+
+      ctx.drawImage(img, 0, 0, width, height);
+      canvas.toBlob(
+        (blob) => {
+          if (!blob || blob.size >= file.size) {
+            resolve(file);
+            return;
+          }
+          const baseName = file.name.replace(/\.[^/.]+$/, "");
+          resolve(
+            new File([blob], `${baseName}.jpg`, {
+              type: "image/jpeg",
+              lastModified: Date.now(),
+            })
+          );
+        },
+        "image/jpeg",
+        0.82
+      );
+    };
+
+    img.onerror = () => {
+      URL.revokeObjectURL(objectUrl);
+      resolve(file);
+    };
+
+    img.src = objectUrl;
+  });
+}
+
+async function fetchWithTimeout(
+  input: RequestInfo | URL,
+  init: RequestInit = {},
+  timeoutMs: number = REQUEST_TIMEOUT_MS
+): Promise<Response> {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
+  try {
+    return await fetch(input, {
+      ...init,
+      signal: controller.signal,
+    });
+  } catch (err: any) {
+    if (err?.name === "AbortError") {
+      throw new Error("Proses terlalu lama (timeout). Periksa koneksi lalu coba lagi.");
+    }
+    throw err;
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
+
 export default function EditProdukPage() {
   const router = useRouter();
   const params = useParams();
@@ -46,21 +138,30 @@ export default function EditProdukPage() {
   const [category, setCategory] = useState("Makanan");
   const [weight, setWeight] = useState("250 gram");
   const [origin, setOrigin] = useState("Banyuwangi");
-  const [stock, setStock] = useState("50"); 
+  const [stock, setStock] = useState("50");
   const [badge, setBadge] = useState("Best Seller");
   const [description, setDescription] = useState("");
   const [ingredients, setIngredients] = useState("");
   const [packagingStandard, setPackagingStandard] = useState("Mika Plastik Transparan Eksklusif");
   const [keyFeatures, setKeyFeatures] = useState("");
   const [isPopular, setIsPopular] = useState(false);
-  
+
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [existingImageUrl, setExistingImageUrl] = useState<string | null>(null);
   const [variants, setVariants] = useState<ProductVariant[]>([]);
 
+  const previewUrlsRef = useRef<string[]>([]);
+
+  useEffect(() => {
+    return () => {
+      previewUrlsRef.current.forEach((url) => URL.revokeObjectURL(url));
+    };
+  }, []);
+
   useEffect(() => {
     if (id) fetchProductDetail(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
   const fetchProductDetail = async (productId: string) => {
@@ -82,7 +183,7 @@ export default function EditProdukPage() {
       setOrigin(data.origin || "Banyuwangi");
       setStock(data.stock !== null && data.stock !== undefined ? String(data.stock) : "50");
       setBadge(data.badge || "Best Seller");
-      
+
       setDescription(data.description || data.long_description || "");
       setIngredients(data.ingredients || "");
       setPackagingStandard(data.packaging_standard || "Mika Plastik Transparan Eksklusif");
@@ -99,41 +200,56 @@ export default function EditProdukPage() {
       setExistingImageUrl(activeImg);
 
       if (Array.isArray(data.variants)) {
-        setVariants(data.variants.map((v: any) => ({
-          name: v.name || "",
-          price: v.price ? String(v.price) : "",
-          stock: v.stock !== null && v.stock !== undefined ? String(v.stock) : "0",
-          weight: v.weight || "250 gram",
-          origin: v.origin || "Banyuwangi",
-          image_url: v.image_url || "",
-          imageFile: null,
-          description: v.description || "",
-          ingredients: v.ingredients || "",
-          key_features: v.key_features || "",
-          packaging_standard: v.packaging_standard || "",
-          is_popular: v.is_popular || false
-        })));
+        setVariants(
+          data.variants.map((v: any) => ({
+            name: v.name || "",
+            price: v.price ? String(v.price) : "",
+            stock: v.stock !== null && v.stock !== undefined ? String(v.stock) : "0",
+            weight: v.weight || "250 gram",
+            origin: v.origin || "Banyuwangi",
+            image_url: v.image_url || "",
+            imageFile: null,
+            description: v.description || "",
+            ingredients: v.ingredients || "",
+            key_features: v.key_features || "",
+            packaging_standard: v.packaging_standard || "",
+            is_popular: v.is_popular || false,
+          }))
+        );
       }
     }
     setLoadingData(false);
   };
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0];
-      setImageFile(file);
-      setImagePreview(URL.createObjectURL(file));
+      const rawFile = e.target.files[0];
+      const compressed = await compressImageBeforeUpload(rawFile);
+      const nextPreview = URL.createObjectURL(compressed);
+      previewUrlsRef.current.push(nextPreview);
+
+      setImageFile(compressed);
+      setImagePreview(nextPreview);
     }
   };
 
   const handleAddVariant = () => {
     setVariants([
-      ...variants, 
-      { 
-        name: "", price: "", stock: "10", weight: "250 gram", origin: "Banyuwangi",
-        image_url: "", imageFile: null, description: "", ingredients: "",
-        key_features: "", packaging_standard: "", is_popular: false
-      }
+      ...variants,
+      {
+        name: "",
+        price: "",
+        stock: "10",
+        weight: "250 gram",
+        origin: "Banyuwangi",
+        image_url: "",
+        imageFile: null,
+        description: "",
+        ingredients: "",
+        key_features: "",
+        packaging_standard: "",
+        is_popular: false,
+      },
     ]);
   };
 
@@ -147,27 +263,30 @@ export default function EditProdukPage() {
     setVariants(updated);
   };
 
-  const handleVariantImageChange = (index: number, e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleVariantImageChange = async (index: number, e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0];
-      const previewUrl = URL.createObjectURL(file);
+      const rawFile = e.target.files[0];
+      const compressed = await compressImageBeforeUpload(rawFile);
+      const previewUrl = URL.createObjectURL(compressed);
+      previewUrlsRef.current.push(previewUrl);
+
       const updated = [...variants];
-      updated[index] = { ...updated[index], imageFile: file, image_url: previewUrl };
+      updated[index] = { ...updated[index], imageFile: compressed, image_url: previewUrl };
       setVariants(updated);
     }
   };
 
-  // Fungsi Upload gambar ke Google Drive melalui API Route (diperbaiki menggunakan data.imageUrl)
+  // Fungsi Upload gambar ke Google Drive melalui API Route dengan timeout
   const uploadToGoogleDrive = async (file: File) => {
     const formData = new FormData();
     formData.append("file", file);
 
-    const res = await fetch("/api/upload", {
+    const res = await fetchWithTimeout("/api/upload", {
       method: "POST",
       body: formData,
     });
-    const data = await res.json();
-    if (!data.success) {
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok || !data.success) {
       throw new Error(data.error || data.message || "Gagal mengunggah gambar ke Google Drive");
     }
     return data.imageUrl;
@@ -175,16 +294,21 @@ export default function EditProdukPage() {
 
   const handleUpdateProduct = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (submitting) return;
     setSubmitting(true);
 
     try {
-      const finalImageUrl = imageFile ? await uploadToGoogleDrive(imageFile) : (existingImageUrl || "");
+      const finalImageUrl = imageFile
+        ? await uploadToGoogleDrive(imageFile)
+        : existingImageUrl || "";
 
       const processedVariants = await Promise.all(
         variants.map(async (v) => {
           let variantImgUrl = v.image_url;
           if (v.imageFile) {
             variantImgUrl = await uploadToGoogleDrive(v.imageFile);
+          } else if (variantImgUrl?.startsWith("blob:")) {
+            variantImgUrl = "";
           }
           return {
             name: v.name,
@@ -219,12 +343,17 @@ export default function EditProdukPage() {
       formData.append("image_url", finalImageUrl);
       formData.append("variants", JSON.stringify(processedVariants));
 
-      const res = await fetch("/api/products", { method: "PUT", body: formData });
-      const result = await res.json();
-      if (!result.success) throw new Error(result.message || "Gagal memperbarui produk.");
+      const res = await fetchWithTimeout("/api/products", {
+        method: "PUT",
+        body: formData,
+      });
+      const result = await res.json().catch(() => ({}));
+      if (!res.ok || !result.success) {
+        throw new Error(result.message || "Gagal memperbarui produk.");
+      }
 
       setSuccessMsg("Produk berhasil diperbarui!");
-      setTimeout(() => router.push("/admin/produk"), 1500);
+      setTimeout(() => router.push("/admin/produk"), 900);
     } catch (err: any) {
       alert(err.message);
     } finally {
