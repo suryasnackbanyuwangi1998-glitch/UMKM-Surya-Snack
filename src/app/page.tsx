@@ -172,7 +172,6 @@ export default function HomePage() {
   useEffect(() => {
     let isMounted = true;
 
-    // 1. Baca cache terakhir dari localStorage agar langsung tampil tanpa flash gambar lama
     try {
       const cachedRaw = window.localStorage.getItem(STORE_SETTINGS_CACHE_KEY);
       if (cachedRaw) {
@@ -186,7 +185,6 @@ export default function HomePage() {
       // Abaikan jika localStorage tidak tersedia
     }
 
-    // 2. Ambil data terbaru dari Supabase dan perbarui cache
     async function loadStoreSettings() {
       try {
         const { data, error } = await supabase
@@ -293,7 +291,7 @@ export default function HomePage() {
               className="object-cover object-right sm:object-center"
             />
           ) : null}
-          <div className="absolute inset-0 bg-gradient-to-r from-[#F7F1E5]/85 via-[#F7F1E5]/45 to-transparent pointer-events-none" />
+          <div className="absolute inset-0 bg-linear-to-r from-[#F7F1E5]/85 via-[#F7F1E5]/45 to-transparent pointer-events-none" />
         </div>
 
         <div className="relative z-10 w-full max-w-7xl mx-auto px-5 sm:px-8 lg:px-12 pt-28 sm:pt-32 pb-16">
