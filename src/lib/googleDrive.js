@@ -1,3 +1,4 @@
+// src/lib/googleDrive.js
 import { google } from "googleapis";
 import { Readable } from "stream";
 
@@ -12,73 +13,17 @@ oauth2Client.setCredentials({
 
 const drive = google.drive({ version: "v3", auth: oauth2Client });
 
-// Cache di memori agar tidak perlu query list folder berulang kali
-const folderCache = new Map();
-
-async function getOrCreateFolder(folderName) {
-  const cleanName = String(folderName || "").trim();
-  if (!cleanName) {
-    return process.env.GOOGLE_FOLDER_ID?.trim();
-  }
-
-  if (folderCache.has(cleanName)) {
-    return folderCache.get(cleanName);
-  }
-
-  try {
-    const escapedName = cleanName.replace(/'/g, "\\'");
-    const searchResponse = await drive.files.list({
-      q: `mimeType='application/vnd.google-apps.folder' and name='${escapedName}' and trashed=false`,
-      fields: "files(id, name)",
-      spaces: "drive",
-      pageSize: 1,
-    });
-
-    if (searchResponse.data.files && searchResponse.data.files.length > 0) {
-      const existingId = searchResponse.data.files[0].id;
-      folderCache.set(cleanName, existingId);
-      return existingId;
-    }
-
-    const folderMetadata = {
-      name: cleanName,
-      mimeType: "application/vnd.google-apps.folder",
-    };
-
-    const createResponse = await drive.files.create({
-      requestBody: folderMetadata,
-      fields: "id",
-    });
-
-    const newId = createResponse.data.id;
-    if (newId) {
-      folderCache.set(cleanName, newId);
-      return newId;
-    }
-
-    return process.env.GOOGLE_FOLDER_ID?.trim();
-  } catch (error) {
-    console.error(`Gagal mencari/membuat folder ${cleanName}:`, error);
-    return process.env.GOOGLE_FOLDER_ID?.trim();
-  }
-}
-
 export async function uploadFileToDrive(
   fileBuffer,
   fileName,
-  mimeType,
-  customFolderName = null
+  mimeType
 ) {
   try {
-    const bufferStream = new Readable();
-    bufferStream.push(fileBuffer);
-    bufferStream.push(null);
+    const bufferStream = Readable.from(fileBuffer);
+    const targetFolderId = process.env.GOOGLE_FOLDER_ID?.trim();
 
-    let targetFolderId = process.env.GOOGLE_FOLDER_ID?.trim();
-    if (customFolderName) {
-      targetFolderId = await getOrCreateFolder(customFolderName);
-    }
-
+    // Langsung upload ke folder Google Drive yang sudah dibuat (GOOGLE_FOLDER_ID)
+    // dalam 1x request tanpa pencarian folder berulang
     const response = await drive.files.create({
       requestBody: {
         name: fileName,
@@ -88,22 +33,27 @@ export async function uploadFileToDrive(
         mimeType: mimeType || "image/jpeg",
         body: bufferStream,
       },
-      fields: "id, webViewLink",
+      fields: "id",
     });
 
     const fileId = response.data.id;
+    if (!fileId) {
+      throw new Error("ID file tidak dikembalikan oleh Google Drive");
+    }
 
-    try {
-      await drive.permissions.create({
+    // Jalankan pengaturan izin di latar belakang (non-blocking) sebagai cadangan
+    // jika folder induk belum diset publik
+    drive.permissions
+      .create({
         fileId,
         requestBody: {
           role: "reader",
           type: "anyone",
         },
+      })
+      .catch((permError) => {
+        console.warn("Info izin file Drive:", permError?.message);
       });
-    } catch (permError) {
-      console.warn("Gagal mengubah izin file menjadi publik:", permError);
-    }
 
     return `https://lh3.googleusercontent.com/d/${fileId}`;
   } catch (error) {
