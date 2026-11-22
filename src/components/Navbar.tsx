@@ -258,16 +258,16 @@ export default function Navbar(): React.ReactElement {
             >
               <div className="w-4 h-3 relative flex flex-col justify-between">
                 <span
-                  className={`block h-[2px] w-full rounded-full transition-all duration-300 ${
+                  className={`block h-0.5 w-full rounded-full transition-all duration-300 ${
                     isMobileMenuOpen
-                      ? 'bg-amber-200 translate-y-[5px] rotate-45'
+                      ? 'bg-amber-200 translate-y-1.25 rotate-45'
                       : 'bg-[#5A0A14]'
                   }`}
                 />
                 <span
-                  className={`block h-[2px] w-full rounded-full transition-all duration-300 ${
+                  className={`block h-0.5 w-full rounded-full transition-all duration-300 ${
                     isMobileMenuOpen
-                      ? 'bg-amber-200 translate-y-[-5px] -rotate-45'
+                      ? 'bg-amber-200 -translate-y-1.25 -rotate-45'
                       : 'bg-[#5A0A14]'
                   }`}
                 />
