@@ -24,14 +24,21 @@ interface CartContextType {
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
+const CART_STORAGE_KEY = 'surya_snack_cart_session';
 
 export function CartProvider({ children }: { children: React.ReactNode }) {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [isInitialized, setIsInitialized] = useState(false);
 
+  // Muat keranjang hanya dari sessionStorage (otomatis hilang saat tab/aplikasi ditutup)
   useEffect(() => {
     try {
-      const savedCart = localStorage.getItem('surya_snack_cart');
+      // Hapus sisa data lama di localStorage jika sebelumnya pernah tersimpan
+      if (typeof window !== 'undefined' && window.localStorage) {
+        window.localStorage.removeItem('surya_snack_cart');
+      }
+
+      const savedCart = sessionStorage.getItem(CART_STORAGE_KEY);
       if (savedCart) {
         setCart(JSON.parse(savedCart));
       }
@@ -41,11 +48,35 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     setIsInitialized(true);
   }, []);
 
+  // Simpan perubahan keranjang ke sessionStorage selama sesi aktif
   useEffect(() => {
-    if (isInitialized) {
-      localStorage.setItem('surya_snack_cart', JSON.stringify(cart));
+    if (!isInitialized) return;
+    try {
+      if (cart.length === 0) {
+        sessionStorage.removeItem(CART_STORAGE_KEY);
+      } else {
+        sessionStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cart));
+      }
+    } catch (e) {
+      console.error('Gagal menyimpan keranjang:', e);
     }
   }, [cart, isInitialized]);
+
+  // Bersihkan sesi keranjang ketika pengguna menutup tab atau keluar dari aplikasi/browser
+  useEffect(() => {
+    const handleAppClose = () => {
+      try {
+        sessionStorage.removeItem(CART_STORAGE_KEY);
+      } catch {
+        // Abaikan error storage saat halaman ditutup
+      }
+    };
+
+    window.addEventListener('beforeunload', handleAppClose);
+    return () => {
+      window.removeEventListener('beforeunload', handleAppClose);
+    };
+  }, []);
 
   // Memasukkan ke keranjang dengan membedakan ID dan Varian (selectedVariant)
   const addToCart = (product: CartItemProduct, quantity: number = 1) => {
@@ -53,13 +84,16 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       const existingIndex = prevCart.findIndex(
         (item) =>
           String(item.product.id) === String(product.id) &&
-          (item.product.selectedVariant || 'Produk Utama') === (product.selectedVariant || 'Produk Utama')
+          (item.product.selectedVariant || 'Produk Utama') ===
+            (product.selectedVariant || 'Produk Utama')
       );
 
       if (existingIndex > -1) {
-        const updatedCart = [...prevCart];
-        updatedCart[existingIndex].quantity += quantity;
-        return updatedCart;
+        return prevCart.map((item, idx) =>
+          idx === existingIndex
+            ? { ...item, quantity: item.quantity + quantity }
+            : item
+        );
       }
       return [...prevCart, { product, quantity }];
     });
@@ -72,14 +106,19 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         (item) =>
           !(
             String(item.product.id) === String(productId) &&
-            (item.product.selectedVariant || 'Produk Utama') === (selectedVariant || 'Produk Utama')
+            (item.product.selectedVariant || 'Produk Utama') ===
+              (selectedVariant || 'Produk Utama')
           )
       )
     );
   };
 
   // Update kuantitas berdasarkan ID dan Varian tertentu
-  const updateQuantity = (productId: string | number, quantity: number, selectedVariant?: string) => {
+  const updateQuantity = (
+    productId: string | number,
+    quantity: number,
+    selectedVariant?: string
+  ) => {
     if (quantity <= 0) {
       removeFromCart(productId, selectedVariant);
       return;
@@ -87,7 +126,8 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     setCart((prevCart) =>
       prevCart.map((item) =>
         String(item.product.id) === String(productId) &&
-        (item.product.selectedVariant || 'Produk Utama') === (selectedVariant || 'Produk Utama')
+        (item.product.selectedVariant || 'Produk Utama') ===
+          (selectedVariant || 'Produk Utama')
           ? { ...item, quantity }
           : item
       )
@@ -96,6 +136,11 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
   const clearCart = () => {
     setCart([]);
+    try {
+      sessionStorage.removeItem(CART_STORAGE_KEY);
+    } catch {
+      // Abaikan error storage
+    }
   };
 
   const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);

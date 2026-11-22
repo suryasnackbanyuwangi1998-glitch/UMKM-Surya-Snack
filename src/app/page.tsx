@@ -28,7 +28,7 @@ const STORE_SETTINGS_CACHE_KEY = "surya_snack_store_settings_v1";
 
 const DEFAULTS = {
   id: {
-    storeLabel: "Oleh-Oleh Khas Banyuwangi",
+    storeLabel: "Oleh-Oleh Khas Banyuwangi • Est. 1998",
     heroTitle: "Cita Rasa Legendaris Khas Banyuwangi",
     heroDesc:
       "Mengangkat kelezatan resep pusaka leluhur tanah Blambangan, disajikan khusus dalam balutan kualitas artisan yang renyah dan penuh kenangan.",
@@ -41,7 +41,7 @@ const DEFAULTS = {
       "Berawal dari dapur rumahan di Banyuwangi, Surya Snack tumbuh dengan memegang teguh prinsip keaslian resep leluhur.",
   },
   en: {
-    storeLabel: "Authentic Banyuwangi Delicacies",
+    storeLabel: "Authentic Banyuwangi Delicacies • Est. 1998",
     heroTitle: "Timeless Taste of Banyuwangi",
     heroDesc:
       "Bringing heritage recipes from Blambangan to life with artisan quality that is crispy and full of nostalgia.",
@@ -96,7 +96,7 @@ export default function HomePage() {
   const [heroData, setHeroData] = useState({
     title: DEFAULTS.id.heroTitle,
     desc: DEFAULTS.id.heroDesc,
-    bgUrl: "",
+    bgUrl: DEFAULT_HERO_BG_IMAGE,
   });
   const [quoteData, setQuoteData] = useState({
     text: DEFAULTS.id.quoteText,
@@ -106,20 +106,20 @@ export default function HomePage() {
     title: DEFAULTS.id.heritageTitle,
     subtitle: DEFAULTS.id.heritageSubtitle,
     desc: DEFAULTS.id.heritageDesc,
-    image_url: "",
+    image_url: DEFAULT_HERITAGE_IMAGE,
   });
 
   const syncContentByLanguage = useCallback(
     (currentLang: 'id' | 'en', dbData: Record<string, any> | null, isReady: boolean) => {
       const resolvedHeritageUrl = isReady
         ? normalizeImageUrl(dbData && dbData.heritage_image_url, DEFAULT_HERITAGE_IMAGE)
-        : "";
+        : DEFAULT_HERITAGE_IMAGE;
       const resolvedHeroBgUrl = isReady
         ? normalizeImageUrl(
             (dbData && (dbData.hero_image_url || dbData.hero_bg_url)) || DEFAULT_HERO_BG_IMAGE,
             DEFAULT_HERO_BG_IMAGE
           )
-        : "";
+        : DEFAULT_HERO_BG_IMAGE;
 
       if (currentLang === 'en') {
         const en = DEFAULTS.en;
@@ -276,9 +276,10 @@ export default function HomePage() {
   return (
     <div className="min-h-screen bg-[#F5EFE6] text-[#2B211B] font-serif selection:bg-[#5A0A14] selection:text-amber-100 antialiased overflow-x-hidden">
 
-      {/* ================= 1. FULL-BLEED HERO TANPA BLUR BACKGROUND ================= */}
+      {/* ================= 1. FULL-SCREEN HERO TANPA BLUR BACKGROUND ================= */}
       <section className="relative w-full min-h-screen flex items-center border-b border-[#5A0A14]/15 bg-[#EFE6D5] overflow-hidden">
-        <div className="absolute inset-0">
+        {/* Gambar Full 1 Layar Penuh */}
+        <div className="absolute inset-0 z-0">
           {heroData.bgUrl ? (
             <Image
               key={heroData.bgUrl}
@@ -291,35 +292,42 @@ export default function HomePage() {
               className="object-cover object-right sm:object-center"
             />
           ) : null}
-          <div className="absolute inset-0 bg-linear-to-r from-[#F7F1E5]/85 via-[#F7F1E5]/45 to-transparent pointer-events-none" />
+          {/* Gradasi halus sisi kiri agar teks kontras tanpa menutup gambar penuh di sisi kanan */}
+          <div className="absolute inset-0 bg-linear-to-r from-[#F7F1E5]/95 via-[#F7F1E5]/70 to-transparent pointer-events-none" />
+          <div className="absolute inset-x-0 bottom-0 h-24 bg-linear-to-t from-[#F5EFE6] to-transparent pointer-events-none" />
         </div>
 
-        <div className="relative z-10 w-full max-w-7xl mx-auto px-5 sm:px-8 lg:px-12 pt-28 sm:pt-32 pb-16">
+        {/* Konten Utama Hero */}
+        <div className="relative z-10 w-full max-w-7xl mx-auto px-5 sm:px-8 lg:px-12 pt-28 sm:pt-32 pb-20">
           <div className="max-w-xl lg:max-w-2xl space-y-6">
-            <p className="text-[11px] font-sans font-extrabold uppercase tracking-[0.26em] text-[#5A0A14]">
-              {storeLabel}
-            </p>
+            {/* Badge Kecil Khas Maroon */}
+            <div className="inline-flex items-center gap-2.5 px-4 py-1.5 rounded-full bg-[#5A0A14]/8 border border-[#5A0A14]/20 backdrop-blur-xs">
+              <span className="w-2 h-2 rounded-full bg-[#5A0A14]" />
+              <span className="text-[11px] font-sans font-extrabold uppercase tracking-[0.22em] text-[#5A0A14]">
+                {storeLabel}
+              </span>
+            </div>
 
-            <h1 className="text-4xl sm:text-6xl lg:text-[4.35rem] font-serif font-bold leading-[1.05] tracking-tight drop-shadow-[0_1px_2px_rgba(255,255,255,0.95)]">
+            <h1 className="text-4xl sm:text-6xl lg:text-[4.35rem] font-serif font-bold leading-[1.06] tracking-tight">
               <span className="text-[#5A0A14]">{heroPrimary}</span>
               {heroAccent ? (
                 <>
                   {' '}
-                  <span className="text-[#9A5D0A] underline decoration-[#5A0A14]/30 decoration-2 underline-offset-4">
+                  <span className="text-[#9A5D0A] italic font-semibold">
                     {heroAccent}
                   </span>
                 </>
               ) : null}
             </h1>
 
-            <p className="max-w-lg text-[#2B1D14] font-sans text-sm sm:text-base font-medium leading-relaxed drop-shadow-[0_1px_2px_rgba(255,255,255,0.85)]">
+            <p className="max-w-lg text-[#2B1D14] font-sans text-sm sm:text-base font-medium leading-relaxed">
               {heroData.desc}
             </p>
 
-            <div className="flex flex-wrap items-center gap-4 pt-2 font-sans">
+            <div className="flex flex-wrap items-center gap-3.5 pt-2 font-sans">
               <Link
                 href="/katalog"
-                className="group inline-flex items-center gap-3 bg-[#5A0A14] hover:bg-[#46070F] text-amber-300 font-bold px-6 py-3.5 rounded-full text-xs sm:text-sm transition-all shadow-md cursor-pointer border border-amber-400/50"
+                className="group inline-flex items-center gap-3 bg-[#5A0A14] hover:bg-[#46070F] text-amber-200 font-bold px-6 py-3.5 rounded-full text-xs sm:text-sm transition-all shadow-[0_10px_25px_-8px_rgba(90,10,20,0.5)] cursor-pointer border border-amber-400/30"
               >
                 <span>{t('exploreCatalog') || 'Jelajahi Katalog'}</span>
                 <FontAwesomeIcon
@@ -332,10 +340,10 @@ export default function HomePage() {
                 href={getWaLink()}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="group inline-flex items-center gap-2.5 text-[#5A0A14] hover:text-[#9A5D0A] font-bold px-3 py-2 text-xs sm:text-sm transition-all cursor-pointer"
+                className="group inline-flex items-center gap-2.5 bg-white/90 hover:bg-white text-[#5A0A14] border border-[#5A0A14]/25 font-bold px-5 py-3.5 rounded-full text-xs sm:text-sm transition-all shadow-xs cursor-pointer"
               >
-                <span className="w-9 h-9 rounded-full border border-[#5A0A14]/45 bg-[#F5EFE6]/95 group-hover:bg-white flex items-center justify-center transition shadow-xs">
-                  <FontAwesomeIcon icon={faPlay} className="w-2.5 h-2.5 ml-0.5 text-[#9A5D0A]" />
+                <span className="w-6 h-6 rounded-full bg-[#5A0A14]/10 flex items-center justify-center">
+                  <FontAwesomeIcon icon={faPlay} className="w-2.5 h-2.5 ml-0.5 text-[#5A0A14]" />
                 </span>
                 <span>{t('contactStore') || 'Hubungi Toko'}</span>
               </a>
@@ -346,9 +354,10 @@ export default function HomePage() {
 
       {/* ================= 2. FEATURED DELICACIES ================= */}
       <section className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-12 py-16 sm:py-24 space-y-10">
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 border-b border-[#5A0A14]/12 pb-8">
           <div className="space-y-2">
-            <span className="text-[11px] font-sans font-bold uppercase tracking-[0.26em] text-[#5A0A14] block">
+            <span className="inline-flex items-center gap-2 text-[11px] font-sans font-bold uppercase tracking-[0.26em] text-[#5A0A14]">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#5A0A14]" />
               {lang === 'en' ? 'Our Selection' : 'Pilihan Unggulan'}
             </span>
             <h2 className="text-3xl sm:text-5xl font-serif font-bold text-[#5A0A14] tracking-tight">
@@ -364,7 +373,7 @@ export default function HomePage() {
             </p>
             <Link
               href="/katalog"
-              className="inline-flex items-center gap-2 bg-white hover:bg-[#FAF7F0] text-[#5A0A14] border border-[#5A0A14]/25 font-semibold px-5 py-2.5 rounded-full text-xs whitespace-nowrap transition cursor-pointer shrink-0"
+              className="inline-flex items-center gap-2 bg-[#5A0A14] hover:bg-[#46070F] text-amber-200 font-semibold px-5 py-2.5 rounded-full text-xs whitespace-nowrap transition cursor-pointer shrink-0 shadow-xs"
             >
               <span>{lang === 'en' ? 'View Full Catalog' : 'Lihat Katalog'}</span>
               <FontAwesomeIcon icon={faArrowRight} className="w-3 h-3" />
@@ -442,8 +451,8 @@ export default function HomePage() {
           </div>
 
           <div className="lg:col-span-3 p-8 sm:p-10 bg-[#EFE6D5] text-[#5A0A14] flex flex-col justify-center space-y-4 border-t lg:border-t-0 lg:border-l border-[#5A0A14]/15">
-            <div className="w-9 h-9 rounded-full bg-[#5A0A14]/10 flex items-center justify-center text-[#5A0A14]">
-              <FontAwesomeIcon icon={faQuoteLeft} className="w-3.5 h-3.5" />
+            <div className="w-10 h-10 rounded-full bg-[#5A0A14]/10 flex items-center justify-center text-[#5A0A14]">
+              <FontAwesomeIcon icon={faQuoteLeft} className="w-4 h-4" />
             </div>
             <blockquote className="text-lg sm:text-xl font-serif font-semibold leading-snug text-[#5A0A14]">
               “{quoteData.text}”
@@ -461,8 +470,10 @@ export default function HomePage() {
 
       {/* ================= 5. CLASSIC BANNER CTA ================= */}
       <section className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-12 pb-24 pt-6 font-sans">
-        <div className="bg-[#5A0A14] text-[#FBF6EE] rounded-3xl p-8 sm:p-12 flex flex-col lg:flex-row items-center justify-between gap-8 shadow-xl border border-[#5A0A14]/20">
-          <div className="space-y-2 text-center lg:text-left max-w-2xl">
+        <div className="relative overflow-hidden bg-[#5A0A14] text-[#FBF6EE] rounded-3xl p-8 sm:p-12 flex flex-col lg:flex-row items-center justify-between gap-8 shadow-xl border border-[#5A0A14]/20">
+          <div className="pointer-events-none absolute -right-16 -top-16 w-64 h-64 rounded-full bg-amber-400/15 blur-3xl" />
+
+          <div className="relative z-10 space-y-2 text-center lg:text-left max-w-2xl">
             <span className="text-[11px] font-bold uppercase tracking-[0.26em] text-amber-300">
               Surya Snack Banyuwangi
             </span>
@@ -471,7 +482,7 @@ export default function HomePage() {
             </h2>
           </div>
 
-          <div className="flex flex-wrap items-center justify-center gap-3.5 shrink-0">
+          <div className="relative z-10 flex flex-wrap items-center justify-center gap-3.5 shrink-0">
             <Link
               href="/katalog"
               className="bg-amber-400 hover:bg-amber-300 text-[#2B1607] font-bold px-7 py-3.5 rounded-full text-xs uppercase tracking-wider transition-all shadow-md cursor-pointer"

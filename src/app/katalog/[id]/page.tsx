@@ -1,4 +1,5 @@
 // src/app/katalog/[id]/page.tsx
+import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
 import ProductDetailClient from '@/components/ProductDetailClient';
 
@@ -19,7 +20,7 @@ export default async function Page({ params }: PageProps) {
     .eq('slug', paramValue)
     .single();
 
-  // 2. Jika tidak ditemukan lewat slug, coba cari berdasarkan kolom 'id' (untuk mengantisipasi jika URL pakai ID)
+  // 2. Jika tidak ditemukan lewat slug, coba cari berdasarkan kolom 'id'
   if (error || !product) {
     const { data: productById, error: errorById } = await supabase
       .from('products')
@@ -35,15 +36,26 @@ export default async function Page({ params }: PageProps) {
   // Jika tetap tidak ditemukan di kedua kolom
   if (!product) {
     return (
-      <div className="mx-auto max-w-4xl px-4 py-28 text-center space-y-4 font-sans">
-        <h2 className="text-2xl font-serif font-bold text-[#3b0912]">Produk Tidak Ditemukan</h2>
-        <p className="text-gray-600 text-sm">Maaf, data produk yang Anda cari tidak tersedia di database atau link tidak valid.</p>
-        <a
-          href="/katalog"
-          className="inline-block bg-[#5c0f1c] text-amber-200 px-6 py-3 rounded-xl text-xs font-bold uppercase tracking-wider transition hover:bg-[#3b0912]"
-        >
-          Kembali ke Katalog
-        </a>
+      <div className="min-h-[75vh] bg-[#F5EFE6] flex items-center justify-center px-4 pt-28 pb-20">
+        <div className="max-w-lg w-full bg-[#FAF7F0] border border-[#5A0A14]/15 rounded-3xl p-8 sm:p-12 text-center space-y-4 shadow-xs">
+          <span className="inline-block text-[10px] font-sans font-extrabold uppercase tracking-[0.24em] text-[#9A5D0A]">
+            Surya Snack Banyuwangi
+          </span>
+          <h2 className="text-2xl sm:text-3xl font-serif font-bold text-[#5A0A14]">
+            Produk Tidak Ditemukan
+          </h2>
+          <p className="text-[#5f524a] font-sans text-xs sm:text-sm leading-relaxed">
+            Maaf, data produk yang Anda cari tidak tersedia di database atau tautan sudah tidak valid.
+          </p>
+          <div className="pt-2">
+            <Link
+              href="/katalog"
+              className="inline-block bg-[#5A0A14] hover:bg-[#46070F] text-amber-200 px-7 py-3 rounded-full text-xs font-sans font-bold uppercase tracking-wider transition shadow-sm"
+            >
+              Kembali ke Katalog
+            </Link>
+          </div>
+        </div>
       </div>
     );
   }
@@ -52,7 +64,7 @@ export default async function Page({ params }: PageProps) {
   const { data: relatedProducts } = await supabase
     .from('products')
     .select('*')
-    .neq('id', product.id) // Kecualikan produk yang sedang dibuka
+    .neq('id', product.id)
     .limit(4);
 
   // Mapping variant_products ke variants agar cocok dengan Client Component
@@ -62,9 +74,9 @@ export default async function Page({ params }: PageProps) {
   };
 
   return (
-    <ProductDetailClient 
-      product={formattedProduct} 
-      relatedProducts={relatedProducts || []} 
+    <ProductDetailClient
+      product={formattedProduct}
+      relatedProducts={relatedProducts || []}
     />
   );
 }

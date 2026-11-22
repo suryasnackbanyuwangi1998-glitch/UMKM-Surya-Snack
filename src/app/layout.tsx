@@ -5,7 +5,7 @@ import './globals.css';
 import MainLayout from '@/components/MainLayout';
 import { CartProvider } from '@/context/CartProvider';
 import { ContactProvider } from '@/context/ContactProvider';
-import { LanguageProvider } from '@/context/LanguageContext'; // <-- Pastikan ini diimpor
+import { LanguageProvider } from '@/context/LanguageContext';
 
 export const metadata: Metadata = {
   title: 'Surya Snack - Camilan Khas UMKM',
@@ -18,9 +18,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }): React.ReactElement {
   return (
-    <html lang="id" suppressHydrationWarning>
-      <body className="bg-[#FDFBF7] min-h-screen font-sans antialiased" suppressHydrationWarning>
-        <LanguageProvider> {/* <-- Dibungkus paling luar agar mencakup Admin maupun Web utama */}
+    <html lang="id" className="bg-[#F5EFE6]" suppressHydrationWarning>
+      <body
+        className="bg-[#F5EFE6] text-[#2B211B] min-h-screen font-sans antialiased"
+        suppressHydrationWarning
+      >
+        <LanguageProvider>
           <ContactProvider>
             <CartProvider>
               <MainLayout>{children}</MainLayout>

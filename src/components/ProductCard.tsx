@@ -5,7 +5,7 @@ import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { formatRupiah } from '@/lib/products';
-import { useLanguage } from '@/context/LanguageContext'; // <-- Impor hook bahasa
+import { useLanguage } from '@/context/LanguageContext';
 import type { Product } from '@/types';
 
 interface ProductCardProps {
@@ -13,7 +13,7 @@ interface ProductCardProps {
 }
 
 export default function ProductCard({ product }: ProductCardProps) {
-  const { lang } = useLanguage(); // <-- Ambil status bahasa aktif ('id' | 'en')
+  const { lang } = useLanguage();
 
   let displayImage = product.image_url;
   if (!displayImage && Array.isArray(product.images) && product.images.length > 0) {
@@ -26,16 +26,15 @@ export default function ProductCard({ product }: ProductCardProps) {
     displayImage ||
     'https://images.unsplash.com/photo-1599490659213-e2b9527bd087?q=80&w=400';
 
-  // Fallback ke product.id jika slug kosong untuk mencegah /katalog/null
   const productIdentifier = product.slug || product.id;
 
   return (
-    <div className="group bg-white rounded-xl border border-gray-100 overflow-hidden hover:shadow-lg hover:border-gray-200 transition-all duration-300 flex flex-col font-sans">
-      
+    <div className="group bg-[#FAF7F0] rounded-2xl border border-[#5A0A14]/15 overflow-hidden hover:shadow-[0_14px_30px_-10px_rgba(90,10,20,0.18)] hover:border-[#5A0A14]/35 transition-all duration-300 flex flex-col font-sans">
+
       {/* Gambar Produk */}
       <Link
         href={`/katalog/${productIdentifier}`}
-        className="relative w-full aspect-square overflow-hidden bg-gray-50 block"
+        className="relative w-full aspect-square overflow-hidden bg-[#EFE6D5] block"
       >
         <Image
           src={finalImage}
@@ -46,28 +45,27 @@ export default function ProductCard({ product }: ProductCardProps) {
           className="object-cover object-center transition-transform duration-500 group-hover:scale-105"
         />
         {product.badge && (
-          <span className="absolute top-2 left-2 bg-[#3b0912] text-amber-300 text-[9px] font-extrabold uppercase px-2 py-0.5 rounded-full shadow-md">
+          <span className="absolute top-2.5 left-2.5 bg-[#5A0A14] text-amber-200 text-[9px] font-extrabold uppercase tracking-wider px-2.5 py-1 rounded-full shadow-sm border border-amber-300/30">
             {product.badge}
           </span>
         )}
       </Link>
 
       {/* Informasi Produk & Tombol Detail */}
-      <div className="p-4 flex flex-col grow gap-3">
-        <h3 className="font-semibold text-gray-900 text-sm line-clamp-2 leading-snug min-h-10">
+      <div className="p-4 flex flex-col grow gap-3 bg-white">
+        <h3 className="font-semibold text-[#2B211B] group-hover:text-[#5A0A14] transition-colors text-sm line-clamp-2 leading-snug min-h-10">
           {product.name}
         </h3>
 
-        <p className="text-[#5c0f1c] font-bold text-base mt-auto">
+        <p className="text-[#5A0A14] font-bold text-base mt-auto">
           {formatRupiah(product.price)}
         </p>
 
-        <div className="pt-1 border-t border-gray-100">
+        <div className="pt-2 border-t border-[#5A0A14]/10">
           <Link
             href={`/katalog/${productIdentifier}`}
-            className="w-full text-center border border-[#5c0f1c] text-[#5c0f1c] hover:bg-[#5c0f1c] hover:text-white font-bold py-2 rounded-lg text-xs transition-all duration-300 block"
+            className="w-full text-center border border-[#5A0A14] text-[#5A0A14] hover:bg-[#5A0A14] hover:text-amber-200 font-bold py-2 rounded-xl text-xs transition-all duration-300 block"
           >
-            {/* Teks tombol berubah otomatis sesuai bahasa */}
             {lang === 'en' ? 'Details' : 'Detail'}
           </Link>
         </div>

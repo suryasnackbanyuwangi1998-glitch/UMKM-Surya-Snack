@@ -18,7 +18,7 @@ const DEFAULT_LABELS = {
     allProd: 'Semua Produk',
     food: 'Makanan',
     beverage: 'Minuman',
-    reset: 'Reset ✕',
+    reset: 'Reset Filter',
     noResultTitle: 'Produk Tidak Ditemukan',
     noResultDesc:
       'Maaf, tidak ada produk makanan atau minuman yang cocok dengan pencarian Anda.',
@@ -30,7 +30,7 @@ const DEFAULT_LABELS = {
     allProd: 'All Products',
     food: 'Food',
     beverage: 'Beverages',
-    reset: 'Reset ✕',
+    reset: 'Reset Filter',
     noResultTitle: 'Products Not Found',
     noResultDesc:
       'Sorry, no food or beverage products match your search criteria.',
@@ -169,7 +169,9 @@ function KatalogContent() {
         },
         (payload) => {
           if (isMounted && payload.new) {
-            setCatalogLabels(mergeCatalogLabels(payload.new as Record<string, any>));
+            setCatalogLabels(
+              mergeCatalogLabels(payload.new as Record<string, any>)
+            );
           }
         }
       )
@@ -249,8 +251,8 @@ function KatalogContent() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#FDFBF7] font-sans">
-        <p className="text-xs font-bold text-gray-500 animate-pulse">
+      <div className="min-h-screen flex items-center justify-center bg-[#F5EFE6] font-sans">
+        <p className="text-xs font-bold text-[#5A0A14] animate-pulse">
           {lang === 'en' ? 'Loading Catalog...' : 'Memuat Katalog...'}
         </p>
       </div>
@@ -258,139 +260,148 @@ function KatalogContent() {
   }
 
   return (
-    <div className="min-h-screen bg-[#FDFBF7] text-[#2D241E] font-serif selection:bg-[#5c0f1c] selection:text-amber-100 antialiased pt-24 pb-24">
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 pt-6">
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-          {/* SIDEBAR KIRI */}
-          <aside className="lg:col-span-1 space-y-6">
-            <div className="bg-[#FAF7F0] p-5 rounded-2xl border border-amber-900/10 shadow-sm font-sans space-y-4">
-              <div className="flex items-center justify-between">
-                <h3 className="font-serif font-bold text-sm text-[#3b0912] uppercase tracking-wider">
-                  {t.searchTitle}
-                </h3>
-                {isFiltered && (
-                  <Link
-                    href="/katalog"
-                    className="text-[11px] font-bold text-[#5c0f1c] hover:underline uppercase tracking-wider"
-                  >
-                    {t.reset}
-                  </Link>
-                )}
-              </div>
-              <KatalogSearchInput />
-            </div>
+    <div className="min-h-screen bg-[#F5EFE6] text-[#2B211B] font-serif selection:bg-[#5A0A14] selection:text-amber-100 antialiased pt-14 sm:pt-20 pb-24">
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 space-y-5">
+        {/* 1. HEADER EDITORIAL KATALOG */}
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-3 border-b border-[#5A0A14]/15 pb-4">
+          <div className="space-y-0.5">
+            <span className="inline-flex items-center gap-2 text-[10px] sm:text-[11px] font-sans font-extrabold uppercase tracking-[0.26em] text-[#9A5D0A]">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#5A0A14]" />
+              {lang === 'en'
+                ? 'Surya Snack Banyuwangi'
+                : 'Koleksi Oleh-Oleh Khas Banyuwangi'}
+            </span>
+            <h1 className="text-3xl sm:text-5xl font-serif font-bold text-[#5A0A14] tracking-tight">
+              {lang === 'en' ? 'Product Catalog.' : 'Katalog Produk.'}
+            </h1>
+          </div>
 
-            <div className="bg-[#FAF7F0] p-5 rounded-2xl border border-amber-900/10 shadow-sm font-sans space-y-3">
-              <h3 className="font-serif font-bold text-sm text-[#3b0912] uppercase tracking-wider border-b border-amber-900/10 pb-2">
-                {t.catTitle}
-              </h3>
-              <ul className="space-y-1.5 text-xs max-h-100 overflow-y-auto pr-1">
-                {categories.map((cat) => {
-                  const isCatActive =
-                    activeCategory.toLowerCase() === cat.id.toLowerCase();
-                  return (
-                    <li key={cat.id}>
-                      <Link
-                        href={`/katalog?category=${encodeURIComponent(cat.id)}${search ? `&search=${encodeURIComponent(search)}` : ''}`}
-                        className={`flex items-center justify-between px-3.5 py-2.5 rounded-xl transition-all duration-300 ${
-                          isCatActive
-                            ? 'bg-[#3b0912] text-amber-200 font-bold shadow-md scale-[1.02]'
-                            : 'text-gray-700 hover:bg-amber-100/60 hover:text-[#3b0912]'
-                        }`}
-                      >
-                        <span className="truncate mr-2">{cat.label}</span>
-                        <span
-                          className={`text-[10px] px-2 py-0.5 rounded-full shrink-0 ${
-                            isCatActive
-                              ? 'bg-amber-400/20 text-amber-300'
-                              : 'bg-gray-200 text-gray-600'
-                          }`}
-                        >
-                          {cat.count}
-                        </span>
-                      </Link>
-                    </li>
-                  );
-                })}
-              </ul>
-            </div>
-          </aside>
+          <p className="font-sans text-xs sm:text-sm text-[#5f524a] max-w-md leading-relaxed">
+            {lang === 'en'
+              ? 'Explore our authentic Banyuwangi food and beverage selection, crafted with heritage recipes.'
+              : 'Temukan pilihan camilan dan minuman khas Banyuwangi yang diolah dari resep warisan keluarga.'}
+          </p>
+        </div>
 
-          {/* KONTEN KANAN */}
-          <div className="lg:col-span-3 space-y-6">
-            {paginatedProducts.length === 0 ? (
-              <div className="bg-[#FAF7F0] rounded-3xl p-12 text-center border-2 border-dashed border-amber-900/25 space-y-4 font-sans shadow-sm">
-                <h3 className="text-lg font-serif font-bold text-[#3b0912]">
-                  {t.noResultTitle}
-                </h3>
-                <p className="text-xs text-gray-600 max-w-md mx-auto">
-                  {t.noResultDesc}
-                </p>
-                <div>
-                  <Link
-                    href="/katalog"
-                    className="bg-[#3b0912] hover:bg-[#5c0f1c] text-amber-200 font-bold px-6 py-3 rounded-xl text-xs uppercase tracking-widest inline-block shadow-md"
-                  >
-                    {t.resetBtn}
-                  </Link>
-                </div>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
-                {paginatedProducts.map((product) => (
-                  <div
-                    key={product.id}
-                    className="transition-all duration-500 hover:-translate-y-1.5"
-                  >
-                    <ProductCard product={product} />
-                  </div>
-                ))}
-              </div>
-            )}
+        {/* 2. HORIZONTAL TOOLBAR: PENCARIAN (KIRI) + TAB KATEGORI (KANAN) */}
+        <div className="bg-[#FAF7F0] border border-[#5A0A14]/15 rounded-3xl md:rounded-full p-3.5 sm:px-5 sm:py-3 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4 md:gap-8 font-sans">
+          {/* Input Pencarian di Sisi Kiri */}
+          <div className="w-full md:w-80 lg:w-96 shrink-0">
+            <KatalogSearchInput />
+          </div>
 
-            {/* PAGINATION */}
-            {totalPages > 1 && (
-              <div className="flex items-center justify-center gap-2 pt-10 font-sans">
-                {currentPage > 1 && (
-                  <Link
-                    href={`/katalog?category=${encodeURIComponent(activeCategory)}${search ? `&search=${encodeURIComponent(search)}` : ''}&page=${currentPage - 1}`}
-                    className="px-4 py-2.5 rounded-xl bg-[#FAF7F0] border border-amber-900/20 text-xs font-bold text-gray-700 hover:bg-[#3b0912] hover:text-white transition-all shadow-sm"
+          {/* Tab Kategori di Sisi Kanan dengan Jarak Lega & Tanpa Scrollbar */}
+          <div className="flex flex-wrap items-center gap-2 pt-3.5 border-t border-[#5A0A14]/10 md:pt-0 md:border-t-0 md:justify-end">
+            {categories.map((cat) => {
+              const isCatActive =
+                activeCategory.toLowerCase() === cat.id.toLowerCase();
+              return (
+                <Link
+                  key={cat.id}
+                  href={`/katalog?category=${encodeURIComponent(cat.id)}${search ? `&search=${encodeURIComponent(search)}` : ''}`}
+                  className={`inline-flex items-center gap-1.5 sm:gap-2 px-3.5 sm:px-4 py-2 rounded-full text-xs font-bold whitespace-nowrap transition-all ${
+                    isCatActive
+                      ? 'bg-[#5A0A14] text-amber-200 shadow-xs'
+                      : 'bg-white/70 md:bg-transparent text-[#2B211B] border border-[#5A0A14]/12 md:border-transparent hover:bg-[#EFE6D5] hover:text-[#5A0A14]'
+                  }`}
+                >
+                  <span>{cat.label}</span>
+                  <span
+                    className={`text-[10px] px-1.5 py-0.5 rounded-full ${
+                      isCatActive
+                        ? 'bg-amber-300/20 text-amber-200'
+                        : 'bg-[#EFE6D5] text-[#5A0A14]'
+                    }`}
                   >
-                    ← Prev
-                  </Link>
-                )}
+                    {cat.count}
+                  </span>
+                </Link>
+              );
+            })}
 
-                {Array.from({ length: totalPages }, (_, i) => i + 1).map(
-                  (pageNum) => {
-                    const isPageActive = pageNum === currentPage;
-                    return (
-                      <Link
-                        key={pageNum}
-                        href={`/katalog?category=${encodeURIComponent(activeCategory)}${search ? `&search=${encodeURIComponent(search)}` : ''}&page=${pageNum}`}
-                        className={`w-10 h-10 flex items-center justify-center rounded-xl text-xs font-bold transition-all shadow-sm ${
-                          isPageActive
-                            ? 'bg-[#3b0912] text-amber-300 border border-[#3b0912] scale-105 shadow-md'
-                            : 'bg-[#FAF7F0] text-gray-700 border border-amber-900/20 hover:bg-amber-100/80'
-                        }`}
-                      >
-                        {pageNum}
-                      </Link>
-                    );
-                  }
-                )}
-
-                {currentPage < totalPages && (
-                  <Link
-                    href={`/katalog?category=${encodeURIComponent(activeCategory)}${search ? `&search=${encodeURIComponent(search)}` : ''}&page=${currentPage + 1}`}
-                    className="px-4 py-2.5 rounded-xl bg-[#FAF7F0] border border-amber-900/20 text-xs font-bold text-gray-700 hover:bg-[#3b0912] hover:text-white transition-all shadow-sm"
-                  >
-                    Next →
-                  </Link>
-                )}
-              </div>
+            {isFiltered && (
+              <Link
+                href="/katalog"
+                className="px-3 py-2 text-[11px] font-bold text-[#9A5D0A] hover:text-[#5A0A14] whitespace-nowrap transition"
+              >
+                {t.reset} ✕
+              </Link>
             )}
           </div>
         </div>
+
+        {/* 3. GRID PRODUK LEGA FULL-WIDTH (4 KOLOM DESKTOP, 2 KOLOM HP) */}
+        {paginatedProducts.length === 0 ? (
+          <div className="bg-[#FAF7F0] rounded-3xl p-12 sm:p-16 text-center border border-dashed border-[#5A0A14]/25 space-y-4 font-sans">
+            <h3 className="text-xl font-serif font-bold text-[#5A0A14]">
+              {t.noResultTitle}
+            </h3>
+            <p className="text-xs sm:text-sm text-[#6b5a50] max-w-md mx-auto leading-relaxed">
+              {t.noResultDesc}
+            </p>
+            <div className="pt-2">
+              <Link
+                href="/katalog"
+                className="bg-[#5A0A14] hover:bg-[#46070F] text-amber-200 font-bold px-7 py-3 rounded-full text-xs uppercase tracking-wider inline-block shadow-sm transition"
+              >
+                {t.resetBtn}
+              </Link>
+            </div>
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3.5 sm:gap-6">
+            {paginatedProducts.map((product) => (
+              <div
+                key={product.id}
+                className="transition-transform duration-300 hover:-translate-y-1"
+              >
+                <ProductCard product={product} />
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* 4. PAGINATION */}
+        {totalPages > 1 && (
+          <div className="flex items-center justify-center gap-2 pt-8 font-sans">
+            {currentPage > 1 && (
+              <Link
+                href={`/katalog?category=${encodeURIComponent(activeCategory)}${search ? `&search=${encodeURIComponent(search)}` : ''}&page=${currentPage - 1}`}
+                className="px-4 py-2 rounded-full bg-[#FAF7F0] border border-[#5A0A14]/20 text-xs font-bold text-[#5A0A14] hover:bg-[#5A0A14] hover:text-amber-200 transition-all shadow-xs"
+              >
+                ← Prev
+              </Link>
+            )}
+
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map(
+              (pageNum) => {
+                const isPageActive = pageNum === currentPage;
+                return (
+                  <Link
+                    key={pageNum}
+                    href={`/katalog?category=${encodeURIComponent(activeCategory)}${search ? `&search=${encodeURIComponent(search)}` : ''}&page=${pageNum}`}
+                    className={`w-9 h-9 flex items-center justify-center rounded-full text-xs font-bold transition-all shadow-xs ${
+                      isPageActive
+                        ? 'bg-[#5A0A14] text-amber-200 border border-[#5A0A14] scale-105'
+                        : 'bg-[#FAF7F0] text-[#2B211B] border border-[#5A0A14]/15 hover:bg-[#EFE6D5]'
+                    }`}
+                  >
+                    {pageNum}
+                  </Link>
+                );
+              }
+            )}
+
+            {currentPage < totalPages && (
+              <Link
+                href={`/katalog?category=${encodeURIComponent(activeCategory)}${search ? `&search=${encodeURIComponent(search)}` : ''}&page=${currentPage + 1}`}
+                className="px-4 py-2 rounded-full bg-[#FAF7F0] border border-[#5A0A14]/20 text-xs font-bold text-[#5A0A14] hover:bg-[#5A0A14] hover:text-amber-200 transition-all shadow-xs"
+              >
+                Next →
+              </Link>
+            )}
+          </div>
+        )}
       </section>
     </div>
   );
@@ -400,8 +411,8 @@ export default function KatalogPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen flex items-center justify-center bg-[#FDFBF7] font-sans">
-          <p className="text-xs font-bold text-gray-500 animate-pulse">
+        <div className="min-h-screen flex items-center justify-center bg-[#F5EFE6] font-sans">
+          <p className="text-xs font-bold text-[#5A0A14] animate-pulse">
             Memuat Katalog...
           </p>
         </div>
