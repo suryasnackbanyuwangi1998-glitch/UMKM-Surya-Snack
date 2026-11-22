@@ -1,89 +1,61 @@
 // src/app/api/products/route.js
 import { NextResponse } from "next/server";
-import { revalidatePath } from "next/cache";
 import { supabase } from "@/lib/supabase";
-
-async function parsePayload(request) {
-  const contentType = request.headers.get("content-type") || "";
-  if (contentType.includes("application/json")) {
-    return await request.json();
-  }
-
-  const formData = await request.formData();
-  const variantsRaw = formData.get("variants");
-  return {
-    id: formData.get("id"),
-    name: formData.get("name"),
-    price: formData.get("price") ? parseFloat(formData.get("price")) : null,
-    category: formData.get("category"),
-    weight: formData.get("weight"),
-    origin: formData.get("origin"),
-    stock: formData.get("stock") ? parseInt(formData.get("stock")) : 0,
-    badge: formData.get("badge"),
-    description: formData.get("description"),
-    ingredients: formData.get("ingredients"),
-    packaging_standard: formData.get("packaging_standard"),
-    key_features: formData.get("key_features"),
-    is_popular: formData.get("is_popular") === "true",
-    image_url: formData.get("image_url"),
-    variants: variantsRaw ? JSON.parse(variantsRaw) : [],
-  };
-}
 
 export async function POST(request) {
   try {
-    const body = await parsePayload(request);
-    const {
-      name,
-      price = null,
-      category,
-      weight,
-      origin,
-      stock = 0,
-      badge,
-      description,
-      ingredients,
-      packaging_standard,
-      key_features,
-      is_popular = false,
-      image_url = "",
-      variants = [],
-    } = body;
+    const formData = await request.formData();
+    
+    const name = formData.get("name");
+    const price = formData.get("price") ? parseFloat(formData.get("price")) : null;
+    const category = formData.get("category");
+    const weight = formData.get("weight");
+    const origin = formData.get("origin");
+    const stock = formData.get("stock") ? parseInt(formData.get("stock")) : 0;
+    const badge = formData.get("badge");
+    const description = formData.get("description");
+    const ingredients = formData.get("ingredients");
+    const packaging_standard = formData.get("packaging_standard");
+    const key_features = formData.get("key_features");
+    const is_popular = formData.get("is_popular") === "true";
+    const image_url = formData.get("image_url");
+    const variantsRaw = formData.get("variants");
+    const variants = variantsRaw ? JSON.parse(variantsRaw) : [];
 
+    // 1. Simpan produk utama ke tabel "products"
     const { data: productData, error: productError } = await supabase
       .from("products")
       .insert([
         {
           name,
-          price: price !== null && price !== "" ? Number(price) : null,
+          price,
           category,
           weight,
           origin,
-          stock: Number(stock) || 0,
+          stock,
           badge,
           description,
           ingredients,
           packaging_standard,
           key_features,
-          is_popular: Boolean(is_popular),
+          is_popular,
           image_url,
         },
       ])
-      .select("id")
+      .select()
       .single();
 
     if (productError) throw productError;
 
-    const validVariants = Array.isArray(variants)
-      ? variants.filter((v) => v && String(v.name || "").trim() !== "")
-      : [];
+    const productId = productData.id;
 
-    if (validVariants.length > 0) {
-      const variantsToInsert = validVariants.map((v) => ({
-        product_id: productData.id,
+    // 2. Simpan varian ke tabel "variant_products" jika ada
+    if (variants.length > 0) {
+      const variantsToInsert = variants.map((v) => ({
+        product_id: productId,
         name: v.name,
-        price: v.price ? Number(v.price) : 0,
-        stock: v.stock ? Number(v.stock) : 0,
+        price: v.price ? parseFloat(v.price) : 0,
+        stock: v.stock ? parseInt(v.stock) : 0,
         weight: v.weight,
         origin: v.origin,
         image_url: v.image_url,
@@ -91,7 +63,7 @@ export async function POST(request) {
         ingredients: v.ingredients,
         key_features: v.key_features,
         packaging_standard: v.packaging_standard,
-        is_popular: Boolean(v.is_popular),
+        is_popular: v.is_popular,
       }));
 
       const { error: variantError } = await supabase
@@ -101,15 +73,7 @@ export async function POST(request) {
       if (variantError) throw variantError;
     }
 
-    revalidatePath("/");
-    revalidatePath("/katalog");
-    revalidatePath("/admin/produk");
-
-    return NextResponse.json({
-      success: true,
-      id: productData.id,
-      message: "Produk berhasil ditambahkan",
-    });
+    return NextResponse.json({ success: true, message: "Produk berhasil ditambahkan" });
   } catch (error) {
     console.error("API Error (POST):", error.message);
     return NextResponse.json({ success: false, message: error.message }, { status: 500 });
@@ -118,62 +82,57 @@ export async function POST(request) {
 
 export async function PUT(request) {
   try {
-    const body = await parsePayload(request);
-    const {
-      id,
-      name,
-      price = null,
-      category,
-      weight,
-      origin,
-      stock = 0,
-      badge,
-      description,
-      ingredients,
-      packaging_standard,
-      key_features,
-      is_popular = false,
-      image_url = "",
-      variants = [],
-    } = body;
+    const formData = await request.formData();
+    
+    const id = formData.get("id");
+    const name = formData.get("name");
+    const price = formData.get("price") ? parseFloat(formData.get("price")) : null;
+    const category = formData.get("category");
+    const weight = formData.get("weight");
+    const origin = formData.get("origin");
+    const stock = formData.get("stock") ? parseInt(formData.get("stock")) : 0;
+    const badge = formData.get("badge");
+    const description = formData.get("description");
+    const ingredients = formData.get("ingredients");
+    const packaging_standard = formData.get("packaging_standard");
+    const key_features = formData.get("key_features");
+    const is_popular = formData.get("is_popular") === "true";
+    const image_url = formData.get("image_url");
+    const variantsRaw = formData.get("variants");
+    const variants = variantsRaw ? JSON.parse(variantsRaw) : [];
 
-    // Jalankan update produk utama dan hapus varian lama secara paralel
-    const [updateRes, deleteVarRes] = await Promise.all([
-      supabase
-        .from("products")
-        .update({
-          name,
-          price: price !== null && price !== "" ? Number(price) : null,
-          category,
-          weight,
-          origin,
-          stock: Number(stock) || 0,
-          badge,
-          description,
-          ingredients,
-          packaging_standard,
-          key_features,
-          is_popular: Boolean(is_popular),
-          image_url,
-          updated_at: new Date().toISOString(),
-        })
-        .eq("id", id),
-      supabase.from("variant_products").delete().eq("product_id", id),
-    ]);
+    // 1. Update data produk utama
+    const { error: updateError } = await supabase
+      .from("products")
+      .update({
+        name,
+        price,
+        category,
+        weight,
+        origin,
+        stock,
+        badge,
+        description,
+        ingredients,
+        packaging_standard,
+        key_features,
+        is_popular,
+        image_url,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", id);
 
-    if (updateRes.error) throw updateRes.error;
-    if (deleteVarRes.error) throw deleteVarRes.error;
+    if (updateError) throw updateError;
 
-    const validVariants = Array.isArray(variants)
-      ? variants.filter((v) => v && String(v.name || "").trim() !== "")
-      : [];
+    // 2. Refresh varian: Hapus varian lama, lalu masukkan varian yang baru
+    await supabase.from("variant_products").delete().eq("product_id", id);
 
-    if (validVariants.length > 0) {
-      const variantsToInsert = validVariants.map((v) => ({
+    if (variants.length > 0) {
+      const variantsToInsert = variants.map((v) => ({
         product_id: id,
         name: v.name,
-        price: v.price ? Number(v.price) : 0,
-        stock: v.stock ? Number(v.stock) : 0,
+        price: v.price ? parseFloat(v.price) : 0,
+        stock: v.stock ? parseInt(v.stock) : 0,
         weight: v.weight,
         origin: v.origin,
         image_url: v.image_url,
@@ -181,7 +140,7 @@ export async function PUT(request) {
         ingredients: v.ingredients,
         key_features: v.key_features,
         packaging_standard: v.packaging_standard,
-        is_popular: Boolean(v.is_popular),
+        is_popular: v.is_popular,
       }));
 
       const { error: variantError } = await supabase
@@ -190,11 +149,6 @@ export async function PUT(request) {
 
       if (variantError) throw variantError;
     }
-
-    revalidatePath("/");
-    revalidatePath("/katalog");
-    revalidatePath(`/katalog/${id}`);
-    revalidatePath("/admin/produk");
 
     return NextResponse.json({ success: true, message: "Produk berhasil diperbarui" });
   } catch (error) {

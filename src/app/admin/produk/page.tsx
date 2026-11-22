@@ -1,659 +1,293 @@
-// src/app/admin/produk/tambah/page.tsx
+// src/app/admin/produk/page.tsx
 "use client";
 
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { supabase } from "@/lib/supabase";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faPlus,
   faTrash,
-  faImage,
+  faBoxOpen,
   faSpinner,
   faCheckCircle,
   faArrowLeft,
-  faLayerGroup,
+  faEdit,
+  faSearch,
+  faChevronLeft,
+  faChevronRight,
 } from "@fortawesome/free-solid-svg-icons";
+import type { Product } from "@/types";
 
-interface ProductVariant {
-  name: string;
-  price: string;
-  stock: string;
-  weight: string;
-  origin: string;
-  image_url: string;
-  imageFile?: File | null;
-  description?: string;
-  ingredients?: string;
-  key_features?: string;
-  packaging_standard?: string;
-  is_popular?: boolean;
-}
-
-const REQUEST_TIMEOUT_MS = 15000;
-
-async function compressImageBeforeUpload(file: File): Promise<File> {
-  if (
-    typeof window === "undefined" ||
-    !file?.type?.startsWith("image/") ||
-    file.type === "image/gif" ||
-    file.size <= 300 * 1024
-  ) {
-    return file;
-  }
-
-  return new Promise((resolve) => {
-    const img = new Image();
-    const objectUrl = URL.createObjectURL(file);
-
-    img.onload = () => {
-      URL.revokeObjectURL(objectUrl);
-      const maxDimension = 1200;
-      let { width, height } = img;
-
-      if (width > maxDimension || height > maxDimension) {
-        if (width >= height) {
-          height = Math.round((height * maxDimension) / width);
-          width = maxDimension;
-        } else {
-          width = Math.round((width * maxDimension) / height);
-          height = maxDimension;
-        }
-      }
-
-      const canvas = document.createElement("canvas");
-      canvas.width = width;
-      canvas.height = height;
-      const ctx = canvas.getContext("2d");
-      if (!ctx) {
-        resolve(file);
-        return;
-      }
-
-      ctx.drawImage(img, 0, 0, width, height);
-      canvas.toBlob(
-        (blob) => {
-          if (!blob || blob.size >= file.size) {
-            resolve(file);
-            return;
-          }
-          const baseName = file.name.replace(/\.[^/.]+$/, "");
-          resolve(
-            new File([blob], `${baseName}.jpg`, {
-              type: "image/jpeg",
-              lastModified: Date.now(),
-            })
-          );
-        },
-        "image/jpeg",
-        0.8
-      );
-    };
-
-    img.onerror = () => {
-      URL.revokeObjectURL(objectUrl);
-      resolve(file);
-    };
-
-    img.src = objectUrl;
-  });
-}
-
-async function fetchWithTimeout(
-  input: RequestInfo | URL,
-  init: RequestInit = {},
-  timeoutMs: number = REQUEST_TIMEOUT_MS
-): Promise<Response> {
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
-
-  try {
-    return await fetch(input, {
-      ...init,
-      signal: controller.signal,
-    });
-  } catch (err: any) {
-    if (err?.name === "AbortError") {
-      throw new Error("Proses terlalu lama (timeout). Periksa koneksi lalu coba lagi.");
-    }
-    throw err;
-  } finally {
-    clearTimeout(timeoutId);
-  }
-}
-
-export default function TambahProdukPage() {
+export default function AdminProdukPage() {
   const router = useRouter();
-  const [submitting, setSubmitting] = useState(false);
-  const [statusStep, setStatusStep] = useState("");
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
   const [successMsg, setSuccessMsg] = useState("");
+  
+  const [searchQuery, setSearchQuery] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
-  // Form State Utama Produk
-  const [name, setName] = useState("");
-  const [price, setPrice] = useState("");
-  const [category, setCategory] = useState("Makanan");
-  const [weight, setWeight] = useState("250 gram");
-  const [origin, setOrigin] = useState("Banyuwangi");
-  const [stock, setStock] = useState("50");
-  const [badge, setBadge] = useState("Best Seller");
-  const [description, setDescription] = useState("");
-  const [ingredients, setIngredients] = useState("");
-  const [packagingStandard, setPackagingStandard] = useState("Mika Plastik Transparan Eksklusif");
-  const [keyFeatures, setKeyFeatures] = useState(
-    "Tanpa Bahan Pengawet.\nResep Warisan Leluhur.\nGurih & Renyah."
-  );
-  const [isPopular, setIsPopular] = useState(false);
+  const fetchProducts = async () => {
+    setLoading(true);
+    const { data, error } = await supabase
+      .from("products")
+      .select("*, variants:variant_products(*)")
+      .order("created_at", { ascending: false });
 
-  const [imageFile, setImageFile] = useState<File | null>(null);
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
-  const [variants, setVariants] = useState<ProductVariant[]>([]);
-
-  const previewUrlsRef = useRef<string[]>([]);
+    if (error) {
+      console.error("Gagal memuat produk:", error.message);
+    } else {
+      setProducts(data || []);
+    }
+    setLoading(false);
+  };
 
   useEffect(() => {
-    return () => {
-      previewUrlsRef.current.forEach((url) => URL.revokeObjectURL(url));
-    };
+    fetchProducts();
   }, []);
 
-  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      const compressed = await compressImageBeforeUpload(e.target.files[0]);
-      const preview = URL.createObjectURL(compressed);
-      previewUrlsRef.current.push(preview);
-      setImageFile(compressed);
-      setImagePreview(preview);
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery]);
+
+  // Arahkan ke halaman tambah produk terpisah
+  const handleOpenAddModal = () => {
+    router.push("/admin/produk/tambah");
+  };
+
+  // Arahkan ke halaman edit produk dinamis berdasar ID (dengan pengamanan)
+  const handleOpenEditModal = (item: any) => {
+    if (!item || !item.id) {
+      alert("ID produk tidak valid atau tidak ditemukan!");
+      return;
+    }
+    router.push(`/admin/produk/edit/${item.id}`);
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!id) {
+      alert("ID produk tidak valid.");
+      return;
+    }
+    if (!confirm("Apakah Anda yakin ingin menghapus produk ini?")) return;
+
+    const { error } = await supabase.from("products").delete().eq("id", id);
+    if (error) {
+      alert("Gagal menghapus produk: " + error.message);
+    } else {
+      fetchProducts();
     }
   };
 
-  const handleAddVariant = () => {
-    setVariants([
-      ...variants,
-      {
-        name: "",
-        price: "",
-        stock: "10",
-        weight: "250 gram",
-        origin: "Banyuwangi",
-        image_url: "",
-        imageFile: null,
-        description: "",
-        ingredients: "",
-        key_features: "",
-        packaging_standard: "",
-        is_popular: false,
-      },
-    ]);
-  };
+  const filteredProducts = products.filter((item: any) =>
+    item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (item.category && item.category.toLowerCase().includes(searchQuery.toLowerCase()))
+  );
 
-  const handleRemoveVariant = (index: number) => {
-    setVariants(variants.filter((_, i) => i !== index));
-  };
-
-  const handleVariantChange = (index: number, field: keyof ProductVariant, value: any) => {
-    const updated = [...variants];
-    updated[index] = { ...updated[index], [field]: value };
-    setVariants(updated);
-  };
-
-  const handleVariantImageChange = async (
-    index: number,
-    e: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    if (e.target.files && e.target.files[0]) {
-      const compressed = await compressImageBeforeUpload(e.target.files[0]);
-      const previewUrl = URL.createObjectURL(compressed);
-      previewUrlsRef.current.push(previewUrl);
-      const updated = [...variants];
-      updated[index] = { ...updated[index], imageFile: compressed, image_url: previewUrl };
-      setVariants(updated);
-    }
-  };
-
-  const uploadToGoogleDrive = async (file: File) => {
-    const formData = new FormData();
-    formData.append("file", file);
-    formData.append("folder", "produk");
-
-    const res = await fetchWithTimeout("/api/upload", {
-      method: "POST",
-      body: formData,
-    });
-    const data = await res.json().catch(() => ({}));
-    if (!res.ok || !data.success) {
-      throw new Error(data.error || data.message || "Gagal mengunggah gambar ke Google Drive");
-    }
-    return data.imageUrl as string;
-  };
-
-  const handleSaveProduct = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (submitting) return;
-    setSubmitting(true);
-
-    try {
-      const hasAnyUpload = Boolean(imageFile || variants.some((v) => v.imageFile));
-      if (hasAnyUpload) {
-        setStatusStep("Mengunggah foto...");
-      }
-
-      // Upload foto utama dan semua foto varian SECARA PARALEL sekaligus
-      const [finalImageUrl, processedVariants] = await Promise.all([
-        imageFile ? uploadToGoogleDrive(imageFile) : Promise.resolve(""),
-        Promise.all(
-          variants.map(async (v) => {
-            let variantImgUrl = v.image_url;
-            if (v.imageFile) {
-              variantImgUrl = await uploadToGoogleDrive(v.imageFile);
-            } else if (variantImgUrl?.startsWith("blob:")) {
-              variantImgUrl = "";
-            }
-            return {
-              name: v.name,
-              price: v.price ? parseFloat(v.price) : 0,
-              stock: parseInt(v.stock) || 0,
-              weight: v.weight || "250 gram",
-              origin: v.origin || "Banyuwangi",
-              image_url: variantImgUrl || "",
-              description: v.description || "",
-              ingredients: v.ingredients || "",
-              key_features: v.key_features || "",
-              packaging_standard: v.packaging_standard || "",
-              is_popular: v.is_popular || false,
-            };
-          })
-        ),
-      ]);
-
-      setStatusStep("Menyimpan produk...");
-
-      const res = await fetchWithTimeout("/api/products", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name,
-          price: price ? parseFloat(price) : null,
-          category,
-          weight,
-          origin,
-          stock: stock ? parseInt(stock) : 0,
-          badge,
-          description,
-          ingredients,
-          packaging_standard: packagingStandard,
-          key_features: keyFeatures,
-          is_popular: isPopular,
-          image_url: finalImageUrl,
-          variants: processedVariants,
-        }),
-      });
-
-      const result = await res.json().catch(() => ({}));
-      if (!res.ok || !result.success) {
-        throw new Error(result.message || "Gagal menyimpan produk.");
-      }
-
-      setSuccessMsg("Produk berhasil ditambahkan!");
-      setTimeout(() => router.push("/admin/produk"), 450);
-    } catch (err: any) {
-      alert(err.message);
-    } finally {
-      setSubmitting(false);
-      setStatusStep("");
-    }
-  };
+  const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const currentProducts = filteredProducts.slice(startIndex, startIndex + itemsPerPage);
 
   return (
-    <div className="p-6 md:p-10 max-w-4xl mx-auto space-y-8 bg-white min-h-screen text-[#2D241E] font-sans">
-      <div className="flex items-center justify-between border-b border-gray-100 pb-4">
-        <div>
+    <div className="p-6 md:p-10 space-y-8 bg-white min-h-screen text-[#2D241E] font-sans">
+      
+      {/* Top Header Card */}
+      <div className="bg-white border border-gray-200 p-6 md:p-8 rounded-3xl shadow-xs flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div className="space-y-1.5 font-sans">
           <Link
-            href="/admin/produk"
-            className="text-xs font-bold text-[#5c0f1c] hover:underline flex items-center gap-1.5 mb-1"
+            href="/admin/dashboard"
+            className="inline-flex items-center gap-1.5 text-xs font-bold text-[#5c0f1c] hover:underline mb-1"
           >
-            <FontAwesomeIcon icon={faArrowLeft} /> Kembali ke Manajemen Produk
+            <FontAwesomeIcon icon={faArrowLeft} className="w-3 h-3" />
+            <span>Kembali ke Dashboard</span>
           </Link>
-          <h1 className="text-2xl font-serif font-black text-[#3b0912]">Tambah Produk Baru</h1>
+          <h1 className="text-2xl md:text-3xl font-serif font-black tracking-tight text-[#3b0912]">
+            Manajemen Produk & Varian
+          </h1>
+          <p className="text-xs text-gray-500">
+            Kelola informasi lengkap produk utama UMKM Surya Snack beserta varian rasanya.
+          </p>
         </div>
+        <button
+          onClick={handleOpenAddModal}
+          className="bg-[#3b0912] hover:bg-[#5c0f1c] text-amber-200 text-xs font-bold px-5 py-3.5 rounded-xl transition shadow-md flex items-center gap-2 w-fit cursor-pointer uppercase tracking-widest"
+        >
+          <FontAwesomeIcon icon={faPlus} className="w-3.5 h-3.5 text-amber-400" />
+          <span>Tambah Produk Baru</span>
+        </button>
       </div>
 
       {successMsg && (
-        <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-2xl text-xs text-emerald-800 flex items-center gap-2">
+        <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-2xl text-xs text-emerald-800 flex items-center gap-2 shadow-xs">
           <FontAwesomeIcon icon={faCheckCircle} className="text-emerald-600 text-base" />
           <span className="font-bold">{successMsg}</span>
         </div>
       )}
 
-      <form onSubmit={handleSaveProduct} className="space-y-6">
-        <div>
-          <label className="block text-[11px] font-bold uppercase tracking-widest text-gray-500 mb-1.5">
-            Nama Produk
-          </label>
-          <input
-            type="text"
-            required
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="Contoh: Bagiak Susu Super Banyuwangi"
-            className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-xs text-gray-800 focus:outline-none focus:border-[#5c0f1c]"
-          />
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-[11px] font-bold uppercase tracking-widest text-gray-500 mb-1.5">
-              Harga Dasar (Rp)
-            </label>
-            <input
-              type="number"
-              value={price}
-              onChange={(e) => setPrice(e.target.value)}
-              placeholder="Contoh: 25000"
-              className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-xs text-gray-800 focus:outline-none focus:border-[#5c0f1c]"
-            />
-          </div>
-          <div>
-            <label className="block text-[11px] font-bold uppercase tracking-widest text-gray-500 mb-1.5">
-              Kategori
-            </label>
-            <select
-              value={category}
-              onChange={(e) => setCategory(e.target.value)}
-              className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-xs text-gray-800 font-bold focus:outline-none focus:border-[#5c0f1c]"
-            >
-              <option value="Makanan">Makanan</option>
-              <option value="Minuman">Minuman</option>
-            </select>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-[11px] font-bold uppercase tracking-widest text-gray-500 mb-1.5">
-              Berat Produk
-            </label>
+      {/* Tabel Daftar Produk */}
+      <div className="bg-white border border-gray-200 rounded-3xl shadow-xs overflow-hidden">
+        <div className="p-6 border-b border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <h2 className="text-sm font-bold text-[#3b0912] flex items-center gap-2 font-serif">
+            <FontAwesomeIcon icon={faBoxOpen} className="text-amber-600" />
+            <span>Daftar Produk Aktif ({filteredProducts.length} total)</span>
+          </h2>
+          
+          <div className="relative w-full sm:w-72">
+            <span className="absolute inset-y-0 left-0 flex items-center pl-3.5 text-gray-400 pointer-events-none">
+              <FontAwesomeIcon icon={faSearch} className="w-3.5 h-3.5" />
+            </span>
             <input
               type="text"
-              value={weight}
-              onChange={(e) => setWeight(e.target.value)}
-              placeholder="Contoh: 250 gram"
-              className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-xs text-gray-800 focus:outline-none focus:border-[#5c0f1c]"
-            />
-          </div>
-          <div>
-            <label className="block text-[11px] font-bold uppercase tracking-widest text-gray-500 mb-1.5">
-              Asal Produk
-            </label>
-            <input
-              type="text"
-              value={origin}
-              onChange={(e) => setOrigin(e.target.value)}
-              placeholder="Contoh: Banyuwangi"
-              className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-xs text-gray-800 focus:outline-none focus:border-[#5c0f1c]"
+              id="searchQuery"
+              name="search_query"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Cari nama / kategori..."
+              className="w-full bg-gray-50 border border-gray-200 rounded-xl pl-10 pr-4 py-2.5 text-xs text-gray-800 focus:outline-none focus:border-[#5c0f1c] transition"
             />
           </div>
         </div>
 
-        <div>
-          <label className="block text-[11px] font-bold uppercase tracking-widest text-[#3b0912] mb-1.5">
-            📦 Stok Utama Produk
-          </label>
-          <input
-            type="number"
-            min="0"
-            value={stock}
-            onChange={(e) => setStock(e.target.value)}
-            className="w-full bg-amber-50/60 border border-amber-300 rounded-xl px-4 py-3 text-xs text-[#3b0912] font-extrabold focus:outline-none"
-          />
-        </div>
-
-        <div className="space-y-4 bg-gray-50/70 p-4 rounded-2xl border border-gray-200">
-          <h4 className="text-xs font-bold uppercase tracking-widest text-[#3b0912]">
-            Informasi & Deskripsi Produk Utama
-          </h4>
-          <div>
-            <label className="block text-[11px] font-bold uppercase tracking-widest text-gray-500 mb-1.5">
-              Deskripsi Produk
-            </label>
-            <textarea
-              rows={4}
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="Tuliskan keterangan lengkap produk..."
-              className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-xs text-gray-800 focus:outline-none"
-            />
+        {loading ? (
+          <div className="p-12 text-center text-gray-500 space-y-3">
+            <FontAwesomeIcon icon={faSpinner} className="animate-spin text-2xl text-[#5c0f1c]" />
+            <p className="text-xs">Memuat data produk dari Supabase...</p>
           </div>
-          <div>
-            <label className="block text-[11px] font-bold uppercase tracking-widest text-gray-500 mb-1.5">
-              Keunggulan Utama (Enter per baris)
-            </label>
-            <textarea
-              rows={3}
-              value={keyFeatures}
-              onChange={(e) => setKeyFeatures(e.target.value)}
-              className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-xs text-gray-800 font-mono focus:outline-none"
-            />
+        ) : currentProducts.length === 0 ? (
+          <div className="p-12 text-center text-gray-500 space-y-2">
+            <p className="text-sm font-bold">Tidak ada produk yang cocok dengan pencarian.</p>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-[11px] font-bold uppercase tracking-widest text-gray-500 mb-1.5">
-                Komposisi
-              </label>
-              <textarea
-                rows={2}
-                value={ingredients}
-                onChange={(e) => setIngredients(e.target.value)}
-                className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-xs text-gray-800 focus:outline-none"
-              />
+        ) : (
+          <>
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="border-b border-gray-100 text-[10px] font-extrabold uppercase tracking-widest text-gray-400 bg-gray-50">
+                    <th className="p-4">Nama Produk</th>
+                    <th className="p-4">Kategori</th>
+                    <th className="p-4">Harga Dasar</th>
+                    <th className="p-4">Stok Utama</th>
+                    <th className="p-4">Varian</th>
+                    <th className="p-4 text-center">Unggulan</th>
+                    <th className="p-4 text-center">Aksi</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100 text-xs">
+                  {currentProducts.map((item: any) => {
+                    const displayImg = item.image_url || "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=500";
+                    const variantCount = Array.isArray(item.variants) ? item.variants.length : 0;
+                    return (
+                      <tr key={item.id} className="hover:bg-gray-50 transition">
+                        <td className="p-4 flex items-center gap-3">
+                          <div className="relative w-12 h-12 rounded-xl overflow-hidden bg-gray-100 shrink-0 border border-gray-200">
+                            <img 
+                              src={displayImg} 
+                              alt={item.name} 
+                              className="w-full h-full object-cover"
+                              onError={(e) => {
+                                (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=500";
+                              }}
+                            />
+                          </div>
+                          <div>
+                            <div className="font-bold text-[#3b0912] text-sm">{item.name}</div>
+                            <div className="text-[11px] text-gray-400 line-clamp-1">{item.weight || "-"}</div>
+                          </div>
+                        </td>
+                        <td className="p-4">
+                          <span className={`px-2.5 py-1 rounded-md text-[11px] font-bold ${
+                            item.category === 'Minuman' ? 'bg-sky-100 text-sky-800' : 'bg-amber-100/70 text-[#3b0912]'
+                          }`}>
+                            {item.category || "Makanan"}
+                          </span>
+                        </td>
+                        <td className="p-4 font-black text-[#5c0f1c]">
+                          {item.price !== null && item.price !== undefined ? `Rp ${item.price.toLocaleString("id-ID")}` : "Cek Varian"}
+                        </td>
+                        <td className="p-4 font-bold text-gray-700">
+                          {item.stock ?? 0} pcs
+                        </td>
+                        <td className="p-4">
+                          <span className="bg-gray-100 text-gray-700 px-2.5 py-1 rounded-md text-[11px] font-bold">
+                            {variantCount} Varian
+                          </span>
+                        </td>
+                        <td className="p-4 text-center">
+                          {item.is_popular ? (
+                            <span className="inline-block px-2.5 py-1 bg-emerald-100 text-emerald-800 rounded-full font-bold text-[10px]">
+                              Ya ✦
+                            </span>
+                          ) : (
+                            <span className="text-gray-300">-</span>
+                          )}
+                        </td>
+                        <td className="p-4 text-center space-x-2">
+                          <button
+                            onClick={() => handleOpenEditModal(item)}
+                            className="px-3 py-1.5 bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 rounded-xl transition text-xs font-bold cursor-pointer inline-flex items-center gap-1"
+                          >
+                            <FontAwesomeIcon icon={faEdit} /> Edit
+                          </button>
+                          <button
+                            onClick={() => handleDelete(item.id)}
+                            className="px-3 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-xl transition text-xs font-bold cursor-pointer inline-flex items-center gap-1"
+                          >
+                            <FontAwesomeIcon icon={faTrash} /> Hapus
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
             </div>
-            <div>
-              <label className="block text-[11px] font-bold uppercase tracking-widest text-gray-500 mb-1.5">
-                Standar Kemasan
-              </label>
-              <input
-                type="text"
-                value={packagingStandard}
-                onChange={(e) => setPackagingStandard(e.target.value)}
-                className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-xs text-gray-800 focus:outline-none"
-              />
-            </div>
-          </div>
-        </div>
 
-        {/* Varian Produk Lengkap */}
-        <div className="border border-amber-900/10 bg-amber-50/30 p-4 rounded-2xl space-y-4">
-          <div className="flex items-center justify-between">
-            <label className="text-xs font-bold uppercase tracking-widest text-[#3b0912] flex items-center gap-2">
-              <FontAwesomeIcon icon={faLayerGroup} className="text-amber-600" />
-              <span>Varian Produk & Keterangan Khusus</span>
-            </label>
-            <button
-              type="button"
-              onClick={handleAddVariant}
-              className="bg-[#3b0912] hover:bg-[#5c0f1c] text-amber-200 text-[10px] font-bold px-3 py-2 rounded-xl uppercase tracking-wider flex items-center gap-1 cursor-pointer"
-            >
-              <FontAwesomeIcon icon={faPlus} /> Tambah Varian
-            </button>
-          </div>
+            {totalPages > 1 && (
+              <div className="p-4 border-t border-gray-100 flex items-center justify-between bg-gray-50/50">
+                <span className="text-xs text-gray-500">
+                  Menampilkan halaman <strong className="text-[#3b0912]">{currentPage}</strong> dari <strong className="text-[#3b0912]">{totalPages}</strong>
+                </span>
 
-          {variants.length === 0 ? (
-            <p className="text-xs text-gray-400 italic">Belum ada varian ditambahkan.</p>
-          ) : (
-            <div className="space-y-4">
-              {variants.map((variant, index) => (
-                <div key={index} className="bg-white border border-gray-200 p-4 rounded-xl space-y-3 shadow-xs">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[10px] font-bold uppercase tracking-widest text-gray-500">
-                      Varian #{index + 1}
-                    </span>
+                <div className="flex items-center gap-1.5">
+                  <button
+                    onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                    disabled={currentPage === 1}
+                    className="px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-xs font-bold text-gray-700 disabled:opacity-40 hover:bg-gray-100 transition cursor-pointer"
+                  >
+                    <FontAwesomeIcon icon={faChevronLeft} className="mr-1" /> Prev
+                  </button>
+
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNumber) => (
                     <button
-                      type="button"
-                      onClick={() => handleRemoveVariant(index)}
-                      className="text-rose-600 hover:text-rose-800 text-xs font-bold cursor-pointer"
+                      key={pageNumber}
+                      onClick={() => setCurrentPage(pageNumber)}
+                      className={`w-8 h-8 rounded-lg text-xs font-bold transition cursor-pointer ${
+                        currentPage === pageNumber
+                          ? "bg-[#3b0912] text-amber-200 shadow-sm"
+                          : "bg-white border border-gray-200 text-gray-700 hover:bg-gray-100"
+                      }`}
                     >
-                      <FontAwesomeIcon icon={faTrash} /> Hapus Varian
+                      {pageNumber}
                     </button>
-                  </div>
+                  ))}
 
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                    <input
-                      type="text"
-                      placeholder="Nama Varian (Cth: Rasa Keju)"
-                      value={variant.name}
-                      onChange={(e) => handleVariantChange(index, "name", e.target.value)}
-                      className="bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-xs text-gray-800 focus:outline-none"
-                    />
-                    <input
-                      type="number"
-                      placeholder="Harga Varian (Rp)"
-                      value={variant.price}
-                      onChange={(e) => handleVariantChange(index, "price", e.target.value)}
-                      className="bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-xs text-gray-800 focus:outline-none"
-                    />
-                    <input
-                      type="number"
-                      min="0"
-                      placeholder="Stok Varian"
-                      value={variant.stock}
-                      onChange={(e) => handleVariantChange(index, "stock", e.target.value)}
-                      className="bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-xs text-[#3b0912] font-bold focus:outline-none"
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                    <input
-                      type="text"
-                      placeholder="Berat Varian (Cth: 250 gram)"
-                      value={variant.weight}
-                      onChange={(e) => handleVariantChange(index, "weight", e.target.value)}
-                      className="bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-xs text-gray-800 focus:outline-none"
-                    />
-                    <input
-                      type="text"
-                      placeholder="Asal Varian (Cth: Banyuwangi)"
-                      value={variant.origin}
-                      onChange={(e) => handleVariantChange(index, "origin", e.target.value)}
-                      className="bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-xs text-gray-800 focus:outline-none"
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <textarea
-                      rows={2}
-                      placeholder="Deskripsi khusus varian ini..."
-                      value={variant.description || ""}
-                      onChange={(e) => handleVariantChange(index, "description", e.target.value)}
-                      className="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-xs text-gray-800 focus:outline-none resize-y"
-                    />
-                    <textarea
-                      rows={2}
-                      placeholder="Komposisi khusus varian ini..."
-                      value={variant.ingredients || ""}
-                      onChange={(e) => handleVariantChange(index, "ingredients", e.target.value)}
-                      className="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-xs text-gray-800 focus:outline-none resize-y"
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <textarea
-                      rows={2}
-                      placeholder="Keunggulan varian ini..."
-                      value={variant.key_features || ""}
-                      onChange={(e) => handleVariantChange(index, "key_features", e.target.value)}
-                      className="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-xs text-gray-800 focus:outline-none resize-y"
-                    />
-                    <input
-                      type="text"
-                      placeholder="Standar kemasan khusus varian ini..."
-                      value={variant.packaging_standard || ""}
-                      onChange={(e) =>
-                        handleVariantChange(index, "packaging_standard", e.target.value)
-                      }
-                      className="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-xs text-gray-800 focus:outline-none"
-                    />
-                  </div>
-
-                  <div className="flex items-center gap-3 pt-1">
-                    <label className="cursor-pointer bg-gray-50 border border-dashed border-gray-300 hover:border-[#5c0f1c] px-3 py-2 rounded-lg text-xs text-gray-600 font-bold inline-flex items-center gap-2">
-                      <FontAwesomeIcon icon={faImage} className="text-[#5c0f1c]" />
-                      <span>
-                        {variant.image_url ? "Ganti Gambar Varian" : "Upload Gambar Varian"}
-                      </span>
-                      <input
-                        type="file"
-                        accept="image/*"
-                        onChange={(e) => handleVariantImageChange(index, e)}
-                        className="hidden"
-                      />
-                    </label>
-                    {variant.image_url && (
-                      <div className="relative w-10 h-10 rounded-lg overflow-hidden border border-gray-200 shrink-0">
-                        <img
-                          src={variant.image_url}
-                          alt="Variant preview"
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
-                    )}
-                  </div>
+                  <button
+                    onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+                    disabled={currentPage === totalPages}
+                    className="px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-xs font-bold text-gray-700 disabled:opacity-40 hover:bg-gray-100 transition cursor-pointer"
+                  >
+                    Next <FontAwesomeIcon icon={faChevronRight} className="ml-1" />
+                  </button>
                 </div>
-              ))}
-            </div>
-          )}
-        </div>
-
-        <div className="flex items-center gap-3 p-3 bg-amber-50/50 border border-amber-900/10 rounded-xl">
-          <input
-            type="checkbox"
-            id="isPopular"
-            checked={isPopular}
-            onChange={(e) => setIsPopular(e.target.checked)}
-            className="w-4 h-4 text-[#3b0912] rounded cursor-pointer"
-          />
-          <label htmlFor="isPopular" className="text-xs font-bold text-[#3b0912] cursor-pointer">
-            Jadikan Produk Utama Unggulan (Tampil di Halaman Utama)
-          </label>
-        </div>
-
-        <div>
-          <label className="block text-[11px] font-bold uppercase tracking-widest text-gray-500 mb-1.5">
-            Unggah Gambar Utama Produk
-          </label>
-          <div className="flex items-center gap-4">
-            <label className="flex-1 cursor-pointer bg-gray-50 border border-dashed border-gray-300 rounded-xl p-4 text-center">
-              <FontAwesomeIcon icon={faImage} className="text-[#5c0f1c] text-xl mb-1" />
-              <span className="block text-xs text-gray-600 font-bold">Pilih file gambar utama</span>
-              <input type="file" accept="image/*" onChange={handleImageChange} className="hidden" />
-            </label>
-            {imagePreview && (
-              <img src={imagePreview} alt="Preview" className="w-16 h-16 rounded-xl object-cover border" />
+              </div>
             )}
-          </div>
-        </div>
+          </>
+        )}
+      </div>
 
-        <div className="pt-4 flex gap-3">
-          <Link
-            href="/admin/produk"
-            className="flex-1 text-center bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold py-3.5 rounded-xl text-xs uppercase tracking-widest"
-          >
-            Batal
-          </Link>
-          <button
-            type="submit"
-            disabled={submitting}
-            className="flex-1 bg-[#3b0912] hover:bg-[#5c0f1c] text-amber-200 font-bold py-3.5 rounded-xl text-xs uppercase tracking-widest shadow-md flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
-          >
-            {submitting ? (
-              <>
-                <FontAwesomeIcon icon={faSpinner} className="animate-spin" />
-                <span>{statusStep || "Menyimpan..."}</span>
-              </>
-            ) : (
-              <span>Simpan Produk Baru</span>
-            )}
-          </button>
-        </div>
-      </form>
     </div>
   );
 }
