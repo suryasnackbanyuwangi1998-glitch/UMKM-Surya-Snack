@@ -284,7 +284,7 @@ export default function TentangKamiPage() {
   const heroChipIcons = [faCircleCheck, faLeaf, faStore];
 
   return (
-    <div className="min-h-screen bg-[#F5EFE6] text-[#2B211B] font-serif selection:bg-[#5A0A14] selection:text-amber-100 antialiased pt-14 sm:pt-20 pb-24">
+    <div className="min-h-screen bg-white text-[#2B211B] font-serif selection:bg-[#5A0A14] selection:text-amber-100 antialiased pt-14 sm:pt-20 pb-24">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 space-y-14 sm:space-y-20">
         {/* HERO — SELARAS DENGAN HEADER BERANDA & KATALOG */}
         <section className="space-y-8">

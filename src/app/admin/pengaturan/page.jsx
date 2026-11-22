@@ -512,14 +512,14 @@ export default function AdminPengaturanPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#F5EFE6] text-[#6E1423] font-semibold">
+      <div className="min-h-screen flex items-center justify-center bg-white text-[#6E1423] font-semibold">
         Memuat pengaturan tampilan website...
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#F5EFE6] text-[#2B211B] py-10 px-4 sm:px-8">
+    <div className="min-h-screen bg-white text-[#2B211B] py-10 px-4 sm:px-8">
       <div className="max-w-5xl mx-auto space-y-6">
         <div className="bg-white rounded-2xl p-6 sm:p-8 shadow-sm border border-[#6E1423]/15 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>

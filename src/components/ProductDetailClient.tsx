@@ -738,7 +738,7 @@ export default function ProductDetailClient({
     mainProductImage;
 
   return (
-    <div className="min-h-screen bg-[#F5EFE6] text-[#2B211B] font-sans selection:bg-[#5A0A14] selection:text-amber-100">
+    <div className="min-h-screen bg-white text-[#2B211B] font-sans selection:bg-[#5A0A14] selection:text-amber-100">
       <div className="mx-auto w-full max-w-6xl px-4 pb-24 pt-14 sm:px-6 sm:pt-20 lg:pb-20">
         {/* ===== TOMBOL KEMBALI & BREADCRUMB ===== */}
         <div className="flex items-center justify-between mb-6 sm:mb-8">
@@ -1005,7 +1005,7 @@ export default function ProductDetailClient({
                     type="button"
                     onClick={handleDecrement}
                     disabled={quantity <= 0}
-                    className="w-7 h-7 rounded-full bg-[#F5EFE6] hover:bg-[#EFE6D5] text-[#5A0A14] flex items-center justify-center font-bold disabled:opacity-40 disabled:cursor-not-allowed transition cursor-pointer"
+                    className="w-7 h-7 rounded-full bg-white hover:bg-[#EFE6D5] text-[#5A0A14] flex items-center justify-center font-bold disabled:opacity-40 disabled:cursor-not-allowed transition cursor-pointer"
                   >
                     <FontAwesomeIcon icon={faMinus} className="w-3 h-3" />
                   </button>

@@ -18,9 +18,9 @@ export default function RootLayout({
   children: React.ReactNode;
 }): React.ReactElement {
   return (
-    <html lang="id" className="bg-[#F5EFE6]" suppressHydrationWarning>
+    <html lang="id" className="bg-white" suppressHydrationWarning>
       <body
-        className="bg-[#F5EFE6] text-[#2B211B] min-h-screen font-sans antialiased"
+        className="bg-white text-[#2B211B] min-h-screen font-sans antialiased"
         suppressHydrationWarning
       >
         <LanguageProvider>

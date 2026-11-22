@@ -251,7 +251,7 @@ function KatalogContent() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#F5EFE6] font-sans">
+      <div className="min-h-screen flex items-center justify-center bg-white font-sans">
         <p className="text-xs font-bold text-[#5A0A14] animate-pulse">
           {lang === 'en' ? 'Loading Catalog...' : 'Memuat Katalog...'}
         </p>
@@ -260,7 +260,7 @@ function KatalogContent() {
   }
 
   return (
-    <div className="min-h-screen bg-[#F5EFE6] text-[#2B211B] font-serif selection:bg-[#5A0A14] selection:text-amber-100 antialiased pt-14 sm:pt-20 pb-24">
+    <div className="min-h-screen bg-white text-[#2B211B] font-serif selection:bg-[#5A0A14] selection:text-amber-100 antialiased pt-14 sm:pt-20 pb-24">
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 space-y-5">
         {/* 1. HEADER EDITORIAL KATALOG */}
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-3 border-b border-[#5A0A14]/15 pb-4">
@@ -411,7 +411,7 @@ export default function KatalogPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen flex items-center justify-center bg-[#F5EFE6] font-sans">
+        <div className="min-h-screen flex items-center justify-center bg-white font-sans">
           <p className="text-xs font-bold text-[#5A0A14] animate-pulse">
             Memuat Katalog...
           </p>

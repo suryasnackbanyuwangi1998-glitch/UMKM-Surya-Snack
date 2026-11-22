@@ -161,7 +161,7 @@ export default function KeranjangPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#F5EFE6] text-[#2B211B] font-serif pt-14 sm:pt-20 pb-24 selection:bg-[#5A0A14] selection:text-amber-100 antialiased">
+    <div className="min-h-screen bg-white text-[#2B211B] font-serif pt-14 sm:pt-20 pb-24 selection:bg-[#5A0A14] selection:text-amber-100 antialiased">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 space-y-8 sm:space-y-10">
         {/* Header Editorial — Selaras dengan Beranda, Katalog, Tentang, & Kontak */}
         <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6 border-b border-[#5A0A14]/15 pb-7">
@@ -291,7 +291,7 @@ export default function KeranjangPage() {
                               item.product.selectedVariant
                             )
                           }
-                          className="w-6 h-6 rounded-full bg-[#F5EFE6] hover:bg-[#EFE6D5] flex items-center justify-center text-xs font-bold text-[#5A0A14] cursor-pointer transition"
+                          className="w-6 h-6 rounded-full bg-white hover:bg-[#EFE6D5] flex items-center justify-center text-xs font-bold text-[#5A0A14] cursor-pointer transition"
                         >
                           <FontAwesomeIcon icon={faMinus} className="w-2.5 h-2.5" />
                         </button>

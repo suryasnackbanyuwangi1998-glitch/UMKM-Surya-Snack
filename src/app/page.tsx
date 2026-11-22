@@ -274,7 +274,7 @@ export default function HomePage() {
   const heroAccent = heroWords.slice(Math.ceil(heroWords.length / 2)).join(' ');
 
   return (
-    <div className="min-h-screen bg-[#F5EFE6] text-[#2B211B] font-serif selection:bg-[#5A0A14] selection:text-amber-100 antialiased overflow-x-hidden">
+    <div className="min-h-screen bg-white text-[#2B211B] font-serif selection:bg-[#5A0A14] selection:text-amber-100 antialiased overflow-x-hidden">
 
       {/* ================= 1. FULL-SCREEN HERO TANPA BLUR BACKGROUND ================= */}
       <section className="relative w-full min-h-screen flex items-center border-b border-[#5A0A14]/15 bg-[#EFE6D5] overflow-hidden">
