@@ -31,14 +31,14 @@ interface ProductVariant {
   is_popular?: boolean;
 }
 
-const REQUEST_TIMEOUT_MS = 12000;
+const REQUEST_TIMEOUT_MS = 15000;
 
 async function compressImageBeforeUpload(file: File): Promise<File> {
   if (
     typeof window === "undefined" ||
     !file?.type?.startsWith("image/") ||
     file.type === "image/gif" ||
-    file.size <= 350 * 1024
+    file.size <= 300 * 1024
   ) {
     return file;
   }
@@ -49,7 +49,7 @@ async function compressImageBeforeUpload(file: File): Promise<File> {
 
     img.onload = () => {
       URL.revokeObjectURL(objectUrl);
-      const maxDimension = 1280;
+      const maxDimension = 1200;
       let { width, height } = img;
 
       if (width > maxDimension || height > maxDimension) {
@@ -87,7 +87,7 @@ async function compressImageBeforeUpload(file: File): Promise<File> {
           );
         },
         "image/jpeg",
-        0.82
+        0.8
       );
     };
 
@@ -130,6 +130,7 @@ export default function EditProdukPage() {
 
   const [loadingData, setLoadingData] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [statusStep, setStatusStep] = useState("");
   const [successMsg, setSuccessMsg] = useState("");
 
   // Form State Utama Produk
@@ -263,7 +264,10 @@ export default function EditProdukPage() {
     setVariants(updated);
   };
 
-  const handleVariantImageChange = async (index: number, e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleVariantImageChange = async (
+    index: number,
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
     if (e.target.files && e.target.files[0]) {
       const rawFile = e.target.files[0];
       const compressed = await compressImageBeforeUpload(rawFile);
@@ -276,10 +280,10 @@ export default function EditProdukPage() {
     }
   };
 
-  // Fungsi Upload gambar ke Google Drive melalui API Route dengan timeout
   const uploadToGoogleDrive = async (file: File) => {
     const formData = new FormData();
     formData.append("file", file);
+    formData.append("folder", "produk");
 
     const res = await fetchWithTimeout("/api/upload", {
       method: "POST",
@@ -289,7 +293,7 @@ export default function EditProdukPage() {
     if (!res.ok || !data.success) {
       throw new Error(data.error || data.message || "Gagal mengunggah gambar ke Google Drive");
     }
-    return data.imageUrl;
+    return data.imageUrl as string;
   };
 
   const handleUpdateProduct = async (e: React.FormEvent) => {
@@ -298,66 +302,75 @@ export default function EditProdukPage() {
     setSubmitting(true);
 
     try {
-      const finalImageUrl = imageFile
-        ? await uploadToGoogleDrive(imageFile)
-        : existingImageUrl || "";
+      const hasAnyUpload = Boolean(imageFile || variants.some((v) => v.imageFile));
+      if (hasAnyUpload) {
+        setStatusStep("Mengunggah foto baru...");
+      }
 
-      const processedVariants = await Promise.all(
-        variants.map(async (v) => {
-          let variantImgUrl = v.image_url;
-          if (v.imageFile) {
-            variantImgUrl = await uploadToGoogleDrive(v.imageFile);
-          } else if (variantImgUrl?.startsWith("blob:")) {
-            variantImgUrl = "";
-          }
-          return {
-            name: v.name,
-            price: v.price ? parseFloat(v.price) : 0,
-            stock: parseInt(v.stock) || 0,
-            weight: v.weight || "250 gram",
-            origin: v.origin || "Banyuwangi",
-            image_url: variantImgUrl || "",
-            description: v.description || "",
-            ingredients: v.ingredients || "",
-            key_features: v.key_features || "",
-            packaging_standard: v.packaging_standard || "",
-            is_popular: v.is_popular || false,
-          };
-        })
-      );
+      // Upload foto utama dan semua foto varian baru SECARA PARALEL sekaligus
+      const [finalImageUrl, processedVariants] = await Promise.all([
+        imageFile ? uploadToGoogleDrive(imageFile) : Promise.resolve(existingImageUrl || ""),
+        Promise.all(
+          variants.map(async (v) => {
+            let variantImgUrl = v.image_url;
+            if (v.imageFile) {
+              variantImgUrl = await uploadToGoogleDrive(v.imageFile);
+            } else if (variantImgUrl?.startsWith("blob:")) {
+              variantImgUrl = "";
+            }
+            return {
+              name: v.name,
+              price: v.price ? parseFloat(v.price) : 0,
+              stock: parseInt(v.stock) || 0,
+              weight: v.weight || "250 gram",
+              origin: v.origin || "Banyuwangi",
+              image_url: variantImgUrl || "",
+              description: v.description || "",
+              ingredients: v.ingredients || "",
+              key_features: v.key_features || "",
+              packaging_standard: v.packaging_standard || "",
+              is_popular: v.is_popular || false,
+            };
+          })
+        ),
+      ]);
 
-      const formData = new FormData();
-      formData.append("id", id);
-      formData.append("name", name);
-      formData.append("price", price);
-      formData.append("category", category);
-      formData.append("weight", weight);
-      formData.append("origin", origin);
-      formData.append("stock", stock);
-      formData.append("badge", badge);
-      formData.append("description", description);
-      formData.append("ingredients", ingredients);
-      formData.append("packaging_standard", packagingStandard);
-      formData.append("key_features", keyFeatures);
-      formData.append("is_popular", String(isPopular));
-      formData.append("image_url", finalImageUrl);
-      formData.append("variants", JSON.stringify(processedVariants));
+      setStatusStep("Memperbarui data...");
 
       const res = await fetchWithTimeout("/api/products", {
         method: "PUT",
-        body: formData,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id,
+          name,
+          price: price ? parseFloat(price) : null,
+          category,
+          weight,
+          origin,
+          stock: stock ? parseInt(stock) : 0,
+          badge,
+          description,
+          ingredients,
+          packaging_standard: packagingStandard,
+          key_features: keyFeatures,
+          is_popular: isPopular,
+          image_url: finalImageUrl,
+          variants: processedVariants,
+        }),
       });
+
       const result = await res.json().catch(() => ({}));
       if (!res.ok || !result.success) {
         throw new Error(result.message || "Gagal memperbarui produk.");
       }
 
       setSuccessMsg("Produk berhasil diperbarui!");
-      setTimeout(() => router.push("/admin/produk"), 900);
+      setTimeout(() => router.push("/admin/produk"), 450);
     } catch (err: any) {
       alert(err.message);
     } finally {
       setSubmitting(false);
+      setStatusStep("");
     }
   };
 
@@ -374,7 +387,10 @@ export default function EditProdukPage() {
     <div className="p-6 md:p-10 max-w-4xl mx-auto space-y-8 bg-white min-h-screen text-[#2D241E] font-sans">
       <div className="flex items-center justify-between border-b border-gray-100 pb-4">
         <div>
-          <Link href="/admin/produk" className="text-xs font-bold text-[#5c0f1c] hover:underline flex items-center gap-1.5 mb-1">
+          <Link
+            href="/admin/produk"
+            className="text-xs font-bold text-[#5c0f1c] hover:underline flex items-center gap-1.5 mb-1"
+          >
             <FontAwesomeIcon icon={faArrowLeft} /> Kembali ke Manajemen Produk
           </Link>
           <h1 className="text-2xl font-serif font-black text-[#3b0912]">Edit Produk</h1>
@@ -390,7 +406,9 @@ export default function EditProdukPage() {
 
       <form onSubmit={handleUpdateProduct} className="space-y-6">
         <div>
-          <label className="block text-[11px] font-bold uppercase tracking-widest text-gray-500 mb-1.5">Nama Produk</label>
+          <label className="block text-[11px] font-bold uppercase tracking-widest text-gray-500 mb-1.5">
+            Nama Produk
+          </label>
           <input
             type="text"
             required
@@ -402,7 +420,9 @@ export default function EditProdukPage() {
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label className="block text-[11px] font-bold uppercase tracking-widest text-gray-500 mb-1.5">Harga Dasar (Rp)</label>
+            <label className="block text-[11px] font-bold uppercase tracking-widest text-gray-500 mb-1.5">
+              Harga Dasar (Rp)
+            </label>
             <input
               type="number"
               value={price}
@@ -411,7 +431,9 @@ export default function EditProdukPage() {
             />
           </div>
           <div>
-            <label className="block text-[11px] font-bold uppercase tracking-widest text-gray-500 mb-1.5">Kategori</label>
+            <label className="block text-[11px] font-bold uppercase tracking-widest text-gray-500 mb-1.5">
+              Kategori
+            </label>
             <select
               value={category}
               onChange={(e) => setCategory(e.target.value)}
@@ -425,7 +447,9 @@ export default function EditProdukPage() {
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label className="block text-[11px] font-bold uppercase tracking-widest text-gray-500 mb-1.5">Berat Produk</label>
+            <label className="block text-[11px] font-bold uppercase tracking-widest text-gray-500 mb-1.5">
+              Berat Produk
+            </label>
             <input
               type="text"
               value={weight}
@@ -434,7 +458,9 @@ export default function EditProdukPage() {
             />
           </div>
           <div>
-            <label className="block text-[11px] font-bold uppercase tracking-widest text-gray-500 mb-1.5">Asal Produk</label>
+            <label className="block text-[11px] font-bold uppercase tracking-widest text-gray-500 mb-1.5">
+              Asal Produk
+            </label>
             <input
               type="text"
               value={origin}
@@ -445,7 +471,9 @@ export default function EditProdukPage() {
         </div>
 
         <div>
-          <label className="block text-[11px] font-bold uppercase tracking-widest text-[#3b0912] mb-1.5">📦 Stok Utama Produk</label>
+          <label className="block text-[11px] font-bold uppercase tracking-widest text-[#3b0912] mb-1.5">
+            📦 Stok Utama Produk
+          </label>
           <input
             type="number"
             min="0"
@@ -456,9 +484,13 @@ export default function EditProdukPage() {
         </div>
 
         <div className="space-y-4 bg-gray-50/70 p-4 rounded-2xl border border-gray-200">
-          <h4 className="text-xs font-bold uppercase tracking-widest text-[#3b0912]">Informasi & Deskripsi Produk Utama</h4>
+          <h4 className="text-xs font-bold uppercase tracking-widest text-[#3b0912]">
+            Informasi & Deskripsi Produk Utama
+          </h4>
           <div>
-            <label className="block text-[11px] font-bold uppercase tracking-widest text-gray-500 mb-1.5">Deskripsi Produk</label>
+            <label className="block text-[11px] font-bold uppercase tracking-widest text-gray-500 mb-1.5">
+              Deskripsi Produk
+            </label>
             <textarea
               rows={4}
               value={description}
@@ -467,7 +499,9 @@ export default function EditProdukPage() {
             />
           </div>
           <div>
-            <label className="block text-[11px] font-bold uppercase tracking-widest text-gray-500 mb-1.5">Keunggulan Utama</label>
+            <label className="block text-[11px] font-bold uppercase tracking-widest text-gray-500 mb-1.5">
+              Keunggulan Utama
+            </label>
             <textarea
               rows={3}
               value={keyFeatures}
@@ -477,7 +511,9 @@ export default function EditProdukPage() {
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-[11px] font-bold uppercase tracking-widest text-gray-500 mb-1.5">Komposisi / Bahan Utama</label>
+              <label className="block text-[11px] font-bold uppercase tracking-widest text-gray-500 mb-1.5">
+                Komposisi / Bahan Utama
+              </label>
               <textarea
                 rows={2}
                 value={ingredients}
@@ -486,7 +522,9 @@ export default function EditProdukPage() {
               />
             </div>
             <div>
-              <label className="block text-[11px] font-bold uppercase tracking-widest text-gray-500 mb-1.5">Standar Kemasan</label>
+              <label className="block text-[11px] font-bold uppercase tracking-widest text-gray-500 mb-1.5">
+                Standar Kemasan
+              </label>
               <input
                 type="text"
                 value={packagingStandard}
@@ -497,7 +535,7 @@ export default function EditProdukPage() {
           </div>
         </div>
 
-        {/* Varian Produk Lengkap dengan Deskripsi, Komposisi, & Keunggulan */}
+        {/* Varian Produk Lengkap */}
         <div className="border border-amber-900/10 bg-amber-50/30 p-4 rounded-2xl space-y-4">
           <div className="flex items-center justify-between">
             <label className="text-xs font-bold uppercase tracking-widest text-[#3b0912] flex items-center gap-2">
@@ -520,7 +558,9 @@ export default function EditProdukPage() {
               {variants.map((variant, index) => (
                 <div key={index} className="bg-white border border-gray-200 p-4 rounded-xl space-y-3 shadow-xs">
                   <div className="flex items-center justify-between">
-                    <span className="text-[10px] font-bold uppercase tracking-widest text-gray-500">Varian #{index + 1}</span>
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-gray-500">
+                      Varian #{index + 1}
+                    </span>
                     <button
                       type="button"
                       onClick={() => handleRemoveVariant(index)}
@@ -601,7 +641,9 @@ export default function EditProdukPage() {
                       type="text"
                       placeholder="Standar kemasan khusus varian ini..."
                       value={variant.packaging_standard || ""}
-                      onChange={(e) => handleVariantChange(index, "packaging_standard", e.target.value)}
+                      onChange={(e) =>
+                        handleVariantChange(index, "packaging_standard", e.target.value)
+                      }
                       className="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-xs text-gray-800 focus:outline-none"
                     />
                   </div>
@@ -609,7 +651,9 @@ export default function EditProdukPage() {
                   <div className="flex items-center gap-3 pt-1">
                     <label className="cursor-pointer bg-gray-50 border border-dashed border-gray-300 hover:border-[#5c0f1c] px-3 py-2 rounded-lg text-xs text-gray-600 font-bold inline-flex items-center gap-2">
                       <FontAwesomeIcon icon={faImage} className="text-[#5c0f1c]" />
-                      <span>{variant.image_url ? "Ganti Gambar Varian" : "Upload Gambar Varian"}</span>
+                      <span>
+                        {variant.image_url ? "Ganti Gambar Varian" : "Upload Gambar Varian"}
+                      </span>
                       <input
                         type="file"
                         accept="image/*"
@@ -619,7 +663,11 @@ export default function EditProdukPage() {
                     </label>
                     {variant.image_url && (
                       <div className="relative w-10 h-10 rounded-lg overflow-hidden border border-gray-200 shrink-0">
-                        <img src={variant.image_url} alt="Variant preview" className="w-full h-full object-cover" />
+                        <img
+                          src={variant.image_url}
+                          alt="Variant preview"
+                          className="w-full h-full object-cover"
+                        />
                       </div>
                     )}
                   </div>
@@ -643,19 +691,26 @@ export default function EditProdukPage() {
         </div>
 
         <div>
-          <label className="block text-[11px] font-bold uppercase tracking-widest text-gray-500 mb-1.5">Ganti Gambar Utama Produk (Opsional)</label>
+          <label className="block text-[11px] font-bold uppercase tracking-widest text-gray-500 mb-1.5">
+            Ganti Gambar Utama Produk (Opsional)
+          </label>
           <div className="flex items-center gap-4">
             <label className="flex-1 cursor-pointer bg-gray-50 border border-dashed border-gray-300 rounded-xl p-4 text-center">
               <FontAwesomeIcon icon={faImage} className="text-[#5c0f1c] text-xl mb-1" />
               <span className="block text-xs text-gray-600 font-bold">Pilih file gambar baru</span>
               <input type="file" accept="image/*" onChange={handleImageChange} className="hidden" />
             </label>
-            {imagePreview && <img src={imagePreview} alt="Preview" className="w-16 h-16 rounded-xl object-cover border" />}
+            {imagePreview && (
+              <img src={imagePreview} alt="Preview" className="w-16 h-16 rounded-xl object-cover border" />
+            )}
           </div>
         </div>
 
         <div className="pt-4 flex gap-3">
-          <Link href="/admin/produk" className="flex-1 text-center bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold py-3.5 rounded-xl text-xs uppercase tracking-widest">
+          <Link
+            href="/admin/produk"
+            className="flex-1 text-center bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold py-3.5 rounded-xl text-xs uppercase tracking-widest"
+          >
             Batal
           </Link>
           <button
@@ -663,7 +718,14 @@ export default function EditProdukPage() {
             disabled={submitting}
             className="flex-1 bg-[#3b0912] hover:bg-[#5c0f1c] text-amber-200 font-bold py-3.5 rounded-xl text-xs uppercase tracking-widest shadow-md flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
           >
-            {submitting ? <FontAwesomeIcon icon={faSpinner} className="animate-spin" /> : <span>Perbarui Produk</span>}
+            {submitting ? (
+              <>
+                <FontAwesomeIcon icon={faSpinner} className="animate-spin" />
+                <span>{statusStep || "Memperbarui..."}</span>
+              </>
+            ) : (
+              <span>Perbarui Produk</span>
+            )}
           </button>
         </div>
       </form>

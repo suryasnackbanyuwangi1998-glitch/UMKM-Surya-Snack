@@ -11,7 +11,7 @@ export async function POST(request) {
     const folderName =
       formData.get('folder') ||
       formData.get('section') ||
-      'pengaturan';
+      'produk';
 
     if (!file || typeof file !== 'object') {
       return NextResponse.json(
@@ -22,7 +22,7 @@ export async function POST(request) {
 
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
-    const safeFolder = String(folderName).trim() || 'pengaturan';
+    const safeFolder = String(folderName).trim() || 'produk';
     const fileName = `${safeFolder}-${Date.now()}-${file.name}`;
 
     const imageUrl = await uploadFileToDrive(
