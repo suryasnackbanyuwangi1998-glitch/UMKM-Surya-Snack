@@ -78,12 +78,14 @@ export default function AdminProdukPage() {
     if (error) {
       alert("Gagal menghapus produk: " + error.message);
     } else {
+      setSuccessMsg(`Produk (${id}) berhasil dihapus.`);
       fetchProducts();
     }
   };
 
   const filteredProducts = products.filter((item: any) =>
     item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (item.id && item.id.toLowerCase().includes(searchQuery.toLowerCase())) ||
     (item.category && item.category.toLowerCase().includes(searchQuery.toLowerCase()))
   );
 
@@ -145,7 +147,7 @@ export default function AdminProdukPage() {
               name="search_query"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Cari nama / kategori..."
+              placeholder="Cari nama, ID, / kategori..."
               className="w-full bg-gray-50 border border-gray-200 rounded-xl pl-10 pr-4 py-2.5 text-xs text-gray-800 focus:outline-none focus:border-[#5c0f1c] transition"
             />
           </div>
@@ -194,7 +196,12 @@ export default function AdminProdukPage() {
                           </div>
                           <div>
                             <div className="font-bold text-[#3b0912] text-sm">{item.name}</div>
-                            <div className="text-[11px] text-gray-400 line-clamp-1">{item.weight || "-"}</div>
+                            <div className="flex items-center gap-2 mt-0.5">
+                              <span className="text-[10px] font-mono font-bold bg-amber-50 text-[#5c0f1c] px-1.5 py-0.5 rounded border border-amber-200/80">
+                                ID: {item.id}
+                              </span>
+                              <span className="text-[11px] text-gray-400 line-clamp-1">{item.weight || "-"}</span>
+                            </div>
                           </div>
                         </td>
                         <td className="p-4">

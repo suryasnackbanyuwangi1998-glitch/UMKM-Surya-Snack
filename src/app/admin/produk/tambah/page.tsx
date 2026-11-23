@@ -4,7 +4,6 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { supabase } from "@/lib/supabase";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faPlus,
@@ -31,6 +30,19 @@ interface ProductVariant {
   is_popular?: boolean;
 }
 
+// Helper pratinjau ID inisial huruf depan (sama persis dengan fungsi SQL di Supabase)
+function generateAcronymPreview(productName: string): string {
+  const words = productName
+    .replace(/[^a-zA-Z0-9\s]/g, " ")
+    .toLowerCase()
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean);
+
+  if (words.length === 0) return "";
+  return words.map((w) => w[0]).join("");
+}
+
 export default function TambahProdukPage() {
   const router = useRouter();
   const [submitting, setSubmitting] = useState(false);
@@ -55,6 +67,8 @@ export default function TambahProdukPage() {
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [variants, setVariants] = useState<ProductVariant[]>([]);
+
+  const previewId = generateAcronymPreview(name);
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -95,7 +109,7 @@ export default function TambahProdukPage() {
     }
   };
 
-  // Fungsi Upload gambar ke Google Drive melalui API Route (diperbaiki menggunakan data.imageUrl)
+  // Fungsi Upload gambar ke Google Drive melalui API Route
   const uploadToGoogleDrive = async (file: File) => {
     const formData = new FormData();
     formData.append("file", file);
@@ -192,15 +206,25 @@ export default function TambahProdukPage() {
 
       <form onSubmit={handleSaveProduct} className="space-y-6">
         <div>
-          <label className="block text-[11px] font-bold uppercase tracking-widest text-gray-500 mb-1.5">Nama Produk</label>
+          <div className="flex items-center justify-between mb-1.5">
+            <label className="block text-[11px] font-bold uppercase tracking-widest text-gray-500">Nama Produk</label>
+            {previewId && (
+              <span className="text-[11px] font-mono font-bold bg-amber-50 text-[#5c0f1c] px-2.5 py-0.5 rounded-md border border-amber-200">
+                Estimasi ID Otomatis: {previewId}
+              </span>
+            )}
+          </div>
           <input
             type="text"
             required
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder="Contoh: Bagiak Susu Super Banyuwangi"
+            placeholder="Contoh: Opak Gulung Mawar"
             className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-xs text-gray-800 focus:outline-none focus:border-[#5c0f1c]"
           />
+          <p className="text-[11px] text-gray-400 mt-1">
+            ID database otomatis dibuat dari huruf depan nama produk (jika kembar otomatis diberi akhiran angka, misal <code>-2</code>).
+          </p>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

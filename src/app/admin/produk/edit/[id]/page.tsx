@@ -126,7 +126,7 @@ async function fetchWithTimeout(
 export default function EditProdukPage() {
   const router = useRouter();
   const params = useParams();
-  const id = params?.id as string;
+  const id = decodeURIComponent((params?.id as string) || "");
 
   const [loadingData, setLoadingData] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -377,7 +377,12 @@ export default function EditProdukPage() {
           <Link href="/admin/produk" className="text-xs font-bold text-[#5c0f1c] hover:underline flex items-center gap-1.5 mb-1">
             <FontAwesomeIcon icon={faArrowLeft} /> Kembali ke Manajemen Produk
           </Link>
-          <h1 className="text-2xl font-serif font-black text-[#3b0912]">Edit Produk</h1>
+          <div className="flex items-center gap-3">
+            <h1 className="text-2xl font-serif font-black text-[#3b0912]">Edit Produk</h1>
+            <span className="text-xs font-mono font-bold bg-amber-50 text-[#5c0f1c] px-2.5 py-1 rounded-lg border border-amber-200">
+              ID: {id}
+            </span>
+          </div>
         </div>
       </div>
 
