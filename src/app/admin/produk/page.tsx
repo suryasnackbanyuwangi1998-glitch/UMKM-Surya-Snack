@@ -147,7 +147,7 @@ export default function AdminProdukPage() {
               name="search_query"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Cari nama, ID, / kategori..."
+              placeholder="Cari ID, nama, / kategori..."
               className="w-full bg-gray-50 border border-gray-200 rounded-xl pl-10 pr-4 py-2.5 text-xs text-gray-800 focus:outline-none focus:border-[#5c0f1c] transition"
             />
           </div>
@@ -168,6 +168,7 @@ export default function AdminProdukPage() {
               <table className="w-full text-left border-collapse">
                 <thead>
                   <tr className="border-b border-gray-100 text-[10px] font-extrabold uppercase tracking-widest text-gray-400 bg-gray-50">
+                    <th className="p-4">ID Produk</th>
                     <th className="p-4">Nama Produk</th>
                     <th className="p-4">Kategori</th>
                     <th className="p-4">Harga Dasar</th>
@@ -183,6 +184,11 @@ export default function AdminProdukPage() {
                     const variantCount = Array.isArray(item.variants) ? item.variants.length : 0;
                     return (
                       <tr key={item.id} className="hover:bg-gray-50 transition">
+                        <td className="p-4 whitespace-nowrap">
+                          <span className="font-mono font-bold text-[11px] bg-amber-50 text-[#5c0f1c] px-2.5 py-1 rounded-lg border border-amber-200/80">
+                            {item.id}
+                          </span>
+                        </td>
                         <td className="p-4 flex items-center gap-3">
                           <div className="relative w-12 h-12 rounded-xl overflow-hidden bg-gray-100 shrink-0 border border-gray-200">
                             <img 
@@ -196,12 +202,7 @@ export default function AdminProdukPage() {
                           </div>
                           <div>
                             <div className="font-bold text-[#3b0912] text-sm">{item.name}</div>
-                            <div className="flex items-center gap-2 mt-0.5">
-                              <span className="text-[10px] font-mono font-bold bg-amber-50 text-[#5c0f1c] px-1.5 py-0.5 rounded border border-amber-200/80">
-                                ID: {item.id}
-                              </span>
-                              <span className="text-[11px] text-gray-400 line-clamp-1">{item.weight || "-"}</span>
-                            </div>
+                            <div className="text-[11px] text-gray-400 line-clamp-1">{item.weight || "-"}</div>
                           </div>
                         </td>
                         <td className="p-4">
@@ -211,13 +212,13 @@ export default function AdminProdukPage() {
                             {item.category || "Makanan"}
                           </span>
                         </td>
-                        <td className="p-4 font-black text-[#5c0f1c]">
+                        <td className="p-4 font-black text-[#5c0f1c] whitespace-nowrap">
                           {item.price !== null && item.price !== undefined ? `Rp ${item.price.toLocaleString("id-ID")}` : "Cek Varian"}
                         </td>
-                        <td className="p-4 font-bold text-gray-700">
+                        <td className="p-4 font-bold text-gray-700 whitespace-nowrap">
                           {item.stock ?? 0} pcs
                         </td>
-                        <td className="p-4">
+                        <td className="p-4 whitespace-nowrap">
                           <span className="bg-gray-100 text-gray-700 px-2.5 py-1 rounded-md text-[11px] font-bold">
                             {variantCount} Varian
                           </span>
@@ -231,7 +232,7 @@ export default function AdminProdukPage() {
                             <span className="text-gray-300">-</span>
                           )}
                         </td>
-                        <td className="p-4 text-center space-x-2">
+                        <td className="p-4 text-center space-x-2 whitespace-nowrap">
                           <button
                             onClick={() => handleOpenEditModal(item)}
                             className="px-3 py-1.5 bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 rounded-xl transition text-xs font-bold cursor-pointer inline-flex items-center gap-1"
