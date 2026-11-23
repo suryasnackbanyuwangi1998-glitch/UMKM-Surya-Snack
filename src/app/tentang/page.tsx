@@ -286,9 +286,9 @@ export default function TentangKamiPage() {
   return (
     <div className="min-h-screen bg-white text-[#2B211B] font-serif selection:bg-[#5A0A14] selection:text-amber-100 antialiased pt-14 sm:pt-20 pb-24">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 space-y-14 sm:space-y-20">
-        {/* HERO — SELARAS DENGAN HEADER BERANDA & KATALOG */}
+        {/* HERO */}
         <section className="space-y-8">
-          <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6 border-b border-[#5A0A14]/15 pb-8">
+          <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6 border-b border-neutral-200 pb-8">
             <div className="space-y-2 max-w-3xl">
               <span className="inline-flex items-center gap-2 text-[10px] sm:text-[11px] font-sans font-extrabold uppercase tracking-[0.26em] text-[#9A5D0A]">
                 <span className="w-1.5 h-1.5 rounded-full bg-[#5A0A14]" />
@@ -311,7 +311,7 @@ export default function TentangKamiPage() {
                 {t.heroChips.map((chip, idx) => (
                   <span
                     key={chip.label}
-                    className="inline-flex items-center gap-1.5 rounded-full border border-[#5A0A14]/15 bg-[#FAF7F0] px-3.5 py-1.5 text-xs font-bold text-[#5A0A14] shadow-2xs"
+                    className="inline-flex items-center gap-1.5 rounded-full border border-neutral-200 bg-neutral-100 px-3.5 py-1.5 text-xs font-bold text-[#5A0A14] shadow-2xs"
                   >
                     <FontAwesomeIcon
                       icon={heroChipIcons[idx]}
@@ -333,8 +333,8 @@ export default function TentangKamiPage() {
                   stat.tone === 'dark'
                     ? 'bg-[#5A0A14] text-amber-100 shadow-sm'
                     : stat.tone === 'amber'
-                      ? 'border border-[#9A5D0A]/25 bg-[#EFE6D5] shadow-2xs'
-                      : 'border border-[#5A0A14]/15 bg-[#FAF7F0] shadow-2xs'
+                      ? 'border border-neutral-300 bg-neutral-100 shadow-2xs'
+                      : 'border border-neutral-200 bg-neutral-50 shadow-2xs'
                 }`}
               >
                 <span
@@ -369,7 +369,7 @@ export default function TentangKamiPage() {
 
         {/* SECTION 1 — TIMELINE & FOTO TOKO */}
         <section className="font-sans">
-          <div className="grid items-stretch overflow-hidden rounded-3xl border border-[#5A0A14]/15 bg-[#FAF7F0] shadow-xs lg:grid-cols-12">
+          <div className="grid items-stretch overflow-hidden rounded-3xl border border-neutral-200 bg-neutral-50 shadow-xs lg:grid-cols-12">
             <div className="relative min-h-72 sm:min-h-96 lg:col-span-5 lg:min-h-0">
               <Image
                 src={aboutImage}
@@ -378,7 +378,7 @@ export default function TentangKamiPage() {
                 sizes="(max-width: 1024px) 100vw, 40vw"
                 className="object-cover"
               />
-              <div className="absolute inset-0 bg-linear-to-t from-[#2B1607]/85 via-[#2B1607]/15 to-transparent" />
+              <div className="absolute inset-0 bg-linear-to-t from-black/80 via-black/15 to-transparent" />
               <span className="absolute left-6 top-6 rounded-full bg-[#5A0A14] border border-amber-300/30 px-3.5 py-1.5 text-[10px] font-extrabold uppercase tracking-[0.22em] text-amber-200 shadow-sm">
                 {t.photoBadge}
               </span>
@@ -401,11 +401,11 @@ export default function TentangKamiPage() {
               <div className="relative mt-8 space-y-8">
                 <span
                   aria-hidden="true"
-                  className="absolute bottom-2 left-2.25 top-2 w-0.5 bg-[#5A0A14]/15"
+                  className="absolute bottom-2 left-2.25 top-2 w-0.5 bg-neutral-300"
                 />
                 {t.timeline.map((item, idx) => (
                   <div key={idx} className="relative pl-10">
-                    <span className="absolute left-0 top-0.5 flex h-5 w-5 items-center justify-center rounded-full border-2 border-[#5A0A14] bg-[#FAF7F0] shadow-2xs">
+                    <span className="absolute left-0 top-0.5 flex h-5 w-5 items-center justify-center rounded-full border-2 border-[#5A0A14] bg-white shadow-2xs">
                       <span className="h-1.5 w-1.5 rounded-full bg-[#9A5D0A]" />
                     </span>
                     <span className="text-[11px] font-extrabold uppercase tracking-[0.2em] text-[#9A5D0A]">
@@ -453,13 +453,13 @@ export default function TentangKamiPage() {
             {pilarMisi.map((item: any) => (
               <div
                 key={item.num}
-                className="group relative flex flex-col justify-between space-y-4 overflow-hidden rounded-3xl border border-[#5A0A14]/15 bg-[#FAF7F0] p-6 shadow-2xs transition-all duration-300 hover:-translate-y-1 hover:border-[#5A0A14]/35 hover:shadow-md"
+                className="group relative flex flex-col justify-between space-y-4 overflow-hidden rounded-3xl border border-neutral-200 bg-neutral-50 p-6 shadow-2xs transition-all duration-300 hover:-translate-y-1 hover:border-[#5A0A14]/35 hover:shadow-md"
               >
                 <div className="flex items-center justify-between">
-                  <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#EFE6D5] text-[#5A0A14] transition-colors duration-300 group-hover:bg-[#5A0A14] group-hover:text-amber-200">
+                  <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-neutral-200/80 text-[#5A0A14] transition-colors duration-300 group-hover:bg-[#5A0A14] group-hover:text-amber-200">
                     <FontAwesomeIcon icon={item.icon} className="h-4 w-4" />
                   </div>
-                  <span className="text-2xl font-bold text-[#5A0A14]/20 transition-colors duration-300 group-hover:text-[#9A5D0A]/45 font-serif">
+                  <span className="text-2xl font-bold text-neutral-300 transition-colors duration-300 group-hover:text-[#9A5D0A]/45 font-serif">
                     {item.num}
                   </span>
                 </div>
@@ -479,7 +479,7 @@ export default function TentangKamiPage() {
 
         {/* SECTION 3 — NILAI YANG KAMI JAGA */}
         <section className="font-sans">
-          <div className="grid gap-8 lg:grid-cols-12 lg:gap-12 bg-[#FAF7F0] rounded-3xl border border-[#5A0A14]/15 p-7 sm:p-10 md:p-12 shadow-2xs">
+          <div className="grid gap-8 lg:grid-cols-12 lg:gap-12 bg-neutral-50 rounded-3xl border border-neutral-200 p-7 sm:p-10 md:p-12 shadow-2xs">
             <div className="lg:col-span-4">
               <div className="space-y-3 lg:sticky lg:top-28">
                 <span className="inline-flex items-center gap-2 text-[10px] sm:text-[11px] font-extrabold uppercase tracking-[0.26em] text-[#9A5D0A]">
@@ -496,13 +496,13 @@ export default function TentangKamiPage() {
               </div>
             </div>
 
-            <div className="divide-y divide-[#5A0A14]/12 border-y border-[#5A0A14]/12 lg:col-span-8">
+            <div className="divide-y divide-neutral-200 border-y border-neutral-200 lg:col-span-8">
               {nilaiItems.map((item: any, idx: number) => (
                 <div
                   key={item.title}
-                  className="group flex items-start gap-4 sm:gap-5 px-2 py-6 transition-colors duration-300 hover:bg-white/60 rounded-2xl"
+                  className="group flex items-start gap-4 sm:gap-5 px-2 py-6 transition-colors duration-300 hover:bg-white rounded-2xl"
                 >
-                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[#EFE6D5] text-[#5A0A14] transition-colors duration-300 group-hover:bg-[#5A0A14] group-hover:text-amber-200">
+                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-neutral-200/80 text-[#5A0A14] transition-colors duration-300 group-hover:bg-[#5A0A14] group-hover:text-amber-200">
                     <FontAwesomeIcon icon={item.icon} className="h-4 w-4" />
                   </div>
                   <div className="min-w-0 flex-1 space-y-1">
@@ -513,7 +513,7 @@ export default function TentangKamiPage() {
                       {item.desc}
                     </p>
                   </div>
-                  <span className="text-xl sm:text-2xl font-bold text-[#5A0A14]/20 transition-colors duration-300 group-hover:text-[#9A5D0A]/50 font-serif">
+                  <span className="text-xl sm:text-2xl font-bold text-neutral-300 transition-colors duration-300 group-hover:text-[#9A5D0A]/50 font-serif">
                     0{idx + 1}
                   </span>
                 </div>

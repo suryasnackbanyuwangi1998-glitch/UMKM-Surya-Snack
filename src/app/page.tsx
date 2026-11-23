@@ -277,7 +277,7 @@ export default function HomePage() {
     <div className="min-h-screen bg-white text-[#2B211B] font-serif selection:bg-[#5A0A14] selection:text-amber-100 antialiased overflow-x-hidden">
 
       {/* ================= 1. FULL-SCREEN HERO TANPA BLUR BACKGROUND ================= */}
-      <section className="relative w-full min-h-screen flex items-center border-b border-[#5A0A14]/15 bg-[#EFE6D5] overflow-hidden">
+      <section className="relative w-full min-h-screen flex items-center border-b border-neutral-200 bg-neutral-100 overflow-hidden">
         {/* Gambar Full 1 Layar Penuh */}
         <div className="absolute inset-0 z-0">
           {heroData.bgUrl ? (
@@ -292,16 +292,16 @@ export default function HomePage() {
               className="object-cover object-right sm:object-center"
             />
           ) : null}
-          {/* Gradasi halus sisi kiri agar teks kontras tanpa menutup gambar penuh di sisi kanan */}
-          <div className="absolute inset-0 bg-linear-to-r from-[#F7F1E5]/95 via-[#F7F1E5]/70 to-transparent pointer-events-none" />
-          <div className="absolute inset-x-0 bottom-0 h-24 bg-linear-to-t from-[#F5EFE6] to-transparent pointer-events-none" />
+          {/* Gradasi halus abu-abu/putih sisi kiri agar teks kontras tanpa menutup gambar penuh di sisi kanan */}
+          <div className="absolute inset-0 bg-linear-to-r from-white/95 via-neutral-50/75 to-transparent pointer-events-none" />
+          <div className="absolute inset-x-0 bottom-0 h-24 bg-linear-to-t from-white to-transparent pointer-events-none" />
         </div>
 
         {/* Konten Utama Hero */}
         <div className="relative z-10 w-full max-w-7xl mx-auto px-5 sm:px-8 lg:px-12 pt-28 sm:pt-32 pb-20">
           <div className="max-w-xl lg:max-w-2xl space-y-6">
             {/* Badge Kecil Khas Maroon */}
-            <div className="inline-flex items-center gap-2.5 px-4 py-1.5 rounded-full bg-[#5A0A14]/8 border border-[#5A0A14]/20 backdrop-blur-xs">
+            <div className="inline-flex items-center gap-2.5 px-4 py-1.5 rounded-full bg-neutral-100/90 border border-[#5A0A14]/20 backdrop-blur-xs">
               <span className="w-2 h-2 rounded-full bg-[#5A0A14]" />
               <span className="text-[11px] font-sans font-extrabold uppercase tracking-[0.22em] text-[#5A0A14]">
                 {storeLabel}
@@ -340,9 +340,9 @@ export default function HomePage() {
                 href={getWaLink()}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="group inline-flex items-center gap-2.5 bg-white/90 hover:bg-white text-[#5A0A14] border border-[#5A0A14]/25 font-bold px-5 py-3.5 rounded-full text-xs sm:text-sm transition-all shadow-xs cursor-pointer"
+                className="group inline-flex items-center gap-2.5 bg-white hover:bg-neutral-100 text-[#5A0A14] border border-[#5A0A14]/25 font-bold px-5 py-3.5 rounded-full text-xs sm:text-sm transition-all shadow-xs cursor-pointer"
               >
-                <span className="w-6 h-6 rounded-full bg-[#5A0A14]/10 flex items-center justify-center">
+                <span className="w-6 h-6 rounded-full bg-neutral-100 flex items-center justify-center">
                   <FontAwesomeIcon icon={faPlay} className="w-2.5 h-2.5 ml-0.5 text-[#5A0A14]" />
                 </span>
                 <span>{t('contactStore') || 'Hubungi Toko'}</span>
@@ -354,7 +354,7 @@ export default function HomePage() {
 
       {/* ================= 2. FEATURED DELICACIES ================= */}
       <section className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-12 py-16 sm:py-24 space-y-10">
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 border-b border-[#5A0A14]/12 pb-8">
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 border-b border-neutral-200 pb-8">
           <div className="space-y-2">
             <span className="inline-flex items-center gap-2 text-[11px] font-sans font-bold uppercase tracking-[0.26em] text-[#5A0A14]">
               <span className="w-1.5 h-1.5 rounded-full bg-[#5A0A14]" />
@@ -382,11 +382,11 @@ export default function HomePage() {
         </div>
 
         {products.length === 0 ? (
-          <div className="text-center py-16 px-6 text-[#6b5a50] font-sans text-sm bg-white rounded-2xl border border-[#5A0A14]/15">
+          <div className="text-center py-16 px-6 text-[#6b5a50] font-sans text-sm bg-neutral-50 rounded-2xl border border-neutral-200">
             {lang === 'en' ? 'No featured products found in the database.' : 'Belum ada produk unggulan di database.'}
           </div>
         ) : (
-          <div className="flex overflow-x-auto gap-6 pb-6 pt-1 snap-x snap-mandatory scrollbar-thin scrollbar-thumb-[#5A0A14]/40 scrollbar-track-amber-100/50">
+          <div className="flex overflow-x-auto gap-6 pb-6 pt-1 snap-x snap-mandatory scrollbar-thin scrollbar-thumb-[#5A0A14]/40 scrollbar-track-neutral-200">
             {products.map((product) => (
               <div
                 key={product.id}
@@ -401,7 +401,7 @@ export default function HomePage() {
 
       {/* ================= 3. HERITAGE STORY & QUOTE PANEL ================= */}
       <section className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-12 pb-16 sm:pb-24">
-        <div className="grid lg:grid-cols-12 rounded-3xl overflow-hidden border border-[#5A0A14]/20 shadow-xl bg-[#5A0A14] text-[#FBF6EE]">
+        <div className="grid lg:grid-cols-12 rounded-3xl overflow-hidden border border-neutral-200 shadow-xl bg-[#5A0A14] text-neutral-100">
           <div className="lg:col-span-5 p-8 sm:p-12 flex flex-col justify-between space-y-6 bg-[#5A0A14]">
             <div className="space-y-4">
               <span className="text-[11px] font-sans font-bold uppercase tracking-[0.26em] text-amber-300 block">
@@ -419,7 +419,7 @@ export default function HomePage() {
                   heritage.title
                 )}
               </h2>
-              <p className="text-[#F5EFE6]/90 font-sans text-sm leading-relaxed">
+              <p className="text-neutral-200 font-sans text-sm leading-relaxed">
                 {heritage.desc}
               </p>
             </div>
@@ -450,8 +450,8 @@ export default function HomePage() {
             ) : null}
           </div>
 
-          <div className="lg:col-span-3 p-8 sm:p-10 bg-[#EFE6D5] text-[#5A0A14] flex flex-col justify-center space-y-4 border-t lg:border-t-0 lg:border-l border-[#5A0A14]/15">
-            <div className="w-10 h-10 rounded-full bg-[#5A0A14]/10 flex items-center justify-center text-[#5A0A14]">
+          <div className="lg:col-span-3 p-8 sm:p-10 bg-neutral-100 text-[#5A0A14] flex flex-col justify-center space-y-4 border-t lg:border-t-0 lg:border-l border-neutral-200">
+            <div className="w-10 h-10 rounded-full bg-neutral-200/80 flex items-center justify-center text-[#5A0A14]">
               <FontAwesomeIcon icon={faQuoteLeft} className="w-4 h-4" />
             </div>
             <blockquote className="text-lg sm:text-xl font-serif font-semibold leading-snug text-[#5A0A14]">
@@ -470,7 +470,7 @@ export default function HomePage() {
 
       {/* ================= 5. CLASSIC BANNER CTA ================= */}
       <section className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-12 pb-24 pt-6 font-sans">
-        <div className="relative overflow-hidden bg-[#5A0A14] text-[#FBF6EE] rounded-3xl p-8 sm:p-12 flex flex-col lg:flex-row items-center justify-between gap-8 shadow-xl border border-[#5A0A14]/20">
+        <div className="relative overflow-hidden bg-[#5A0A14] text-neutral-100 rounded-3xl p-8 sm:p-12 flex flex-col lg:flex-row items-center justify-between gap-8 shadow-xl border border-[#5A0A14]/20">
           <div className="pointer-events-none absolute -right-16 -top-16 w-64 h-64 rounded-full bg-amber-400/15 blur-3xl" />
 
           <div className="relative z-10 space-y-2 text-center lg:text-left max-w-2xl">

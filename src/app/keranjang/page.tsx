@@ -163,13 +163,13 @@ export default function KeranjangPage() {
   return (
     <div className="min-h-screen bg-white text-[#2B211B] font-serif pt-14 sm:pt-20 pb-24 selection:bg-[#5A0A14] selection:text-amber-100 antialiased">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 space-y-8 sm:space-y-10">
-        {/* Header Editorial — Selaras dengan Beranda, Katalog, Tentang, & Kontak */}
-        <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6 border-b border-[#5A0A14]/15 pb-7">
+        {/* Header Editorial */}
+        <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6 border-b border-neutral-200 pb-7">
           <div className="space-y-2 max-w-3xl">
             <div className="flex flex-wrap items-center gap-3 mb-2">
               <Link
                 href="/katalog"
-                className="inline-flex items-center gap-2 rounded-full border border-[#5A0A14]/20 bg-[#FAF7F0] px-4 py-1.5 text-xs font-sans font-bold text-[#5A0A14] shadow-2xs transition hover:bg-[#5A0A14] hover:text-amber-200"
+                className="inline-flex items-center gap-2 rounded-full border border-neutral-200 bg-neutral-100 px-4 py-1.5 text-xs font-sans font-bold text-[#5A0A14] shadow-2xs transition hover:bg-[#5A0A14] hover:text-amber-200"
               >
                 <FontAwesomeIcon icon={faArrowLeft} className="w-3 h-3" />
                 <span>{t.back}</span>
@@ -195,7 +195,7 @@ export default function KeranjangPage() {
             {cart.length > 0 && (
               <Link
                 href="/katalog"
-                className="inline-flex items-center justify-center gap-2 bg-[#EFE6D5] hover:bg-[#5A0A14] text-[#5A0A14] hover:text-amber-200 border border-[#5A0A14]/20 font-sans font-bold px-5 py-2.5 rounded-full text-xs uppercase tracking-wider transition shadow-2xs w-fit"
+                className="inline-flex items-center justify-center gap-2 bg-neutral-100 hover:bg-[#5A0A14] text-[#5A0A14] hover:text-amber-200 border border-neutral-200 font-sans font-bold px-5 py-2.5 rounded-full text-xs uppercase tracking-wider transition shadow-2xs w-fit"
               >
                 <FontAwesomeIcon icon={faCartPlus} />
                 <span>{t.addMoreBtn}</span>
@@ -205,8 +205,8 @@ export default function KeranjangPage() {
         </div>
 
         {cart.length === 0 ? (
-          <div className="bg-[#FAF7F0] rounded-3xl border border-dashed border-[#5A0A14]/25 p-12 sm:p-16 text-center space-y-4 font-sans shadow-2xs">
-            <div className="w-16 h-16 bg-[#EFE6D5] text-[#5A0A14] border border-[#5A0A14]/15 rounded-2xl flex items-center justify-center mx-auto text-2xl">
+          <div className="bg-neutral-50 rounded-3xl border border-dashed border-neutral-300 p-12 sm:p-16 text-center space-y-4 font-sans shadow-2xs">
+            <div className="w-16 h-16 bg-neutral-100 text-[#5A0A14] border border-neutral-200 rounded-2xl flex items-center justify-center mx-auto text-2xl">
               <FontAwesomeIcon icon={faShoppingBag} />
             </div>
             <h2 className="text-xl sm:text-2xl font-serif font-bold text-[#5A0A14]">
@@ -254,9 +254,9 @@ export default function KeranjangPage() {
                   return (
                     <div
                       key={uniqueKey}
-                      className="bg-[#FAF7F0] p-4 rounded-3xl border border-[#5A0A14]/15 shadow-2xs flex items-center gap-3.5 sm:gap-4 transition hover:border-[#5A0A14]/35"
+                      className="bg-neutral-50 p-4 rounded-3xl border border-neutral-200 shadow-2xs flex items-center gap-3.5 sm:gap-4 transition hover:border-[#5A0A14]/35"
                     >
-                      <div className="relative w-16 h-16 sm:w-18 sm:h-18 rounded-2xl overflow-hidden bg-white border border-[#5A0A14]/12 shrink-0">
+                      <div className="relative w-16 h-16 sm:w-18 sm:h-18 rounded-2xl overflow-hidden bg-white border border-neutral-200 shrink-0">
                         <Image
                           src={displayImg}
                           alt={item.product.name}
@@ -271,7 +271,7 @@ export default function KeranjangPage() {
                           {item.product.name}
                         </h3>
                         {item.product.selectedVariant && (
-                          <span className="inline-block bg-[#EFE6D5] text-[#5A0A14] border border-[#5A0A14]/15 text-[10px] font-bold px-2.5 py-0.5 rounded-full mt-1">
+                          <span className="inline-block bg-neutral-200/80 text-[#5A0A14] border border-neutral-300 text-[10px] font-bold px-2.5 py-0.5 rounded-full mt-1">
                             {t.variantLabel} {item.product.selectedVariant}
                           </span>
                         )}
@@ -281,7 +281,7 @@ export default function KeranjangPage() {
                       </div>
 
                       {/* Tombol Kuantitas (- / +) */}
-                      <div className="flex items-center gap-2 bg-white px-2.5 py-1.5 rounded-full border border-[#5A0A14]/20 shadow-2xs">
+                      <div className="flex items-center gap-2 bg-white px-2.5 py-1.5 rounded-full border border-neutral-200 shadow-2xs">
                         <button
                           type="button"
                           onClick={() =>
@@ -291,7 +291,7 @@ export default function KeranjangPage() {
                               item.product.selectedVariant
                             )
                           }
-                          className="w-6 h-6 rounded-full bg-white hover:bg-[#EFE6D5] flex items-center justify-center text-xs font-bold text-[#5A0A14] cursor-pointer transition"
+                          className="w-6 h-6 rounded-full bg-white hover:bg-neutral-100 flex items-center justify-center text-xs font-bold text-[#5A0A14] cursor-pointer transition"
                         >
                           <FontAwesomeIcon icon={faMinus} className="w-2.5 h-2.5" />
                         </button>
@@ -331,8 +331,8 @@ export default function KeranjangPage() {
 
             {/* Form Ringkasan & Tombol Pop-up */}
             <div className="lg:col-span-5 space-y-4 lg:sticky lg:top-24">
-              <div className="bg-[#FAF7F0] p-6 sm:p-8 rounded-3xl border border-[#5A0A14]/15 shadow-2xs space-y-5">
-                <div className="border-b border-[#5A0A14]/12 pb-3.5 space-y-1">
+              <div className="bg-neutral-50 p-6 sm:p-8 rounded-3xl border border-neutral-200 shadow-2xs space-y-5">
+                <div className="border-b border-neutral-200 pb-3.5 space-y-1">
                   <span className="inline-flex items-center gap-2 text-[10px] font-extrabold uppercase tracking-[0.24em] text-[#9A5D0A]">
                     <span className="w-1.5 h-1.5 rounded-full bg-[#5A0A14]" />
                     Surya Snack
@@ -352,7 +352,7 @@ export default function KeranjangPage() {
                       value={customerName}
                       onChange={(e) => setCustomerName(e.target.value)}
                       placeholder={t.namePlaceholder}
-                      className="w-full bg-white border border-[#5A0A14]/20 rounded-2xl px-4 py-2.5 text-xs text-[#2B211B] placeholder:text-[#9c8c82] focus:outline-none focus:border-[#5A0A14]"
+                      className="w-full bg-white border border-neutral-300 rounded-2xl px-4 py-2.5 text-xs text-[#2B211B] placeholder:text-neutral-400 focus:outline-none focus:border-[#5A0A14]"
                     />
                   </div>
                   <div>
@@ -364,17 +364,17 @@ export default function KeranjangPage() {
                       value={customerAddress}
                       onChange={(e) => setCustomerAddress(e.target.value)}
                       placeholder={t.addressPlaceholder}
-                      className="w-full bg-white border border-[#5A0A14]/20 rounded-2xl px-4 py-2.5 text-xs text-[#2B211B] placeholder:text-[#9c8c82] focus:outline-none focus:border-[#5A0A14]"
+                      className="w-full bg-white border border-neutral-300 rounded-2xl px-4 py-2.5 text-xs text-[#2B211B] placeholder:text-neutral-400 focus:outline-none focus:border-[#5A0A14]"
                     />
                   </div>
                 </div>
 
-                <div className="space-y-2.5 pt-2 border-t border-[#5A0A14]/12 text-xs text-[#5f524a]">
+                <div className="space-y-2.5 pt-2 border-t border-neutral-200 text-xs text-[#5f524a]">
                   <div className="flex justify-between">
                     <span>{t.totalItemsLabel}</span>
                     <span className="font-bold text-[#2B211B]">{totalItems} pcs</span>
                   </div>
-                  <div className="flex justify-between items-center text-sm font-bold text-[#5A0A14] pt-2.5 border-t border-[#5A0A14]/12">
+                  <div className="flex justify-between items-center text-sm font-bold text-[#5A0A14] pt-2.5 border-t border-neutral-200">
                     <span>{t.estTotalLabel}</span>
                     <span className="text-[#5A0A14] font-serif font-black text-xl">
                       {formatRupiah(totalPrice)}
@@ -393,7 +393,7 @@ export default function KeranjangPage() {
 
                 <Link
                   href="/katalog"
-                  className="w-full bg-[#EFE6D5] hover:bg-[#e5d9c3] text-[#5A0A14] border border-[#5A0A14]/20 font-bold py-3 rounded-full transition-all flex items-center justify-center gap-2 text-xs uppercase tracking-wider text-center"
+                  className="w-full bg-neutral-100 hover:bg-neutral-200 text-[#5A0A14] border border-neutral-200 font-bold py-3 rounded-full transition-all flex items-center justify-center gap-2 text-xs uppercase tracking-wider text-center"
                 >
                   <FontAwesomeIcon icon={faCartPlus} />
                   <span>{t.addCatalogBtn}</span>
@@ -405,8 +405,8 @@ export default function KeranjangPage() {
 
         {/* MODAL / POP-UP RINCIAN PILIHAN */}
         {isModalOpen && (
-          <div className="fixed inset-0 z-50 bg-[#2B1607]/60 backdrop-blur-xs flex items-center justify-center p-4 font-sans">
-            <div className="bg-[#FAF7F0] w-full max-w-lg rounded-3xl shadow-2xl border border-[#5A0A14]/20 overflow-hidden flex flex-col max-h-[90vh]">
+          <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 font-sans">
+            <div className="bg-white w-full max-w-lg rounded-3xl shadow-2xl border border-neutral-200 overflow-hidden flex flex-col max-h-[90vh]">
               <div className="bg-[#5A0A14] text-amber-100 p-5 flex items-center justify-between">
                 <div className="flex items-center gap-2.5">
                   <FontAwesomeIcon icon={faFileInvoice} className="text-amber-300 text-lg" />
@@ -424,7 +424,7 @@ export default function KeranjangPage() {
               </div>
 
               <div className="p-6 overflow-y-auto space-y-4 text-xs text-[#2B211B]">
-                <div className="bg-[#EFE6D5]/80 p-3.5 rounded-2xl border border-[#5A0A14]/15 space-y-1">
+                <div className="bg-neutral-100 p-3.5 rounded-2xl border border-neutral-200 space-y-1">
                   <p>
                     <strong className="text-[#5A0A14]">{t.modalName}</strong>{' '}
                     {customerName || t.notFilled}
@@ -439,7 +439,7 @@ export default function KeranjangPage() {
                   <h4 className="font-bold text-[#5A0A14] uppercase tracking-wider mb-2 text-[11px]">
                     {t.productListTitle} ({cart.length} {t.productTypes} | Total {totalItems} pcs):
                   </h4>
-                  <div className="divide-y divide-[#5A0A14]/12 border-y border-[#5A0A14]/12">
+                  <div className="divide-y divide-neutral-200 border-y border-neutral-200">
                     {cart.map((item, idx) => {
                       const itemPrice = item.product.price || 0;
                       const subtotal = itemPrice * item.quantity;
@@ -474,11 +474,11 @@ export default function KeranjangPage() {
                 </div>
               </div>
 
-              <div className="p-5 bg-[#EFE6D5]/60 border-t border-[#5A0A14]/12 flex gap-3">
+              <div className="p-5 bg-neutral-100 border-t border-neutral-200 flex gap-3">
                 <button
                   type="button"
                   onClick={() => setIsModalOpen(false)}
-                  className="flex-1 bg-white hover:bg-[#EFE6D5] text-[#5A0A14] font-bold py-3 rounded-full border border-[#5A0A14]/20 text-xs uppercase tracking-wider transition cursor-pointer"
+                  className="flex-1 bg-white hover:bg-neutral-200 text-[#5A0A14] font-bold py-3 rounded-full border border-neutral-300 text-xs uppercase tracking-wider transition cursor-pointer"
                 >
                   {t.editBtn}
                 </button>

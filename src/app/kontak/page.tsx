@@ -299,16 +299,16 @@ export default function KontakPage(): React.ReactElement {
       label: t.directCall,
       value: waDisplay,
       href: `tel:+${waNumber}`,
-      iconBg: 'bg-[#EFE6D5] text-[#5A0A14]',
+      iconBg: 'bg-neutral-200/80 text-[#5A0A14]',
     },
   ];
 
   return (
     <div className="min-h-screen bg-white text-[#2B211B] font-serif selection:bg-[#5A0A14] selection:text-amber-100 antialiased pt-14 sm:pt-20 pb-24">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 space-y-12 sm:space-y-16">
-        {/* ===== HERO — SELARAS DENGAN BERANDA & KATALOG ===== */}
+        {/* ===== HERO ===== */}
         <section className="space-y-8">
-          <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6 border-b border-[#5A0A14]/15 pb-8">
+          <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6 border-b border-neutral-200 pb-8">
             <div className="space-y-2 max-w-3xl">
               <span className="inline-flex items-center gap-2 text-[10px] sm:text-[11px] font-sans font-extrabold uppercase tracking-[0.26em] text-[#9A5D0A]">
                 <span className="w-1.5 h-1.5 rounded-full bg-[#5A0A14]" />
@@ -339,7 +339,7 @@ export default function KontakPage(): React.ReactElement {
                 href={item.href}
                 target={item.href.startsWith('http') ? '_blank' : undefined}
                 rel={item.href.startsWith('http') ? 'noopener noreferrer' : undefined}
-                className="group flex items-center gap-3.5 rounded-3xl border border-[#5A0A14]/15 bg-[#FAF7F0] p-4 sm:p-5 shadow-2xs transition-all duration-300 hover:-translate-y-0.5 hover:border-[#5A0A14]/35 hover:shadow-md"
+                className="group flex items-center gap-3.5 rounded-3xl border border-neutral-200 bg-neutral-50 p-4 sm:p-5 shadow-2xs transition-all duration-300 hover:-translate-y-0.5 hover:border-[#5A0A14]/35 hover:shadow-md"
               >
                 <span
                   className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl ${item.iconBg}`}
@@ -364,7 +364,7 @@ export default function KontakPage(): React.ReactElement {
           <div className="grid items-start gap-8 lg:grid-cols-12">
             {/* KOLOM KIRI: LOKASI & MAPS */}
             <div className="space-y-6 lg:col-span-7">
-              <div className="flex flex-col space-y-6 rounded-3xl border border-[#5A0A14]/15 bg-[#FAF7F0] p-6 sm:p-8 shadow-2xs font-sans">
+              <div className="flex flex-col space-y-6 rounded-3xl border border-neutral-200 bg-neutral-50 p-6 sm:p-8 shadow-2xs font-sans">
                 <div className="space-y-4">
                   <span className="inline-flex items-center gap-2 text-[10px] sm:text-[11px] font-extrabold uppercase tracking-[0.26em] text-[#9A5D0A]">
                     <span className="w-1.5 h-1.5 rounded-full bg-[#5A0A14]" />
@@ -372,7 +372,7 @@ export default function KontakPage(): React.ReactElement {
                   </span>
 
                   <div className="flex items-start gap-4">
-                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#EFE6D5] text-[#5A0A14]">
+                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-neutral-200/80 text-[#5A0A14]">
                       <FontAwesomeIcon icon={faMapMarkerAlt} className="h-5 w-5" />
                     </div>
                     <div className="min-w-0 space-y-1.5">
@@ -399,7 +399,7 @@ export default function KontakPage(): React.ReactElement {
                       href={googleMapsViewUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center gap-2 rounded-full border border-[#5A0A14]/20 bg-white px-5 py-2.5 text-xs font-bold text-[#5A0A14] shadow-2xs transition-all duration-200 hover:-translate-y-0.5 hover:bg-[#EFE6D5] uppercase tracking-wider"
+                      className="inline-flex items-center gap-2 rounded-full border border-neutral-300 bg-white px-5 py-2.5 text-xs font-bold text-[#5A0A14] shadow-2xs transition-all duration-200 hover:-translate-y-0.5 hover:bg-neutral-100 uppercase tracking-wider"
                     >
                       <FontAwesomeIcon icon={faMapMarkerAlt} className="h-3.5 w-3.5" />
                       {t.viewMapsBtn}
@@ -410,7 +410,7 @@ export default function KontakPage(): React.ReactElement {
                       className={`inline-flex items-center gap-2 rounded-full border px-5 py-2.5 text-xs font-bold shadow-2xs transition-all duration-200 uppercase tracking-wider cursor-pointer ${
                         copied
                           ? 'border-emerald-300 bg-emerald-50 text-emerald-700'
-                          : 'border-[#5A0A14]/20 bg-white text-[#2B211B] hover:border-[#5A0A14]/40 hover:text-[#5A0A14]'
+                          : 'border-neutral-300 bg-white text-[#2B211B] hover:border-[#5A0A14]/40 hover:text-[#5A0A14]'
                       }`}
                     >
                       <FontAwesomeIcon
@@ -422,7 +422,7 @@ export default function KontakPage(): React.ReactElement {
                   </div>
                 </div>
 
-                <div className="group relative h-96 w-full overflow-hidden rounded-2xl border border-[#5A0A14]/15 bg-[#EFE6D5]">
+                <div className="group relative h-96 w-full overflow-hidden rounded-2xl border border-neutral-200 bg-neutral-200">
                   <iframe
                     title="Pusat Oleh-Oleh Khas Banyuwangi Surya Snack"
                     src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d1778.0674498492522!2d114.35055334475906!3d-8.22083597406677!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x2dd1454c95cde09f%3A0x39d4a19b8f537844!2sOleh-oleh%20khas%20Banyuwangi%20Surya%20Snack!5e0!3m2!1sen!2sid!4v1795052457538!5m2!1sen!2sid"
@@ -439,7 +439,7 @@ export default function KontakPage(): React.ReactElement {
                     href={googleMapsViewUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="absolute bottom-3 right-3 flex items-center gap-2 rounded-full bg-[#FAF7F0]/95 border border-[#5A0A14]/20 px-4 py-2 text-xs font-bold text-[#5A0A14] shadow-md backdrop-blur-md transition-all duration-200 hover:bg-[#5A0A14] hover:text-amber-200 font-sans"
+                    className="absolute bottom-3 right-3 flex items-center gap-2 rounded-full bg-white/95 border border-neutral-300 px-4 py-2 text-xs font-bold text-[#5A0A14] shadow-md backdrop-blur-md transition-all duration-200 hover:bg-[#5A0A14] hover:text-amber-200 font-sans"
                   >
                     <FontAwesomeIcon icon={faDirections} className="h-3 w-3" />
                     {t.openMapsBtn}
@@ -448,7 +448,7 @@ export default function KontakPage(): React.ReactElement {
               </div>
 
               {/* Keunggulan Lokasi Strategis */}
-              <div className="flex items-start gap-4 rounded-3xl border border-[#9A5D0A]/25 bg-[#EFE6D5]/85 p-5 sm:p-6 font-sans">
+              <div className="flex items-start gap-4 rounded-3xl border border-neutral-200 bg-neutral-100 p-5 sm:p-6 font-sans">
                 <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-[#5A0A14] text-amber-200">
                   <FontAwesomeIcon icon={faCircleQuestion} className="h-4 w-4" />
                 </div>
@@ -465,7 +465,7 @@ export default function KontakPage(): React.ReactElement {
 
             {/* KOLOM KANAN: KONTAK & JAM OPERASIONAL */}
             <div className="flex flex-col gap-6 lg:col-span-5 lg:sticky lg:top-24 font-sans">
-              <div className="space-y-4 rounded-3xl border border-[#5A0A14]/15 bg-[#FAF7F0] p-6 sm:p-8 shadow-2xs">
+              <div className="space-y-4 rounded-3xl border border-neutral-200 bg-neutral-50 p-6 sm:p-8 shadow-2xs">
                 <span className="inline-flex items-center gap-2 text-[10px] sm:text-[11px] font-extrabold uppercase tracking-[0.26em] text-[#9A5D0A]">
                   <span className="w-1.5 h-1.5 rounded-full bg-[#5A0A14]" />
                   {t.quickServiceTag}
@@ -554,7 +554,7 @@ export default function KontakPage(): React.ReactElement {
                   href={tiktokUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="group flex items-center gap-4 rounded-2xl border border-[#5A0A14]/15 bg-white p-4 transition-all duration-200 hover:-translate-y-0.5 hover:border-[#2B211B] hover:shadow-md"
+                  className="group flex items-center gap-4 rounded-2xl border border-neutral-200 bg-white p-4 transition-all duration-200 hover:-translate-y-0.5 hover:border-[#2B211B] hover:shadow-md"
                 >
                   <div className="relative flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-[#2B211B] text-white shadow-xs transition-transform duration-200 group-hover:scale-105">
                     <FontAwesomeIcon icon={faTiktok} className="h-5 w-5" />
@@ -652,7 +652,7 @@ export default function KontakPage(): React.ReactElement {
                   className={`overflow-hidden rounded-3xl border transition-all duration-300 ${
                     isOpen
                       ? 'border-[#5A0A14]/30 bg-white shadow-sm'
-                      : 'border-[#5A0A14]/15 bg-[#FAF7F0] hover:border-[#5A0A14]/30 hover:bg-white'
+                      : 'border-neutral-200 bg-neutral-50 hover:border-[#5A0A14]/30 hover:bg-white'
                   }`}
                 >
                   <button

@@ -263,7 +263,7 @@ function KatalogContent() {
     <div className="min-h-screen bg-white text-[#2B211B] font-serif selection:bg-[#5A0A14] selection:text-amber-100 antialiased pt-14 sm:pt-20 pb-24">
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 space-y-5">
         {/* 1. HEADER EDITORIAL KATALOG */}
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-3 border-b border-[#5A0A14]/15 pb-4">
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-3 border-b border-neutral-200 pb-4">
           <div className="space-y-0.5">
             <span className="inline-flex items-center gap-2 text-[10px] sm:text-[11px] font-sans font-extrabold uppercase tracking-[0.26em] text-[#9A5D0A]">
               <span className="w-1.5 h-1.5 rounded-full bg-[#5A0A14]" />
@@ -284,14 +284,14 @@ function KatalogContent() {
         </div>
 
         {/* 2. HORIZONTAL TOOLBAR: PENCARIAN (KIRI) + TAB KATEGORI (KANAN) */}
-        <div className="bg-[#FAF7F0] border border-[#5A0A14]/15 rounded-3xl md:rounded-full p-3.5 sm:px-5 sm:py-3 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4 md:gap-8 font-sans">
+        <div className="bg-neutral-50 border border-neutral-200 rounded-3xl md:rounded-full p-3.5 sm:px-5 sm:py-3 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4 md:gap-8 font-sans">
           {/* Input Pencarian di Sisi Kiri */}
           <div className="w-full md:w-80 lg:w-96 shrink-0">
             <KatalogSearchInput />
           </div>
 
           {/* Tab Kategori di Sisi Kanan dengan Jarak Lega & Tanpa Scrollbar */}
-          <div className="flex flex-wrap items-center gap-2 pt-3.5 border-t border-[#5A0A14]/10 md:pt-0 md:border-t-0 md:justify-end">
+          <div className="flex flex-wrap items-center gap-2 pt-3.5 border-t border-neutral-200 md:pt-0 md:border-t-0 md:justify-end">
             {categories.map((cat) => {
               const isCatActive =
                 activeCategory.toLowerCase() === cat.id.toLowerCase();
@@ -302,7 +302,7 @@ function KatalogContent() {
                   className={`inline-flex items-center gap-1.5 sm:gap-2 px-3.5 sm:px-4 py-2 rounded-full text-xs font-bold whitespace-nowrap transition-all ${
                     isCatActive
                       ? 'bg-[#5A0A14] text-amber-200 shadow-xs'
-                      : 'bg-white/70 md:bg-transparent text-[#2B211B] border border-[#5A0A14]/12 md:border-transparent hover:bg-[#EFE6D5] hover:text-[#5A0A14]'
+                      : 'bg-white md:bg-transparent text-[#2B211B] border border-neutral-200 md:border-transparent hover:bg-neutral-200/70 hover:text-[#5A0A14]'
                   }`}
                 >
                   <span>{cat.label}</span>
@@ -310,7 +310,7 @@ function KatalogContent() {
                     className={`text-[10px] px-1.5 py-0.5 rounded-full ${
                       isCatActive
                         ? 'bg-amber-300/20 text-amber-200'
-                        : 'bg-[#EFE6D5] text-[#5A0A14]'
+                        : 'bg-neutral-200/80 text-[#5A0A14]'
                     }`}
                   >
                     {cat.count}
@@ -332,7 +332,7 @@ function KatalogContent() {
 
         {/* 3. GRID PRODUK LEGA FULL-WIDTH (4 KOLOM DESKTOP, 2 KOLOM HP) */}
         {paginatedProducts.length === 0 ? (
-          <div className="bg-[#FAF7F0] rounded-3xl p-12 sm:p-16 text-center border border-dashed border-[#5A0A14]/25 space-y-4 font-sans">
+          <div className="bg-neutral-50 rounded-3xl p-12 sm:p-16 text-center border border-dashed border-neutral-300 space-y-4 font-sans">
             <h3 className="text-xl font-serif font-bold text-[#5A0A14]">
               {t.noResultTitle}
             </h3>
@@ -367,7 +367,7 @@ function KatalogContent() {
             {currentPage > 1 && (
               <Link
                 href={`/katalog?category=${encodeURIComponent(activeCategory)}${search ? `&search=${encodeURIComponent(search)}` : ''}&page=${currentPage - 1}`}
-                className="px-4 py-2 rounded-full bg-[#FAF7F0] border border-[#5A0A14]/20 text-xs font-bold text-[#5A0A14] hover:bg-[#5A0A14] hover:text-amber-200 transition-all shadow-xs"
+                className="px-4 py-2 rounded-full bg-neutral-100 border border-neutral-200 text-xs font-bold text-[#5A0A14] hover:bg-[#5A0A14] hover:text-amber-200 transition-all shadow-xs"
               >
                 ← Prev
               </Link>
@@ -383,7 +383,7 @@ function KatalogContent() {
                     className={`w-9 h-9 flex items-center justify-center rounded-full text-xs font-bold transition-all shadow-xs ${
                       isPageActive
                         ? 'bg-[#5A0A14] text-amber-200 border border-[#5A0A14] scale-105'
-                        : 'bg-[#FAF7F0] text-[#2B211B] border border-[#5A0A14]/15 hover:bg-[#EFE6D5]'
+                        : 'bg-neutral-50 text-[#2B211B] border border-neutral-200 hover:bg-neutral-200/70'
                     }`}
                   >
                     {pageNum}
@@ -395,7 +395,7 @@ function KatalogContent() {
             {currentPage < totalPages && (
               <Link
                 href={`/katalog?category=${encodeURIComponent(activeCategory)}${search ? `&search=${encodeURIComponent(search)}` : ''}&page=${currentPage + 1}`}
-                className="px-4 py-2 rounded-full bg-[#FAF7F0] border border-[#5A0A14]/20 text-xs font-bold text-[#5A0A14] hover:bg-[#5A0A14] hover:text-amber-200 transition-all shadow-xs"
+                className="px-4 py-2 rounded-full bg-neutral-100 border border-neutral-200 text-xs font-bold text-[#5A0A14] hover:bg-[#5A0A14] hover:text-amber-200 transition-all shadow-xs"
               >
                 Next →
               </Link>

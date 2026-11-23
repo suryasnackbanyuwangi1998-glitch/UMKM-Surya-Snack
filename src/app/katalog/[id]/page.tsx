@@ -37,7 +37,7 @@ export default async function Page({ params }: PageProps) {
   if (!product) {
     return (
       <div className="min-h-[75vh] bg-white flex items-center justify-center px-4 pt-28 pb-20">
-        <div className="max-w-lg w-full bg-[#FAF7F0] border border-[#5A0A14]/15 rounded-3xl p-8 sm:p-12 text-center space-y-4 shadow-xs">
+        <div className="max-w-lg w-full bg-neutral-50 border border-neutral-200 rounded-3xl p-8 sm:p-12 text-center space-y-4 shadow-xs">
           <span className="inline-block text-[10px] font-sans font-extrabold uppercase tracking-[0.24em] text-[#9A5D0A]">
             Surya Snack Banyuwangi
           </span>
