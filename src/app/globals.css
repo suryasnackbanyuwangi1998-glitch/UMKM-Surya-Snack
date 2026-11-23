@@ -2,7 +2,7 @@
 
 :root {
   --background: #ffffff;
-  --foreground: #2b211b;
+  --foreground: #ffff;
   color-scheme: light;
 }
 
@@ -16,6 +16,6 @@
 html,
 body {
   background-color: #ffffff;
-  color: #2b211b;
+  color: #ffff;
   color-scheme: light;
 }
