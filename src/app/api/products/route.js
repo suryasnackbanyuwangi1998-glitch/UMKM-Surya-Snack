@@ -2,10 +2,48 @@
 import { NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
 
+// Helper pembentuk ID inisial huruf depan (sama persis dengan aturan SQL di Supabase)
+function generateAcronymBase(productName) {
+  const words = (productName || "")
+    .replace(/[^a-zA-Z0-9\s]/g, " ")
+    .toLowerCase()
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean);
+
+  if (words.length === 0) return "prd";
+  return words.map((w) => w[0]).join("");
+}
+
+// Cari ID unik jika akronim baru sudah dipakai produk lain
+async function getUniqueProductId(productName, currentId) {
+  const base = generateAcronymBase(productName);
+
+  // Jika ID saat ini sudah sesuai pola akronim nama baru (misal "ogm" atau "ogm-2"), pertahankan ID lama
+  if (currentId === base || currentId?.startsWith(`${base}-`)) {
+    return currentId;
+  }
+
+  let candidate = base;
+  let counter = 2;
+
+  while (true) {
+    const { data } = await supabase
+      .from("products")
+      .select("id")
+      .eq("id", candidate)
+      .maybeSingle();
+
+    if (!data) return candidate;
+    candidate = `${base}-${counter}`;
+    counter++;
+  }
+}
+
 export async function POST(request) {
   try {
     const formData = await request.formData();
-    
+
     const name = formData.get("name");
     const price = formData.get("price") ? parseFloat(formData.get("price")) : null;
     const category = formData.get("category");
@@ -83,8 +121,8 @@ export async function POST(request) {
 export async function PUT(request) {
   try {
     const formData = await request.formData();
-    
-    const id = formData.get("id");
+
+    const oldId = formData.get("id");
     const name = formData.get("name");
     const price = formData.get("price") ? parseFloat(formData.get("price")) : null;
     const category = formData.get("category");
@@ -101,10 +139,17 @@ export async function PUT(request) {
     const variantsRaw = formData.get("variants");
     const variants = variantsRaw ? JSON.parse(variantsRaw) : [];
 
-    // 1. Update data produk utama
+    // Hitung ID baru berdasarkan inisial huruf depan nama produk yang diedit
+    const newId = await getUniqueProductId(name, oldId);
+
+    // 1. Hapus varian lama dulu agar tidak bentrok dengan foreign key jika ID berubah
+    await supabase.from("variant_products").delete().eq("product_id", oldId);
+
+    // 2. Update data produk utama (termasuk ID baru jika nama berubah)
     const { error: updateError } = await supabase
       .from("products")
       .update({
+        id: newId,
         name,
         price,
         category,
@@ -120,16 +165,14 @@ export async function PUT(request) {
         image_url,
         updated_at: new Date().toISOString(),
       })
-      .eq("id", id);
+      .eq("id", oldId);
 
     if (updateError) throw updateError;
 
-    // 2. Refresh varian: Hapus varian lama, lalu masukkan varian yang baru
-    await supabase.from("variant_products").delete().eq("product_id", id);
-
+    // 3. Masukkan kembali varian dengan product_id yang terbaru (newId)
     if (variants.length > 0) {
       const variantsToInsert = variants.map((v) => ({
-        product_id: id,
+        product_id: newId,
         name: v.name,
         price: v.price ? parseFloat(v.price) : 0,
         stock: v.stock ? parseInt(v.stock) : 0,
@@ -150,7 +193,11 @@ export async function PUT(request) {
       if (variantError) throw variantError;
     }
 
-    return NextResponse.json({ success: true, message: "Produk berhasil diperbarui" });
+    return NextResponse.json({
+      success: true,
+      id: newId,
+      message: "Produk berhasil diperbarui",
+    });
   } catch (error) {
     console.error("API Error (PUT):", error.message);
     return NextResponse.json({ success: false, message: error.message }, { status: 500 });

@@ -14,6 +14,7 @@ import TabBeranda from "@/components/admin/pengaturan/TabBeranda";
 import TabProduk from "@/components/admin/pengaturan/TabProduk";
 import TabTentangKami from "@/components/admin/pengaturan/TabTentangKami";
 import TabKontak from "@/components/admin/pengaturan/TabKontak";
+import TabLogin from "@/components/admin/pengaturan/TabLogin";
 
 const INITIAL_FORM = {
   // Beranda (store_settings)
@@ -174,6 +175,9 @@ const INITIAL_FORM = {
     "Jalan Barong, Lingkungan Gaplek, Bakungan, Banyuwangi, Jawa Timur",
   open_hours: "Senin - Minggu: 08.00 - 21.00 WIB",
   google_maps_embed: "",
+
+  // Halaman Login (store_settings)
+  login_bg_url: "",
 };
 
 const getFolderNameByField = (fieldName) => {
@@ -181,6 +185,7 @@ const getFolderNameByField = (fieldName) => {
   if (fieldName === "heritage_image_url") return "heritage";
   if (fieldName === "catalog_banner_url") return "produk";
   if (fieldName === "about_image") return "tentang";
+  if (fieldName === "login_bg_url") return "login";
   return "pengaturan";
 };
 
@@ -459,6 +464,7 @@ export default function AdminPengaturanPage() {
         store_address: form.store_address,
         open_hours: form.open_hours,
         google_maps_embed: form.google_maps_embed,
+        login_bg_url: form.login_bg_url,
         updated_at: nowIso,
       };
 
@@ -504,6 +510,7 @@ export default function AdminPengaturanPage() {
   };
 
   const tabs = [
+    { key: "login", label: "Halaman Login" },
     { key: "beranda", label: "Beranda" },
     { key: "produk", label: "Produk" },
     { key: "tentang", label: "Tentang Kami" },
@@ -629,6 +636,16 @@ export default function AdminPengaturanPage() {
 
           {activeTab === "kontak" && (
             <TabKontak form={form} onChange={handleChange} />
+          )}
+
+          {activeTab === "login" && (
+            <TabLogin
+              form={form}
+              uploadingField={uploadingField}
+              onChange={handleChange}
+              onBatchChange={handleBatchChange}
+              onUpload={handleImageUpload}
+            />
           )}
 
           <div className="pt-4 border-t border-gray-200 flex justify-end">
